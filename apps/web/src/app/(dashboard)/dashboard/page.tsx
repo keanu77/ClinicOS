@@ -21,7 +21,7 @@ import {
   HandoverPriority,
   ShiftTypeLabels,
   ShiftType,
-} from '@clinic-os/shared';
+} from '@/shared';
 
 interface DashboardData {
   todayShifts: Array<{

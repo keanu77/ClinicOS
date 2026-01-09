@@ -57,7 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id!;
         token.role = user.role;
         token.accessToken = user.accessToken;
       }
@@ -78,29 +78,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 });
 
-// Type declarations
-declare module 'next-auth' {
-  interface User {
-    id: string;
-    role: string;
-    accessToken: string;
-  }
-
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-    };
-    accessToken: string;
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string;
-    role: string;
-    accessToken: string;
-  }
-}
+// Types are declared in src/types/next-auth.d.ts

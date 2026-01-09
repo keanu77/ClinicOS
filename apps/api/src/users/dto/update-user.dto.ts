@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsBoolean, IsOptional } from 'class-validator';
-import { Role } from '@clinic-os/shared';
+import { Role } from '../../shared';
 
 export class UpdateUserDto {
   @IsOptional()

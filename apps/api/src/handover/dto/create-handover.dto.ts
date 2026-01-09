@@ -5,7 +5,7 @@ import {
   IsDateString,
   MinLength,
 } from 'class-validator';
-import { HandoverPriority } from '@clinic-os/shared';
+import { HandoverPriority } from '../../shared';
 
 export class CreateHandoverDto {
   @IsString()

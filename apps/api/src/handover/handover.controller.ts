@@ -17,7 +17,7 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Role } from '@clinic-os/shared';
+import { Role } from '../shared';
 
 @Controller('handovers')
 @UseGuards(RolesGuard)

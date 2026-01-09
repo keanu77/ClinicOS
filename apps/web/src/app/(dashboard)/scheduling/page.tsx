@@ -11,7 +11,7 @@ import {
   ShiftType,
   ShiftTypeLabels,
   ShiftTypeColors,
-} from '@clinic-os/shared';
+} from '@/shared';
 
 interface Shift {
   id: string;

@@ -18,7 +18,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@clinic-os/shared": "workspace:*",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.1.1",
     "@nestjs/core": "^10.3.0",

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Download, AlertTriangle, Package } from 'lucide-react';
-import { Role } from '@clinic-os/shared';
+import { Role } from '@/shared';
 
 interface InventoryItem {
   id: string;

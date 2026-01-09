@@ -11,7 +11,7 @@ import {
 import { UsersService } from './users.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
-import { Role } from '@clinic-os/shared';
+import { Role } from '../shared';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')

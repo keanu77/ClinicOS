@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bell, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
-import { RoleLabels, Role } from '@clinic-os/shared';
+import { RoleLabels, Role } from '@/shared';
 
 interface HeaderProps {
   user: {

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { formatRelativeTime } from '@/lib/utils';
 import { Bell, Check, CheckCheck, Trash2, Mail, MailOpen } from 'lucide-react';
-import { NotificationTypeLabels, NotificationType } from '@clinic-os/shared';
+import { NotificationTypeLabels, NotificationType } from '@/shared';
 
 interface Notification {
   id: string;
@@ -37,7 +37,7 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const params: Record<string, string | boolean> = { limit: 50 };
+      const params: Record<string, string | boolean | number> = { limit: 50 };
       if (filter === 'unread') params.isRead = false;
 
       const result = await apiGet<NotificationListResponse>(

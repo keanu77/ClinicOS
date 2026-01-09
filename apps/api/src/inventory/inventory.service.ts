@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { InventoryTxnType, NotificationType, Role } from '@clinic-os/shared';
+import { InventoryTxnType, NotificationType, Role } from '../shared';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import { CreateTxnDto } from './dto/create-txn.dto';

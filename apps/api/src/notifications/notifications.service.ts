@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotificationType, CreateNotificationDto } from '@clinic-os/shared';
+import { NotificationType, CreateNotificationDto } from '../shared';
 
 @Injectable()
 export class NotificationsService {

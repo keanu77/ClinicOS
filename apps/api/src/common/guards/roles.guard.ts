@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Role, RoleHierarchy } from '@clinic-os/shared';
+import { Role, RoleHierarchy } from '../../shared';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
 @Injectable()

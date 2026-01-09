@@ -10,7 +10,7 @@ import {
   HandoverStatus,
   HandoverPriority,
   NotificationType,
-} from '@clinic-os/shared';
+} from '../shared';
 import { CreateHandoverDto } from './dto/create-handover.dto';
 import { UpdateHandoverDto } from './dto/update-handover.dto';
 import { QueryHandoverDto } from './dto/query-handover.dto';

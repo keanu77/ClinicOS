@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { HandoverPriority, HandoverPriorityLabels } from '@clinic-os/shared';
+import { HandoverPriority, HandoverPriorityLabels } from '@/shared';
 
 interface User {
   id: string;

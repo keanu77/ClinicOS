@@ -1,5 +1,5 @@
 import { IsOptional, IsString, IsEnum, IsDateString } from 'class-validator';
-import { ShiftType } from '@clinic-os/shared';
+import { ShiftType } from '../../shared';
 
 export class QueryShiftDto {
   @IsOptional()

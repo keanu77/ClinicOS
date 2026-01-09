@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HandoverService } from '../handover/handover.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { SchedulingService } from '../scheduling/scheduling.service';
-import { Role } from '@clinic-os/shared';
+import { Role } from '../shared';
 
 @Injectable()
 export class DashboardService {

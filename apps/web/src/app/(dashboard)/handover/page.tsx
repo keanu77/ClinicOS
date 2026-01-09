@@ -15,7 +15,7 @@ import {
   HandoverStatusLabels,
   HandoverPriority,
   HandoverPriorityLabels,
-} from '@clinic-os/shared';
+} from '@/shared';
 
 interface Handover {
   id: string;

@@ -25,7 +25,7 @@ import {
   InventoryTxnTypeLabels,
   InventoryTxnTypeColors,
   Role,
-} from '@clinic-os/shared';
+} from '@/shared';
 
 interface InventoryItem {
   id: string;

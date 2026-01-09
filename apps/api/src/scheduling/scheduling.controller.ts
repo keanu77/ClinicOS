@@ -16,7 +16,7 @@ import { QueryShiftDto } from './dto/query-shift.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Role } from '@clinic-os/shared';
+import { Role } from '../shared';
 
 @Controller('scheduling')
 @UseGuards(RolesGuard)
