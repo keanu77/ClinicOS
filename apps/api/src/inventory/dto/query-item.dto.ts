@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsBoolean, IsInt, Min } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { IsOptional, IsString, IsBoolean, IsInt, Min } from "class-validator";
+import { Type, Transform } from "class-transformer";
 
 export class QueryItemDto {
   @IsOptional()
@@ -7,12 +7,12 @@ export class QueryItemDto {
   search?: string;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   lowStock?: boolean;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
+  @Transform(({ value }) => value === "true")
   @IsBoolean()
   isActive?: boolean;
 

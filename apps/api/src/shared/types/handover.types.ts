@@ -1,5 +1,5 @@
-import { HandoverStatus, HandoverPriority } from '../enums/handover.enum';
-import { UserWithoutPassword } from './user.types';
+import { HandoverStatus, HandoverPriority } from "../enums/handover.enum";
+import { UserWithoutPassword } from "./user.types";
 
 export interface Handover {
   id: string;

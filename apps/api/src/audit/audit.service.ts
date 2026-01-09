@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 export interface CreateAuditLogDto {
   action: string;
@@ -48,7 +48,7 @@ export class AuditService {
             select: { id: true, name: true, email: true, role: true },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
       }),
@@ -80,7 +80,7 @@ export class AuditService {
 
   async getActionTypes() {
     const logs = await this.prisma.auditLog.findMany({
-      distinct: ['action'],
+      distinct: ["action"],
       select: { action: true },
     });
 

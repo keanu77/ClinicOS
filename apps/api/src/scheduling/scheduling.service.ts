@@ -2,12 +2,12 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ShiftType } from '../shared';
-import { CreateShiftDto } from './dto/create-shift.dto';
-import { UpdateShiftDto } from './dto/update-shift.dto';
-import { QueryShiftDto } from './dto/query-shift.dto';
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ShiftType } from "../shared";
+import { CreateShiftDto } from "./dto/create-shift.dto";
+import { UpdateShiftDto } from "./dto/update-shift.dto";
+import { QueryShiftDto } from "./dto/query-shift.dto";
 
 @Injectable()
 export class SchedulingService {
@@ -34,7 +34,7 @@ export class SchedulingService {
           select: { id: true, name: true, email: true, role: true },
         },
       },
-      orderBy: [{ date: 'asc' }, { type: 'asc' }],
+      orderBy: [{ date: "asc" }, { type: "asc" }],
     });
   }
 
@@ -52,7 +52,7 @@ export class SchedulingService {
     });
 
     if (!shift) {
-      throw new NotFoundException('Shift not found');
+      throw new NotFoundException("Shift not found");
     }
 
     return shift;
@@ -74,7 +74,9 @@ export class SchedulingService {
     });
 
     if (existing) {
-      throw new BadRequestException('Shift already exists for this date, type, and user');
+      throw new BadRequestException(
+        "Shift already exists for this date, type, and user",
+      );
     }
 
     return this.prisma.shift.create({
@@ -141,7 +143,7 @@ export class SchedulingService {
           select: { id: true, name: true, role: true },
         },
       },
-      orderBy: { type: 'asc' },
+      orderBy: { type: "asc" },
     });
   }
 
@@ -164,7 +166,7 @@ export class SchedulingService {
           select: { id: true, name: true },
         },
       },
-      orderBy: [{ date: 'asc' }, { type: 'asc' }],
+      orderBy: [{ date: "asc" }, { type: "asc" }],
     });
 
     // Group by date
@@ -173,7 +175,7 @@ export class SchedulingService {
     for (let i = 0; i < 7; i++) {
       const date = new Date(start);
       date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = date.toISOString().split("T")[0];
 
       schedule[dateStr] = {
         date: dateStr,
@@ -186,15 +188,15 @@ export class SchedulingService {
     }
 
     for (const shift of shifts) {
-      const dateStr = shift.date.toISOString().split('T')[0];
+      const dateStr = shift.date.toISOString().split("T")[0];
       if (schedule[dateStr]) {
         schedule[dateStr].shifts[shift.type].push(shift);
       }
     }
 
     return {
-      startDate: start.toISOString().split('T')[0],
-      endDate: end.toISOString().split('T')[0],
+      startDate: start.toISOString().split("T")[0],
+      endDate: end.toISOString().split("T")[0],
       schedule: Object.values(schedule),
     };
   }
@@ -203,7 +205,7 @@ export class SchedulingService {
     const where: any = { userId };
 
     if (month) {
-      const [year, monthNum] = month.split('-').map(Number);
+      const [year, monthNum] = month.split("-").map(Number);
       const start = new Date(year, monthNum - 1, 1);
       const end = new Date(year, monthNum, 0);
 
@@ -215,7 +217,7 @@ export class SchedulingService {
 
     return this.prisma.shift.findMany({
       where,
-      orderBy: { date: 'asc' },
+      orderBy: { date: "asc" },
     });
   }
 }

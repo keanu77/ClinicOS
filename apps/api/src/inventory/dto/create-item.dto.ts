@@ -5,7 +5,7 @@ import {
   Min,
   IsDateString,
   MinLength,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateItemDto {
   @IsString()

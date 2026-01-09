@@ -5,7 +5,7 @@ import {
   Min,
   IsDateString,
   IsBoolean,
-} from 'class-validator';
+} from "class-validator";
 
 export class UpdateItemDto {
   @IsOptional()

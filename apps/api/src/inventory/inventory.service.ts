@@ -2,14 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { InventoryTxnType, NotificationType, Role } from '../shared';
-import { CreateItemDto } from './dto/create-item.dto';
-import { UpdateItemDto } from './dto/update-item.dto';
-import { CreateTxnDto } from './dto/create-txn.dto';
-import { QueryItemDto } from './dto/query-item.dto';
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { InventoryTxnType, NotificationType, Role } from "../shared";
+import { CreateItemDto } from "./dto/create-item.dto";
+import { UpdateItemDto } from "./dto/update-item.dto";
+import { CreateTxnDto } from "./dto/create-txn.dto";
+import { QueryItemDto } from "./dto/query-item.dto";
 
 @Injectable()
 export class InventoryService {
@@ -50,7 +50,7 @@ export class InventoryService {
               ],
             }
           : where,
-        orderBy: [{ name: 'asc' }],
+        orderBy: [{ name: "asc" }],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -81,14 +81,14 @@ export class InventoryService {
               select: { id: true, name: true },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 20,
         },
       },
     });
 
     if (!item) {
-      throw new NotFoundException('Inventory item not found');
+      throw new NotFoundException("Inventory item not found");
     }
 
     return item;
@@ -101,7 +101,7 @@ export class InventoryService {
     });
 
     if (existing) {
-      throw new BadRequestException('SKU already exists');
+      throw new BadRequestException("SKU already exists");
     }
 
     return this.prisma.inventoryItem.create({
@@ -109,7 +109,7 @@ export class InventoryService {
         name: dto.name,
         sku: dto.sku,
         description: dto.description,
-        unit: dto.unit || '個',
+        unit: dto.unit || "個",
         quantity: dto.quantity || 0,
         minStock: dto.minStock || 0,
         maxStock: dto.maxStock,
@@ -153,7 +153,7 @@ export class InventoryService {
     // Check if we have enough stock for OUT
     if (dto.type === InventoryTxnType.OUT) {
       if (item.quantity + quantity < 0) {
-        throw new BadRequestException('Insufficient stock');
+        throw new BadRequestException("Insufficient stock");
       }
     }
 
@@ -238,7 +238,7 @@ export class InventoryService {
             select: { id: true, name: true },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -257,27 +257,41 @@ export class InventoryService {
   async exportToCsv() {
     const items = await this.prisma.inventoryItem.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
 
-    const headers = ['品項名稱', 'SKU', '單位', '庫存量', '最低庫存', '最高庫存', '位置', '狀態'];
+    const headers = [
+      "品項名稱",
+      "SKU",
+      "單位",
+      "庫存量",
+      "最低庫存",
+      "最高庫存",
+      "位置",
+      "狀態",
+    ];
     const rows = items.map((item) => [
       item.name,
       item.sku,
       item.unit,
       item.quantity.toString(),
       item.minStock.toString(),
-      item.maxStock?.toString() || '',
-      item.location || '',
-      item.quantity <= item.minStock ? '低庫存' : '正常',
+      item.maxStock?.toString() || "",
+      item.location || "",
+      item.quantity <= item.minStock ? "低庫存" : "正常",
     ]);
 
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
 
     return csv;
   }
 
-  private async notifyLowStock(item: { id: string; name: string; quantity: number; minStock: number }) {
+  private async notifyLowStock(item: {
+    id: string;
+    name: string;
+    quantity: number;
+    minStock: number;
+  }) {
     // Get all admins
     const admins = await this.prisma.user.findMany({
       where: { role: Role.ADMIN, isActive: true },
@@ -288,7 +302,7 @@ export class InventoryService {
       await this.notificationsService.create({
         userId: admin.id,
         type: NotificationType.INVENTORY_LOW_STOCK,
-        title: '低庫存警示',
+        title: "低庫存警示",
         message: `${item.name} 庫存低於安全存量，目前：${item.quantity}，最低：${item.minStock}`,
         metadata: { itemId: item.id },
       });

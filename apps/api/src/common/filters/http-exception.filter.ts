@@ -5,8 +5,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Request, Response } from "express";
 
 interface ErrorResponse {
   success: false;
@@ -29,17 +29,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = '伺服器內部錯誤';
-    let code = 'INTERNAL_ERROR';
+    let message = "伺服器內部錯誤";
+    let code = "INTERNAL_ERROR";
     let details: any = undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (typeof exceptionResponse === 'string') {
+      if (typeof exceptionResponse === "string") {
         message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object') {
+      } else if (typeof exceptionResponse === "object") {
         const res = exceptionResponse as any;
         message = res.message || exception.message;
         details = res.errors || res.details;
@@ -84,21 +84,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private getErrorCode(status: number): string {
     switch (status) {
       case HttpStatus.BAD_REQUEST:
-        return 'BAD_REQUEST';
+        return "BAD_REQUEST";
       case HttpStatus.UNAUTHORIZED:
-        return 'UNAUTHORIZED';
+        return "UNAUTHORIZED";
       case HttpStatus.FORBIDDEN:
-        return 'FORBIDDEN';
+        return "FORBIDDEN";
       case HttpStatus.NOT_FOUND:
-        return 'NOT_FOUND';
+        return "NOT_FOUND";
       case HttpStatus.CONFLICT:
-        return 'CONFLICT';
+        return "CONFLICT";
       case HttpStatus.UNPROCESSABLE_ENTITY:
-        return 'VALIDATION_ERROR';
+        return "VALIDATION_ERROR";
       case HttpStatus.TOO_MANY_REQUESTS:
-        return 'RATE_LIMIT_EXCEEDED';
+        return "RATE_LIMIT_EXCEEDED";
       default:
-        return 'INTERNAL_ERROR';
+        return "INTERNAL_ERROR";
     }
   }
 }

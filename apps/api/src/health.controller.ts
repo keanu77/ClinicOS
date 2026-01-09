@@ -1,7 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
-import { Public } from './common/decorators/public.decorator';
+import { Controller, Get } from "@nestjs/common";
+import { Public } from "./common/decorators/public.decorator";
 
-@Controller('health')
+@Controller("health")
 export class HealthController {
   private readonly startTime = Date.now();
 
@@ -9,10 +9,10 @@ export class HealthController {
   @Get()
   check() {
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       uptime: Math.floor((Date.now() - this.startTime) / 1000),
-      version: '1.0.0',
+      version: "1.0.0",
     };
   }
 }

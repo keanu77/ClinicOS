@@ -3,19 +3,19 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { AuditService } from '../audit/audit.service';
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
+import { AuditService } from "../audit/audit.service";
 import {
   Role,
   HandoverStatus,
   HandoverPriority,
   NotificationType,
-} from '../shared';
-import { CreateHandoverDto } from './dto/create-handover.dto';
-import { UpdateHandoverDto } from './dto/update-handover.dto';
-import { QueryHandoverDto } from './dto/query-handover.dto';
+} from "../shared";
+import { CreateHandoverDto } from "./dto/create-handover.dto";
+import { UpdateHandoverDto } from "./dto/update-handover.dto";
+import { QueryHandoverDto } from "./dto/query-handover.dto";
 
 @Injectable()
 export class HandoverService {
@@ -28,7 +28,14 @@ export class HandoverService {
   ) {}
 
   async findAll(query: QueryHandoverDto, user: { id: string; role: string }) {
-    const { status, priority, assigneeId, createdById, page = 1, limit = 20 } = query;
+    const {
+      status,
+      priority,
+      assigneeId,
+      createdById,
+      page = 1,
+      limit = 20,
+    } = query;
 
     const where: any = {};
 
@@ -53,17 +60,14 @@ export class HandoverService {
                 select: { id: true, name: true, role: true },
               },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
             take: 1,
           },
           _count: {
             select: { comments: true },
           },
         },
-        orderBy: [
-          { priority: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -95,14 +99,14 @@ export class HandoverService {
               select: { id: true, name: true, role: true },
             },
           },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: "asc" },
         },
         shift: true,
       },
     });
 
     if (!handover) {
-      throw new NotFoundException('Handover not found');
+      throw new NotFoundException("Handover not found");
     }
 
     return handover;
@@ -121,10 +125,7 @@ export class HandoverService {
           select: { id: true, name: true },
         },
       },
-      orderBy: [
-        { priority: 'desc' },
-        { dueDate: 'asc' },
-      ],
+      orderBy: [{ priority: "desc" }, { dueDate: "asc" }],
     });
   }
 
@@ -156,7 +157,7 @@ export class HandoverService {
       await this.notificationsService.create({
         userId: dto.assigneeId,
         type: NotificationType.HANDOVER_ASSIGNED,
-        title: '新交班指派',
+        title: "新交班指派",
         message: `您有一項新的交班事項：${dto.title}`,
         metadata: { handoverId: handover.id },
       });
@@ -166,10 +167,10 @@ export class HandoverService {
 
     // 記錄審計日誌
     await this.auditService.create({
-      action: 'HANDOVER_CREATE',
+      action: "HANDOVER_CREATE",
       userId,
       targetId: handover.id,
-      targetType: 'HANDOVER',
+      targetType: "HANDOVER",
       metadata: { title: dto.title, priority: dto.priority },
     });
 
@@ -191,13 +192,15 @@ export class HandoverService {
     );
 
     if (!isOwner && !isAssignee && !isSupervisorOrAdmin) {
-      this.logger.warn(`Forbidden: user ${user.id} tried to modify handover ${id}`);
-      throw new ForbiddenException('You cannot modify this handover');
+      this.logger.warn(
+        `Forbidden: user ${user.id} tried to modify handover ${id}`,
+      );
+      throw new ForbiddenException("You cannot modify this handover");
     }
 
     // Staff can only update status if assigned
     if (user.role === Role.STAFF && !isOwner && !isAssignee) {
-      throw new ForbiddenException('You cannot modify this handover');
+      throw new ForbiddenException("You cannot modify this handover");
     }
 
     const updateData: any = {};
@@ -218,7 +221,7 @@ export class HandoverService {
         await this.notificationsService.create({
           userId: dto.assigneeId,
           type: NotificationType.HANDOVER_ASSIGNED,
-          title: '交班指派',
+          title: "交班指派",
           message: `您被指派了一項交班事項：${handover.title}`,
           metadata: { handoverId: id },
         });
@@ -254,10 +257,10 @@ export class HandoverService {
 
     // 記錄審計日誌
     await this.auditService.create({
-      action: 'HANDOVER_DELETE',
+      action: "HANDOVER_DELETE",
       userId,
       targetId: id,
-      targetType: 'HANDOVER',
+      targetType: "HANDOVER",
       metadata: { title: handover.title },
     });
 
@@ -291,7 +294,7 @@ export class HandoverService {
       await this.notificationsService.create({
         userId: targetUserId,
         type: NotificationType.HANDOVER_COMMENTED,
-        title: '交班註記',
+        title: "交班註記",
         message: `${comment.author.name} 在交班事項中新增了註記`,
         metadata: { handoverId: id, commentId: comment.id },
       });
@@ -328,10 +331,7 @@ export class HandoverService {
           select: { id: true, name: true },
         },
       },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
       take: 10,
     });
   }

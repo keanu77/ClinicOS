@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '../shared';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { Role } from "../shared";
 
 @Injectable()
 export class UsersService {
@@ -18,7 +18,7 @@ export class UsersService {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 
@@ -50,11 +50,14 @@ export class UsersService {
     });
   }
 
-  async update(id: string, data: { name?: string; role?: string; isActive?: boolean }) {
+  async update(
+    id: string,
+    data: { name?: string; role?: string; isActive?: boolean },
+  ) {
     const user = await this.findById(id);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     return this.prisma.user.update({
@@ -76,7 +79,7 @@ export class UsersService {
     const user = await this.findById(id);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     // Soft delete
@@ -95,7 +98,7 @@ export class UsersService {
         name: true,
         role: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
   }
 }

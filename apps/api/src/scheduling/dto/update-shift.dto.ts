@@ -1,5 +1,5 @@
-import { IsString, IsEnum, IsOptional, IsDateString } from 'class-validator';
-import { ShiftType } from '../../shared';
+import { IsString, IsEnum, IsOptional, IsDateString } from "class-validator";
+import { ShiftType } from "../../shared";
 
 export class UpdateShiftDto {
   @IsOptional()

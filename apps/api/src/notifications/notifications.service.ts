@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationType, CreateNotificationDto } from '../shared';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { NotificationType, CreateNotificationDto } from "../shared";
 
 @Injectable()
 export class NotificationsService {
@@ -20,7 +20,7 @@ export class NotificationsService {
     const [data, total, unreadCount] = await Promise.all([
       this.prisma.notification.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
       }),

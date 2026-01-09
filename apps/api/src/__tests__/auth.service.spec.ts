@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
-import { AuthService } from '../auth/auth.service';
-import { UsersService } from '../users/users.service';
-import { AuditService } from '../audit/audit.service';
-import { UnauthorizedException } from '@nestjs/common';
+import { Test, TestingModule } from "@nestjs/testing";
+import { JwtService } from "@nestjs/jwt";
+import { AuthService } from "../auth/auth.service";
+import { UsersService } from "../users/users.service";
+import { AuditService } from "../audit/audit.service";
+import { UnauthorizedException } from "@nestjs/common";
 
-describe('AuthService', () => {
+describe("AuthService", () => {
   let authService: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
@@ -41,48 +41,48 @@ describe('AuthService', () => {
     auditService = module.get(AuditService);
   });
 
-  describe('validateUser', () => {
-    it('should throw UnauthorizedException if user not found', async () => {
+  describe("validateUser", () => {
+    it("should throw UnauthorizedException if user not found", async () => {
       usersService.findByEmail.mockResolvedValue(null);
 
       await expect(
-        authService.validateUser('test@example.com', 'password'),
+        authService.validateUser("test@example.com", "password"),
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should throw UnauthorizedException if account is disabled', async () => {
+    it("should throw UnauthorizedException if account is disabled", async () => {
       usersService.findByEmail.mockResolvedValue({
-        id: '1',
-        email: 'test@example.com',
-        name: 'Test User',
-        role: 'STAFF',
-        passwordHash: 'hash',
+        id: "1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "STAFF",
+        passwordHash: "hash",
         isActive: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
 
       await expect(
-        authService.validateUser('test@example.com', 'password'),
+        authService.validateUser("test@example.com", "password"),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
 
-  describe('login', () => {
-    it('should return access token on successful login', async () => {
+  describe("login", () => {
+    it("should return access token on successful login", async () => {
       const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        name: 'Test User',
-        role: 'STAFF',
-        passwordHash: '$2b$10$YourHashedPasswordHere',
+        id: "1",
+        email: "test@example.com",
+        name: "Test User",
+        role: "STAFF",
+        passwordHash: "$2b$10$YourHashedPasswordHere",
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       usersService.findByEmail.mockResolvedValue(mockUser);
-      jwtService.sign.mockReturnValue('mock-jwt-token');
+      jwtService.sign.mockReturnValue("mock-jwt-token");
       auditService.create.mockResolvedValue(undefined as any);
 
       // 注意: 這個測試需要實際的 bcrypt 比較，這裡只是示例結構

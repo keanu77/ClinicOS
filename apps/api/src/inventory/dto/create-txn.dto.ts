@@ -1,5 +1,5 @@
-import { IsString, IsEnum, IsInt, IsOptional } from 'class-validator';
-import { InventoryTxnType } from '../../shared';
+import { IsString, IsEnum, IsInt, IsOptional } from "class-validator";
+import { InventoryTxnType } from "../../shared";
 
 export class CreateTxnDto {
   @IsString()

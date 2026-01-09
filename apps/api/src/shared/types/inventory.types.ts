@@ -1,5 +1,5 @@
-import { InventoryTxnType } from '../enums/inventory.enum';
-import { UserWithoutPassword } from './user.types';
+import { InventoryTxnType } from "../enums/inventory.enum";
+import { UserWithoutPassword } from "./user.types";
 
 export interface InventoryItem {
   id: string;

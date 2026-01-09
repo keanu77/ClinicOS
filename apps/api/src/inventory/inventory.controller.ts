@@ -8,76 +8,76 @@ import {
   Query,
   Res,
   UseGuards,
-} from '@nestjs/common';
-import { Response } from 'express';
-import { InventoryService } from './inventory.service';
-import { CreateItemDto } from './dto/create-item.dto';
-import { UpdateItemDto } from './dto/update-item.dto';
-import { CreateTxnDto } from './dto/create-txn.dto';
-import { QueryItemDto } from './dto/query-item.dto';
-import { Roles } from '../common/decorators/roles.decorator';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Role } from '../shared';
+} from "@nestjs/common";
+import { Response } from "express";
+import { InventoryService } from "./inventory.service";
+import { CreateItemDto } from "./dto/create-item.dto";
+import { UpdateItemDto } from "./dto/update-item.dto";
+import { CreateTxnDto } from "./dto/create-txn.dto";
+import { QueryItemDto } from "./dto/query-item.dto";
+import { Roles } from "../common/decorators/roles.decorator";
+import { RolesGuard } from "../common/guards/roles.guard";
+import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { Role } from "../shared";
 
-@Controller('inventory')
+@Controller("inventory")
 @UseGuards(RolesGuard)
 export class InventoryController {
   constructor(private inventoryService: InventoryService) {}
 
-  @Get('items')
+  @Get("items")
   findAllItems(@Query() query: QueryItemDto) {
     return this.inventoryService.findAllItems(query);
   }
 
-  @Get('items/:id')
-  findItemById(@Param('id') id: string) {
+  @Get("items/:id")
+  findItemById(@Param("id") id: string) {
     return this.inventoryService.findItemById(id);
   }
 
-  @Post('items')
+  @Post("items")
   @Roles(Role.ADMIN)
   createItem(@Body() dto: CreateItemDto) {
     return this.inventoryService.createItem(dto);
   }
 
-  @Patch('items/:id')
+  @Patch("items/:id")
   @Roles(Role.ADMIN)
-  updateItem(@Param('id') id: string, @Body() dto: UpdateItemDto) {
+  updateItem(@Param("id") id: string, @Body() dto: UpdateItemDto) {
     return this.inventoryService.updateItem(id, dto);
   }
 
-  @Post('txns')
+  @Post("txns")
   createTransaction(
     @Body() dto: CreateTxnDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser("id") userId: string,
   ) {
     return this.inventoryService.createTransaction(dto, userId);
   }
 
-  @Get('items/:id/transactions')
+  @Get("items/:id/transactions")
   getItemTransactions(
-    @Param('id') id: string,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Param("id") id: string,
+    @Query("page") page?: number,
+    @Query("limit") limit?: number,
   ) {
     return this.inventoryService.getItemTransactions(id, page, limit);
   }
 
-  @Get('low-stock')
+  @Get("low-stock")
   getLowStockItems() {
     return this.inventoryService.getLowStockItems();
   }
 
-  @Get('export.csv')
+  @Get("export.csv")
   async exportCsv(@Res() res: Response) {
     const csv = await this.inventoryService.exportToCsv();
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
-      'Content-Disposition',
-      'attachment; filename=inventory-export.csv',
+      "Content-Disposition",
+      "attachment; filename=inventory-export.csv",
     );
-    res.send('\uFEFF' + csv); // Add BOM for Excel compatibility
+    res.send("\uFEFF" + csv); // Add BOM for Excel compatibility
   }
 }

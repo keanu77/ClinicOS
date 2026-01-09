@@ -3,12 +3,12 @@ import {
   UnauthorizedException,
   BadRequestException,
   Logger,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { UsersService } from '../users/users.service';
-import { AuditService } from '../audit/audit.service';
-import { JwtPayload } from '../shared';
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
+import { UsersService } from "../users/users.service";
+import { AuditService } from "../audit/audit.service";
+import { JwtPayload } from "../shared";
 
 @Injectable()
 export class AuthService {
@@ -25,18 +25,18 @@ export class AuthService {
 
     if (!user) {
       this.logger.warn(`Login failed: user not found for email: ${email}`);
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is disabled');
+      throw new UnauthorizedException("Account is disabled");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
       this.logger.warn(`Login failed: invalid password for email: ${email}`);
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException("Invalid email or password");
     }
 
     // Return user without password
@@ -52,17 +52,17 @@ export class AuthService {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      role: user.role as JwtPayload['role'],
+      role: user.role as JwtPayload["role"],
     };
 
     this.logger.log(`Login successful for user: ${user.id} (${user.email})`);
 
     // 記錄登入審計日誌
     await this.auditService.create({
-      action: 'AUTH_LOGIN',
+      action: "AUTH_LOGIN",
       userId: user.id,
       targetId: user.id,
-      targetType: 'USER',
+      targetType: "USER",
       metadata: { email: user.email },
     });
 
@@ -76,7 +76,7 @@ export class AuthService {
     const existingUser = await this.usersService.findByEmail(email);
 
     if (existingUser) {
-      throw new BadRequestException('Email already registered');
+      throw new BadRequestException("Email already registered");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -95,7 +95,7 @@ export class AuthService {
     try {
       return this.jwtService.verify<JwtPayload>(token);
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException("Invalid token");
     }
   }
 }

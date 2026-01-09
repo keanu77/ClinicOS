@@ -1,5 +1,5 @@
-import { ShiftType } from '../enums/shift.enum';
-import { UserWithoutPassword } from './user.types';
+import { ShiftType } from "../enums/shift.enum";
+import { UserWithoutPassword } from "./user.types";
 
 export interface Shift {
   id: string;

@@ -1,4 +1,4 @@
-import { Role } from '../enums/role.enum';
+import { Role } from "../enums/role.enum";
 
 export interface User {
   id: string;
@@ -10,7 +10,7 @@ export interface User {
   updatedAt: Date;
 }
 
-export interface UserWithoutPassword extends Omit<User, 'passwordHash'> {}
+export interface UserWithoutPassword extends Omit<User, "passwordHash"> {}
 
 export interface CreateUserDto {
   email: string;

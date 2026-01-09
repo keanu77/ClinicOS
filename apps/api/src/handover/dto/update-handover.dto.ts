@@ -4,8 +4,8 @@ import {
   IsOptional,
   IsDateString,
   MinLength,
-} from 'class-validator';
-import { HandoverStatus, HandoverPriority } from '../../shared';
+} from "class-validator";
+import { HandoverStatus, HandoverPriority } from "../../shared";
 
 export class UpdateHandoverDto {
   @IsOptional()

@@ -22,7 +22,7 @@ export interface ApiError {
 }
 
 export interface HealthCheckResponse {
-  status: 'ok' | 'error';
+  status: "ok" | "error";
   timestamp: string;
   uptime: number;
   version: string;

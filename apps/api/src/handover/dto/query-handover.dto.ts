@@ -1,6 +1,6 @@
-import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
-import { HandoverStatus, HandoverPriority } from '../../shared';
+import { IsEnum, IsOptional, IsString, IsInt, Min } from "class-validator";
+import { Type } from "class-transformer";
+import { HandoverStatus, HandoverPriority } from "../../shared";
 
 export class QueryHandoverDto {
   @IsOptional()
