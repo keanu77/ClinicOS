@@ -1,0 +1,30 @@
+{
+  "name": "clinic-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clinical Operations Management System",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @clinic-os/api dev\" \"pnpm --filter @clinic-os/web dev\"",
+    "dev:api": "pnpm --filter @clinic-os/api dev",
+    "dev:web": "pnpm --filter @clinic-os/web dev",
+    "build": "pnpm -r build",
+    "build:api": "pnpm --filter @clinic-os/api build",
+    "build:web": "pnpm --filter @clinic-os/web build",
+    "db:generate": "pnpm --filter @clinic-os/api prisma generate",
+    "db:push": "pnpm --filter @clinic-os/api prisma db push",
+    "db:migrate": "pnpm --filter @clinic-os/api prisma migrate dev",
+    "db:seed": "pnpm --filter @clinic-os/api db:seed",
+    "db:studio": "pnpm --filter @clinic-os/api prisma studio",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
