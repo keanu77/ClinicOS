@@ -1,5 +1,5 @@
 build:
-  type: "npm"
+  type: "custom"
   build_command: "npm install --include=dev && npx prisma generate && npx nest build"
 start_command: "node dist/main.js"
 root_directory: apps/api
