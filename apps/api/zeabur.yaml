@@ -1,0 +1,4 @@
+build:
+  type: "nodejs"
+  build_command: "pnpm install && pnpm build"
+  start_command: "node dist/main.js"
