@@ -13,12 +13,17 @@ export class DashboardService {
   ) {}
 
   async getSummary(user: { id: string; role: string }) {
-    const [todayShifts, myHandovers, urgentHandovers, lowStockItems, pendingCount] =
+    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(user.role as Role);
+
+    // 根據角色決定是否需要完整的低庫存列表
+    const [todayShifts, myHandovers, urgentHandovers, lowStockData, pendingCount] =
       await Promise.all([
         this.schedulingService.getTodayShifts(),
         this.handoverService.findMyHandovers(user.id),
-        this.handoverService.getUrgentHandovers(),
-        this.inventoryService.getLowStockItems(),
+        isSupervisorOrAdmin ? this.handoverService.getUrgentHandovers() : Promise.resolve([]),
+        isSupervisorOrAdmin
+          ? this.inventoryService.getLowStockItems()
+          : this.inventoryService.getLowStockCount(),
         this.handoverService.getPendingCount(),
       ]);
 
@@ -26,13 +31,15 @@ export class DashboardService {
       todayShifts,
       myHandovers,
       pendingHandoversCount: pendingCount,
-      lowStockCount: lowStockItems.length,
+      lowStockCount: isSupervisorOrAdmin
+        ? (lowStockData as any[]).length
+        : (lowStockData as number),
     };
 
     // Add more data for supervisor+
-    if ([Role.SUPERVISOR, Role.ADMIN].includes(user.role as Role)) {
+    if (isSupervisorOrAdmin) {
       summary.urgentHandovers = urgentHandovers;
-      summary.lowStockItems = lowStockItems;
+      summary.lowStockItems = lowStockData;
     }
 
     return summary;
@@ -41,7 +48,7 @@ export class DashboardService {
   async getStats() {
     const [pendingCount, lowStockCount] = await Promise.all([
       this.handoverService.getPendingCount(),
-      this.inventoryService.getLowStockItems().then((items) => items.length),
+      this.inventoryService.getLowStockCount(),
     ]);
 
     return {

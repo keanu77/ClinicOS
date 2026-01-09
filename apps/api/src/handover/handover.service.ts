@@ -2,9 +2,11 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuditService } from '../audit/audit.service';
 import {
   Role,
   HandoverStatus,
@@ -17,9 +19,12 @@ import { QueryHandoverDto } from './dto/query-handover.dto';
 
 @Injectable()
 export class HandoverService {
+  private readonly logger = new Logger(HandoverService.name);
+
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private auditService: AuditService,
   ) {}
 
   async findAll(query: QueryHandoverDto, user: { id: string; role: string }) {
@@ -124,6 +129,8 @@ export class HandoverService {
   }
 
   async create(dto: CreateHandoverDto, userId: string) {
+    this.logger.log(`Creating handover: "${dto.title}" by user ${userId}`);
+
     const handover = await this.prisma.handover.create({
       data: {
         title: dto.title,
@@ -155,6 +162,17 @@ export class HandoverService {
       });
     }
 
+    this.logger.log(`Handover created: ${handover.id}`);
+
+    // 記錄審計日誌
+    await this.auditService.create({
+      action: 'HANDOVER_CREATE',
+      userId,
+      targetId: handover.id,
+      targetType: 'HANDOVER',
+      metadata: { title: dto.title, priority: dto.priority },
+    });
+
     return handover;
   }
 
@@ -173,6 +191,7 @@ export class HandoverService {
     );
 
     if (!isOwner && !isAssignee && !isSupervisorOrAdmin) {
+      this.logger.warn(`Forbidden: user ${user.id} tried to modify handover ${id}`);
       throw new ForbiddenException('You cannot modify this handover');
     }
 
@@ -227,9 +246,22 @@ export class HandoverService {
     });
   }
 
-  async delete(id: string) {
-    await this.findOne(id); // Check exists
-    return this.prisma.handover.delete({ where: { id } });
+  async delete(id: string, userId: string) {
+    const handover = await this.findOne(id);
+    this.logger.log(`Deleting handover: ${id}`);
+
+    await this.prisma.handover.delete({ where: { id } });
+
+    // 記錄審計日誌
+    await this.auditService.create({
+      action: 'HANDOVER_DELETE',
+      userId,
+      targetId: id,
+      targetType: 'HANDOVER',
+      metadata: { title: handover.title },
+    });
+
+    return { success: true };
   }
 
   async addComment(id: string, content: string, userId: string) {

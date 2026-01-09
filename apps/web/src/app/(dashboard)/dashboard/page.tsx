@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiGet } from '@/lib/api';
 import { formatRelativeTime } from '@/lib/utils';
+import { getPriorityBadgeVariant } from '@/lib/badge-variants';
 import {
   ClipboardList,
   Package,
@@ -78,19 +79,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case 'URGENT':
-        return 'danger';
-      case 'HIGH':
-        return 'warning';
-      case 'MEDIUM':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
 
   return (
     <div className="space-y-6">

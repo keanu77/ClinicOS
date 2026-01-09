@@ -2,23 +2,29 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+import { AuditService } from '../audit/audit.service';
 import { JwtPayload } from '../shared';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private auditService: AuditService,
   ) {}
 
   async validateUser(email: string, password: string) {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
+      this.logger.warn(`Login failed: user not found for email: ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -29,6 +35,7 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
+      this.logger.warn(`Login failed: invalid password for email: ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -38,6 +45,8 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
+    this.logger.log(`Login attempt for email: ${email}`);
+
     const user = await this.validateUser(email, password);
 
     const payload: JwtPayload = {
@@ -45,6 +54,17 @@ export class AuthService {
       email: user.email,
       role: user.role as JwtPayload['role'],
     };
+
+    this.logger.log(`Login successful for user: ${user.id} (${user.email})`);
+
+    // 記錄登入審計日誌
+    await this.auditService.create({
+      action: 'AUTH_LOGIN',
+      userId: user.id,
+      targetId: user.id,
+      targetType: 'USER',
+      metadata: { email: user.email },
+    });
 
     return {
       user,

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
+import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
 import { ArrowLeft, Send, User, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -73,17 +74,64 @@ export default function HandoverDetailPage() {
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !handover || !session?.user) return;
 
+    const commentContent = newComment.trim();
+    setNewComment('');
     setSubmitting(true);
+
+    // 樂觀更新：立即在 UI 顯示新註記
+    const optimisticComment = {
+      id: `temp-${Date.now()}`,
+      content: commentContent,
+      createdAt: new Date().toISOString(),
+      author: {
+        id: session.user.id,
+        name: session.user.name || '',
+        role: session.user.role || '',
+      },
+    };
+
+    setHandover((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        comments: [...prev.comments, optimisticComment],
+      };
+    });
+
     try {
-      await apiPost(`/handovers/${params.id}/comments`, {
-        content: newComment,
+      const newCommentData = await apiPost<{
+        id: string;
+        content: string;
+        createdAt: string;
+        author: { id: string; name: string; role: string };
+      }>(`/handovers/${params.id}/comments`, {
+        content: commentContent,
       });
-      setNewComment('');
-      await fetchHandover();
+
+      // 用實際數據替換樂觀更新的數據
+      setHandover((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          comments: prev.comments.map((c) =>
+            c.id === optimisticComment.id ? newCommentData : c
+          ),
+        };
+      });
+
       toast({ title: '註記已新增' });
     } catch (error) {
+      // 失敗時回滾樂觀更新
+      setHandover((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          comments: prev.comments.filter((c) => c.id !== optimisticComment.id),
+        };
+      });
+      setNewComment(commentContent); // 恢復輸入內容
       toast({
         title: '新增失敗',
         variant: 'destructive',
@@ -103,32 +151,6 @@ export default function HandoverDetailPage() {
         title: '更新失敗',
         variant: 'destructive',
       });
-    }
-  };
-
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case 'URGENT':
-        return 'danger';
-      case 'HIGH':
-        return 'warning';
-      case 'MEDIUM':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'success';
-      case 'IN_PROGRESS':
-        return 'default';
-      case 'CANCELLED':
-        return 'secondary';
-      default:
-        return 'outline';
     }
   };
 

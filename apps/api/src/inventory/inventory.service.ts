@@ -191,21 +191,40 @@ export class InventoryService {
   }
 
   async getLowStockItems() {
-    const items = await this.prisma.inventoryItem.findMany({
-      where: { isActive: true },
-      orderBy: { quantity: 'asc' },
-    });
+    // 使用原始 SQL 查詢在資料庫層面過濾，避免 N+1 問題
+    const items = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        name: string;
+        sku: string;
+        quantity: number;
+        minStock: number;
+      }>
+    >`
+      SELECT id, name, sku, quantity, minStock
+      FROM InventoryItem
+      WHERE isActive = 1 AND quantity <= minStock
+      ORDER BY quantity ASC
+    `;
 
-    return items
-      .filter((item) => item.quantity <= item.minStock)
-      .map((item) => ({
-        id: item.id,
-        name: item.name,
-        sku: item.sku,
-        quantity: item.quantity,
-        minStock: item.minStock,
-        shortage: item.minStock - item.quantity,
-      }));
+    return items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      sku: item.sku,
+      quantity: item.quantity,
+      minStock: item.minStock,
+      shortage: item.minStock - item.quantity,
+    }));
+  }
+
+  async getLowStockCount(): Promise<number> {
+    // 提供一個只計算數量的方法，避免查詢完整資料
+    const result = await this.prisma.$queryRaw<[{ count: number }]>`
+      SELECT COUNT(*) as count
+      FROM InventoryItem
+      WHERE isActive = 1 AND quantity <= minStock
+    `;
+    return Number(result[0].count);
   }
 
   async getItemTransactions(itemId: string, page = 1, limit = 20) {

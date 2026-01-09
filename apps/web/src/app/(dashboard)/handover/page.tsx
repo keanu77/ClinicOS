@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatRelativeTime } from '@/lib/utils';
+import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
 import { Plus, Search, Filter, MessageSquare } from 'lucide-react';
 import {
   HandoverStatus,
@@ -62,32 +63,6 @@ export default function HandoverListPage() {
 
     fetchData();
   }, [statusFilter, priorityFilter]);
-
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case 'URGENT':
-        return 'danger';
-      case 'HIGH':
-        return 'warning';
-      case 'MEDIUM':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'success';
-      case 'IN_PROGRESS':
-        return 'default';
-      case 'CANCELLED':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
 
   return (
     <div className="space-y-6">

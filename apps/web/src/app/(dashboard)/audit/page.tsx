@@ -6,6 +6,7 @@ import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatRelativeTime } from '@/lib/utils';
+import { getActionBadgeVariant } from '@/lib/badge-variants';
 import { History, User, FileText } from 'lucide-react';
 import { Role } from '@/shared';
 
@@ -68,20 +69,6 @@ export default function AuditPage() {
 
     fetchLogs();
   }, []);
-
-  const getActionBadgeVariant = (action: string) => {
-    switch (action) {
-      case 'CREATE':
-        return 'success';
-      case 'DELETE':
-        return 'danger';
-      case 'UPDATE':
-      case 'STATUS_CHANGE':
-        return 'warning';
-      default:
-        return 'secondary';
-    }
-  };
 
   if (session?.user?.role !== Role.ADMIN) {
     return (

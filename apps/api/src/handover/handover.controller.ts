@@ -66,8 +66,8 @@ export class HandoverController {
 
   @Delete(':id')
   @Roles(Role.SUPERVISOR)
-  remove(@Param('id') id: string) {
-    return this.handoverService.delete(id);
+  remove(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.handoverService.delete(id, userId);
   }
 
   @Post(':id/comments')

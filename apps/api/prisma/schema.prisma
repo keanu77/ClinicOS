@@ -62,6 +62,8 @@ model Handover {
   @@index([status, priority, createdAt])
   @@index([shiftId])
   @@index([dueDate, status])
+  @@index([completedAt])
+  @@index([assigneeId, status, dueDate])
 }
 
 model HandoverComment {
@@ -121,6 +123,7 @@ model InventoryItem {
   @@index([sku])
   @@index([name])
   @@index([quantity, minStock])
+  @@index([isActive, quantity, minStock])
 }
 
 model InventoryTxn {
@@ -140,6 +143,7 @@ model InventoryTxn {
   @@index([itemId, createdAt])
   @@index([performedById, createdAt])
   @@index([type, createdAt])
+  @@index([itemId, performedById, createdAt])
 }
 
 model AuditLog {

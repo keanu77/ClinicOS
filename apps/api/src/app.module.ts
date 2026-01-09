@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -19,6 +20,24 @@ import { HealthController } from './health.controller';
       isGlobal: true,
       envFilePath: ['.env', '.env.local'],
     }),
+    // 速率限制配置
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000, // 1 秒
+        limit: 10, // 每秒最多 10 次請求
+      },
+      {
+        name: 'medium',
+        ttl: 10000, // 10 秒
+        limit: 50, // 每 10 秒最多 50 次請求
+      },
+      {
+        name: 'long',
+        ttl: 60000, // 1 分鐘
+        limit: 200, // 每分鐘最多 200 次請求
+      },
+    ]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -34,6 +53,10 @@ import { HealthController } from './health.controller';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

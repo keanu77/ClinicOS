@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDateTime } from '@/lib/utils';
+import { getTxnBadgeVariant } from '@/lib/badge-variants';
 import {
   ArrowLeft,
   Plus,
@@ -114,19 +115,6 @@ export default function InventoryDetailPage() {
       });
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const getTxnBadgeVariant = (type: string) => {
-    switch (type) {
-      case 'IN':
-        return 'success';
-      case 'OUT':
-        return 'danger';
-      case 'ADJUST':
-        return 'default';
-      default:
-        return 'secondary';
     }
   };
 
