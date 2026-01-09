@@ -1,4 +1,4 @@
 build:
   type: "npm"
-  build_command: "npm install && npx prisma generate && npx nest build"
+  build_command: "npm install --include=dev && npx prisma generate && npx nest build"
 start_command: "node dist/main.js"
