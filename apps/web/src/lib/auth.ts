@@ -75,7 +75,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'build-time-secret-placeholder',
+  trustHost: true,
 });
 
 // Types are declared in src/types/next-auth.d.ts

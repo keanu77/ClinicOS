@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShieldAlert } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function UnauthorizedPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
