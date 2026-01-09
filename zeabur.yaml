@@ -1,1 +1,4 @@
-root_directory: apps/api
+# Clinic OS - Monorepo
+# 請在 Zeabur 控制台分別設定每個服務的根目錄：
+# - API 服務：Root Directory = apps/api
+# - Web 服務：Root Directory = apps/web
