@@ -1,0 +1,27 @@
+# Zeabur 部署配置 - Clinic OS
+# 此專案為 monorepo 結構，需分別部署 API 和 Web
+
+# 方案一：分開部署 (推薦)
+# 在 Zeabur 建立兩個服務：
+# 1. clinic-os-api (後端)
+# 2. clinic-os-web (前端)
+
+# API 服務設定 (apps/api)
+# - 服務名稱: clinic-os-api
+# - 根目錄: apps/api
+# - 建置指令: pnpm install && pnpm build
+# - 啟動指令: pnpm start:prod
+# - 環境變數:
+#   DATABASE_URL: file:./prod.db (或 MySQL URL)
+#   JWT_SECRET: <your-secret>
+#   JWT_EXPIRES_IN: 8h
+#   FRONTEND_URL: https://your-web-domain.zeabur.app
+
+# Web 服務設定 (apps/web)
+# - 服務名稱: clinic-os-web
+# - 根目錄: apps/web
+# - 框架: Next.js (自動偵測)
+# - 環境變數:
+#   NEXT_PUBLIC_API_URL: https://your-api-domain.zeabur.app
+#   NEXTAUTH_SECRET: <your-secret>
+#   NEXTAUTH_URL: https://your-web-domain.zeabur.app
