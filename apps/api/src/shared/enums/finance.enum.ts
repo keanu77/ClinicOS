@@ -1,6 +1,6 @@
 // Finance Module Enums
 
 export enum CostType {
-  FIXED = 'FIXED',
-  VARIABLE = 'VARIABLE',
+  FIXED = "FIXED",
+  VARIABLE = "VARIABLE",
 }

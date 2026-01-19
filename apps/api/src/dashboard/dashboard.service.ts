@@ -111,7 +111,8 @@ export class DashboardService {
     return {
       // 本週營運
       operations: {
-        totalTasks: taskStats.pending + taskStats.inProgress + taskStats.blocked,
+        totalTasks:
+          taskStats.pending + taskStats.inProgress + taskStats.blocked,
         pendingTasks: taskStats.pending,
         inProgressTasks: taskStats.inProgress,
         completedTasks: taskStats.completedThisWeek,

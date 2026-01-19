@@ -452,7 +452,9 @@ export class HandoverService {
       user.role as Role,
     );
     if (!isSupervisorOrAdmin && handover.createdById !== user.id) {
-      throw new ForbiddenException("Only supervisors or the creator can add collaborators");
+      throw new ForbiddenException(
+        "Only supervisors or the creator can add collaborators",
+      );
     }
 
     // Check if already a collaborator
@@ -559,11 +561,7 @@ export class HandoverService {
 
   // ==================== SubTasks ====================
 
-  async createSubTask(
-    parentId: string,
-    dto: CreateSubTaskDto,
-    userId: string,
-  ) {
+  async createSubTask(parentId: string, dto: CreateSubTaskDto, userId: string) {
     const parent = await this.findOne(parentId);
 
     const subTask = await this.prisma.handover.create({
@@ -618,29 +616,30 @@ export class HandoverService {
   // ==================== Task Stats ====================
 
   async getTaskStats() {
-    const [pending, inProgress, blocked, completed, byCategory] = await Promise.all([
-      this.prisma.handover.count({
-        where: { status: HandoverStatus.PENDING },
-      }),
-      this.prisma.handover.count({
-        where: { status: HandoverStatus.IN_PROGRESS },
-      }),
-      this.prisma.handover.count({
-        where: { status: HandoverStatus.BLOCKED },
-      }),
-      this.prisma.handover.count({
-        where: {
-          status: HandoverStatus.COMPLETED,
-          completedAt: {
-            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+    const [pending, inProgress, blocked, completed, byCategory] =
+      await Promise.all([
+        this.prisma.handover.count({
+          where: { status: HandoverStatus.PENDING },
+        }),
+        this.prisma.handover.count({
+          where: { status: HandoverStatus.IN_PROGRESS },
+        }),
+        this.prisma.handover.count({
+          where: { status: HandoverStatus.BLOCKED },
+        }),
+        this.prisma.handover.count({
+          where: {
+            status: HandoverStatus.COMPLETED,
+            completedAt: {
+              gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+            },
           },
-        },
-      }),
-      this.prisma.taskCategoryAssignment.groupBy({
-        by: ["categoryId"],
-        _count: true,
-      }),
-    ]);
+        }),
+        this.prisma.taskCategoryAssignment.groupBy({
+          by: ["categoryId"],
+          _count: true,
+        }),
+      ]);
 
     return {
       pending,

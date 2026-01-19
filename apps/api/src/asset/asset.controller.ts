@@ -9,11 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { AssetService } from "./asset.service";
-import {
-  CreateAssetDto,
-  UpdateAssetDto,
-  QueryAssetDto,
-} from "./dto/asset.dto";
+import { CreateAssetDto, UpdateAssetDto, QueryAssetDto } from "./dto/asset.dto";
 import {
   CreateMaintenanceScheduleDto,
   UpdateMaintenanceScheduleDto,
@@ -44,7 +40,9 @@ export class AssetController {
   @Get("warranty-expiring")
   @Roles(Role.SUPERVISOR)
   getWarrantyExpiring(@Query("days") days?: string) {
-    return this.assetService.getWarrantyExpiring(days ? parseInt(days, 10) : 30);
+    return this.assetService.getWarrantyExpiring(
+      days ? parseInt(days, 10) : 30,
+    );
   }
 
   @Get("stats")
@@ -79,7 +77,9 @@ export class AssetController {
   @Get("maintenance/upcoming")
   @Roles(Role.SUPERVISOR)
   getUpcomingMaintenance(@Query("days") days?: string) {
-    return this.assetService.getUpcomingMaintenance(days ? parseInt(days, 10) : 7);
+    return this.assetService.getUpcomingMaintenance(
+      days ? parseInt(days, 10) : 7,
+    );
   }
 
   @Post("maintenance/schedules")

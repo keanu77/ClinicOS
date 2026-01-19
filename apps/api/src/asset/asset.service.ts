@@ -14,11 +14,7 @@ import {
   MaintenanceType,
   NotificationType,
 } from "../shared";
-import {
-  CreateAssetDto,
-  UpdateAssetDto,
-  QueryAssetDto,
-} from "./dto/asset.dto";
+import { CreateAssetDto, UpdateAssetDto, QueryAssetDto } from "./dto/asset.dto";
 import {
   CreateMaintenanceScheduleDto,
   UpdateMaintenanceScheduleDto,
@@ -43,7 +39,14 @@ export class AssetService {
   // ==================== Assets ====================
 
   async findAll(query: QueryAssetDto) {
-    const { category, status, location, department, page = 1, limit = 20 } = query;
+    const {
+      category,
+      status,
+      location,
+      department,
+      page = 1,
+      limit = 20,
+    } = query;
 
     const where: any = { isActive: true };
     if (category) where.category = category;
@@ -154,7 +157,9 @@ export class AssetService {
       data: {
         ...dto,
         purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : undefined,
-        warrantyStart: dto.warrantyStart ? new Date(dto.warrantyStart) : undefined,
+        warrantyStart: dto.warrantyStart
+          ? new Date(dto.warrantyStart)
+          : undefined,
         warrantyEnd: dto.warrantyEnd ? new Date(dto.warrantyEnd) : undefined,
       },
     });
@@ -203,7 +208,10 @@ export class AssetService {
     });
   }
 
-  async updateMaintenanceSchedule(id: string, dto: UpdateMaintenanceScheduleDto) {
+  async updateMaintenanceSchedule(
+    id: string,
+    dto: UpdateMaintenanceScheduleDto,
+  ) {
     return this.prisma.maintenanceSchedule.update({
       where: { id },
       data: dto,
@@ -232,7 +240,10 @@ export class AssetService {
 
   // ==================== Maintenance Records ====================
 
-  async createMaintenanceRecord(dto: CreateMaintenanceRecordDto, userId: string) {
+  async createMaintenanceRecord(
+    dto: CreateMaintenanceRecordDto,
+    userId: string,
+  ) {
     await this.findOne(dto.assetId);
 
     const record = await this.prisma.maintenanceRecord.create({
@@ -314,7 +325,14 @@ export class AssetService {
   }
 
   async getFaults(query: QueryFaultDto) {
-    const { assetId, status, severity, reporterId, page = 1, limit = 20 } = query;
+    const {
+      assetId,
+      status,
+      severity,
+      reporterId,
+      page = 1,
+      limit = 20,
+    } = query;
 
     const where: any = {};
     if (assetId) where.assetId = assetId;
@@ -381,7 +399,13 @@ export class AssetService {
   async getOpenFaults() {
     return this.prisma.faultReport.findMany({
       where: {
-        status: { in: [FaultStatus.REPORTED, FaultStatus.INVESTIGATING, FaultStatus.IN_REPAIR] },
+        status: {
+          in: [
+            FaultStatus.REPORTED,
+            FaultStatus.INVESTIGATING,
+            FaultStatus.IN_REPAIR,
+          ],
+        },
       },
       include: {
         asset: {

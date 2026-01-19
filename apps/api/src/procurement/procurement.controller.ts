@@ -43,7 +43,10 @@ export class ProcurementController {
 
   @Post("vendors")
   @Roles(Role.ADMIN)
-  createVendor(@Body() dto: CreateVendorDto, @CurrentUser("id") userId: string) {
+  createVendor(
+    @Body() dto: CreateVendorDto,
+    @CurrentUser("id") userId: string,
+  ) {
     return this.procurementService.createVendor(dto, userId);
   }
 

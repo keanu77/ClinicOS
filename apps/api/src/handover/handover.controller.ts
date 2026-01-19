@@ -95,7 +95,11 @@ export class HandoverController {
   createTaskCategory(
     @Body() dto: { name: string; color?: string; description?: string },
   ) {
-    return this.handoverService.createTaskCategory(dto.name, dto.color, dto.description);
+    return this.handoverService.createTaskCategory(
+      dto.name,
+      dto.color,
+      dto.description,
+    );
   }
 
   @Post(":id/categories")
@@ -117,10 +121,7 @@ export class HandoverController {
 
   @Delete(":id/collaborators/:userId")
   @Roles(Role.SUPERVISOR)
-  removeCollaborator(
-    @Param("id") id: string,
-    @Param("userId") userId: string,
-  ) {
+  removeCollaborator(@Param("id") id: string, @Param("userId") userId: string) {
     return this.handoverService.removeCollaborator(id, userId);
   }
 

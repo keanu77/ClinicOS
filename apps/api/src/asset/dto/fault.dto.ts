@@ -1,9 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsNumber,
-} from "class-validator";
+import { IsString, IsOptional, IsEnum, IsNumber } from "class-validator";
 import { Type, Transform } from "class-transformer";
 import { FaultSeverity, FaultStatus } from "../../shared";
 

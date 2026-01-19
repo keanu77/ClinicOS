@@ -7,7 +7,11 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
-import { DocumentStatus, AnnouncementPriority, NotificationType } from "../shared";
+import {
+  DocumentStatus,
+  AnnouncementPriority,
+  NotificationType,
+} from "../shared";
 import {
   CreateDocumentCategoryDto,
   CreateDocumentDto,
@@ -158,7 +162,9 @@ export class DocumentService {
       where: { id },
       data: {
         ...dto,
-        effectiveDate: dto.effectiveDate ? new Date(dto.effectiveDate) : undefined,
+        effectiveDate: dto.effectiveDate
+          ? new Date(dto.effectiveDate)
+          : undefined,
         reviewDate: dto.reviewDate ? new Date(dto.reviewDate) : undefined,
       },
     });
@@ -253,15 +259,16 @@ export class DocumentService {
 
     const unread = [];
     for (const doc of publishedDocs) {
-      const confirmation = await this.prisma.documentReadConfirmation.findUnique({
-        where: {
-          documentId_userId_version: {
-            documentId: doc.id,
-            userId,
-            version: doc.version,
+      const confirmation =
+        await this.prisma.documentReadConfirmation.findUnique({
+          where: {
+            documentId_userId_version: {
+              documentId: doc.id,
+              userId,
+              version: doc.version,
+            },
           },
-        },
-      });
+        });
 
       if (!confirmation) {
         unread.push(doc);
@@ -273,7 +280,11 @@ export class DocumentService {
 
   // ==================== Announcements ====================
 
-  async getAnnouncements(query: QueryAnnouncementDto, userId: string, userRole: string) {
+  async getAnnouncements(
+    query: QueryAnnouncementDto,
+    userId: string,
+    userRole: string,
+  ) {
     const { priority, isPinned, page = 1, limit = 20 } = query;
 
     const now = new Date();
@@ -289,10 +300,7 @@ export class DocumentService {
     // Filter by target roles
     where.AND = [
       {
-        OR: [
-          { targetRoles: null },
-          { targetRoles: { contains: userRole } },
-        ],
+        OR: [{ targetRoles: null }, { targetRoles: { contains: userRole } }],
       },
     ];
 
@@ -308,7 +316,11 @@ export class DocumentService {
             select: { id: true, readAt: true },
           },
         },
-        orderBy: [{ isPinned: "desc" }, { priority: "desc" }, { publishAt: "desc" }],
+        orderBy: [
+          { isPinned: "desc" },
+          { priority: "desc" },
+          { publishAt: "desc" },
+        ],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -322,7 +334,13 @@ export class DocumentService {
       readConfirmations: undefined,
     }));
 
-    return { data: dataWithReadStatus, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return {
+      data: dataWithReadStatus,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async createAnnouncement(dto: CreateAnnouncementDto, userId: string) {
@@ -372,7 +390,9 @@ export class DocumentService {
         ...dto,
         publishAt: dto.publishAt ? new Date(dto.publishAt) : undefined,
         expireAt: dto.expireAt ? new Date(dto.expireAt) : undefined,
-        targetRoles: dto.targetRoles ? JSON.stringify(dto.targetRoles) : undefined,
+        targetRoles: dto.targetRoles
+          ? JSON.stringify(dto.targetRoles)
+          : undefined,
       },
     });
   }

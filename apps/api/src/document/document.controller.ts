@@ -94,10 +94,7 @@ export class DocumentController {
   }
 
   @Post(":id/confirm-read")
-  confirmRead(
-    @Param("id") id: string,
-    @CurrentUser("id") userId: string,
-  ) {
+  confirmRead(@Param("id") id: string, @CurrentUser("id") userId: string) {
     return this.documentService.confirmRead(id, userId);
   }
 

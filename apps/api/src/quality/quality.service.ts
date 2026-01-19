@@ -156,7 +156,8 @@ export class QualityService {
         description: dto.description,
         occurredAt: new Date(dto.occurredAt),
         location: dto.location,
-        severity: dto.severity || incidentType?.severity || IncidentSeverity.MEDIUM,
+        severity:
+          dto.severity || incidentType?.severity || IncidentSeverity.MEDIUM,
         isNearMiss: dto.isNearMiss || false,
         reporterId: userId,
       },
@@ -334,24 +335,29 @@ export class QualityService {
     thisMonth.setDate(1);
     thisMonth.setHours(0, 0, 0, 0);
 
-    const [openIncidents, nearMissCount, openComplaints, monthlyIncidents, monthlyComplaints] =
-      await Promise.all([
-        this.prisma.incident.count({
-          where: { status: { not: IncidentStatus.CLOSED } },
-        }),
-        this.prisma.incident.count({
-          where: { isNearMiss: true, createdAt: { gte: thisMonth } },
-        }),
-        this.prisma.complaint.count({
-          where: { status: { not: ComplaintStatus.CLOSED } },
-        }),
-        this.prisma.incident.count({
-          where: { createdAt: { gte: thisMonth } },
-        }),
-        this.prisma.complaint.count({
-          where: { createdAt: { gte: thisMonth } },
-        }),
-      ]);
+    const [
+      openIncidents,
+      nearMissCount,
+      openComplaints,
+      monthlyIncidents,
+      monthlyComplaints,
+    ] = await Promise.all([
+      this.prisma.incident.count({
+        where: { status: { not: IncidentStatus.CLOSED } },
+      }),
+      this.prisma.incident.count({
+        where: { isNearMiss: true, createdAt: { gte: thisMonth } },
+      }),
+      this.prisma.complaint.count({
+        where: { status: { not: ComplaintStatus.CLOSED } },
+      }),
+      this.prisma.incident.count({
+        where: { createdAt: { gte: thisMonth } },
+      }),
+      this.prisma.complaint.count({
+        where: { createdAt: { gte: thisMonth } },
+      }),
+    ]);
 
     return {
       openIncidents,

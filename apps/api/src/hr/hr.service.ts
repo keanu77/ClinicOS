@@ -28,7 +28,11 @@ import {
   AssignSkillDto,
   UpdateEmployeeSkillDto,
 } from "./dto/skill.dto";
-import { CreateLeaveDto, ApproveLeaveDto, QueryLeaveDto } from "./dto/leave.dto";
+import {
+  CreateLeaveDto,
+  ApproveLeaveDto,
+  QueryLeaveDto,
+} from "./dto/leave.dto";
 
 @Injectable()
 export class HRService {
@@ -44,7 +48,9 @@ export class HRService {
 
   async getEmployees(user: { id: string; role: string }) {
     if (user.role === Role.STAFF) {
-      throw new ForbiddenException("Only supervisors and admins can view employee list");
+      throw new ForbiddenException(
+        "Only supervisors and admins can view employee list",
+      );
     }
 
     return this.prisma.user.findMany({
@@ -64,7 +70,9 @@ export class HRService {
 
   async getEmployee(id: string, user: { id: string; role: string }) {
     const isSelf = user.id === id;
-    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(user.role as Role);
+    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(
+      user.role as Role,
+    );
 
     if (!isSelf && !isSupervisorOrAdmin) {
       throw new ForbiddenException("You can only view your own profile");
@@ -157,7 +165,11 @@ export class HRService {
       where: { userId },
       data: {
         ...dto,
-        hireDate: dto.hireDate ? new Date(dto.hireDate) : dto.hireDate === null ? null : undefined,
+        hireDate: dto.hireDate
+          ? new Date(dto.hireDate)
+          : dto.hireDate === null
+            ? null
+            : undefined,
       },
     });
 
@@ -272,8 +284,16 @@ export class HRService {
       data: {
         ...dto,
         status,
-        issueDate: dto.issueDate ? new Date(dto.issueDate) : dto.issueDate === null ? null : undefined,
-        expiryDate: dto.expiryDate ? new Date(dto.expiryDate) : dto.expiryDate === null ? null : undefined,
+        issueDate: dto.issueDate
+          ? new Date(dto.issueDate)
+          : dto.issueDate === null
+            ? null
+            : undefined,
+        expiryDate: dto.expiryDate
+          ? new Date(dto.expiryDate)
+          : dto.expiryDate === null
+            ? null
+            : undefined,
       },
     });
   }
@@ -367,7 +387,11 @@ export class HRService {
       },
       data: {
         ...dto,
-        certifiedAt: dto.certifiedAt ? new Date(dto.certifiedAt) : dto.certifiedAt === null ? null : undefined,
+        certifiedAt: dto.certifiedAt
+          ? new Date(dto.certifiedAt)
+          : dto.certifiedAt === null
+            ? null
+            : undefined,
       },
       include: {
         skill: true,
@@ -387,7 +411,15 @@ export class HRService {
   // ==================== Leave Management ====================
 
   async getLeaves(query: QueryLeaveDto, user: { id: string; role: string }) {
-    const { requesterId, status, leaveType, startDate, endDate, page = 1, limit = 20 } = query;
+    const {
+      requesterId,
+      status,
+      leaveType,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 20,
+    } = query;
 
     const where: any = {};
 
@@ -493,7 +525,9 @@ export class HRService {
     user: { id: string; role: string },
   ) {
     if (![Role.SUPERVISOR, Role.ADMIN].includes(user.role as Role)) {
-      throw new ForbiddenException("Only supervisors and admins can approve leaves");
+      throw new ForbiddenException(
+        "Only supervisors and admins can approve leaves",
+      );
     }
 
     const leave = await this.prisma.leaveRecord.findUnique({
@@ -541,7 +575,9 @@ export class HRService {
     }
 
     if (leave.requesterId !== userId) {
-      throw new ForbiddenException("You can only cancel your own leave requests");
+      throw new ForbiddenException(
+        "You can only cancel your own leave requests",
+      );
     }
 
     if (leave.status !== LeaveStatus.PENDING) {

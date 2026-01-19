@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { CostType } from "../shared";
@@ -157,7 +154,14 @@ export class FinanceService {
   // ==================== Revenue Entries ====================
 
   async getRevenueEntries(query: QueryRevenueEntryDto) {
-    const { source, doctorId, startDate, endDate, page = 1, limit = 20 } = query;
+    const {
+      source,
+      doctorId,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 20,
+    } = query;
 
     const where: any = {};
     if (source) where.source = source;
@@ -250,9 +254,7 @@ export class FinanceService {
       };
     } else if (year) {
       const start = new Date(year, month ? month - 1 : 0, 1);
-      const end = month
-        ? new Date(year, month, 0)
-        : new Date(year, 11, 31);
+      const end = month ? new Date(year, month, 0) : new Date(year, 11, 31);
       dateFilter = { gte: start, lte: end };
     } else {
       // Default: current month
@@ -262,30 +264,31 @@ export class FinanceService {
       dateFilter = { gte: start, lte: end };
     }
 
-    const [totalCost, totalRevenue, fixedCosts, variableCosts] = await Promise.all([
-      this.prisma.costEntry.aggregate({
-        where: { date: dateFilter },
-        _sum: { amount: true },
-      }),
-      this.prisma.revenueEntry.aggregate({
-        where: { date: dateFilter },
-        _sum: { amount: true },
-      }),
-      this.prisma.costEntry.aggregate({
-        where: {
-          date: dateFilter,
-          category: { type: CostType.FIXED },
-        },
-        _sum: { amount: true },
-      }),
-      this.prisma.costEntry.aggregate({
-        where: {
-          date: dateFilter,
-          category: { type: CostType.VARIABLE },
-        },
-        _sum: { amount: true },
-      }),
-    ]);
+    const [totalCost, totalRevenue, fixedCosts, variableCosts] =
+      await Promise.all([
+        this.prisma.costEntry.aggregate({
+          where: { date: dateFilter },
+          _sum: { amount: true },
+        }),
+        this.prisma.revenueEntry.aggregate({
+          where: { date: dateFilter },
+          _sum: { amount: true },
+        }),
+        this.prisma.costEntry.aggregate({
+          where: {
+            date: dateFilter,
+            category: { type: CostType.FIXED },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.costEntry.aggregate({
+          where: {
+            date: dateFilter,
+            category: { type: CostType.VARIABLE },
+          },
+          _sum: { amount: true },
+        }),
+      ]);
 
     const revenue = totalRevenue._sum?.amount || 0;
     const cost = totalCost._sum?.amount || 0;
@@ -315,9 +318,7 @@ export class FinanceService {
       };
     } else if (year) {
       const start = new Date(year, month ? month - 1 : 0, 1);
-      const end = month
-        ? new Date(year, month, 0)
-        : new Date(year, 11, 31);
+      const end = month ? new Date(year, month, 0) : new Date(year, 11, 31);
       dateFilter = { gte: start, lte: end };
     } else {
       const now = new Date();
@@ -365,9 +366,7 @@ export class FinanceService {
       };
     } else if (year) {
       const start = new Date(year, month ? month - 1 : 0, 1);
-      const end = month
-        ? new Date(year, month, 0)
-        : new Date(year, 11, 31);
+      const end = month ? new Date(year, month, 0) : new Date(year, 11, 31);
       dateFilter = { gte: start, lte: end };
     } else {
       const now = new Date();
@@ -450,30 +449,31 @@ export class FinanceService {
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0);
 
-    const [totalRevenue, totalCost, fixedCosts, variableCosts] = await Promise.all([
-      this.prisma.revenueEntry.aggregate({
-        where: { date: { gte: start, lte: end } },
-        _sum: { amount: true },
-      }),
-      this.prisma.costEntry.aggregate({
-        where: { date: { gte: start, lte: end } },
-        _sum: { amount: true },
-      }),
-      this.prisma.costEntry.aggregate({
-        where: {
-          date: { gte: start, lte: end },
-          category: { type: CostType.FIXED },
-        },
-        _sum: { amount: true },
-      }),
-      this.prisma.costEntry.aggregate({
-        where: {
-          date: { gte: start, lte: end },
-          category: { type: CostType.VARIABLE },
-        },
-        _sum: { amount: true },
-      }),
-    ]);
+    const [totalRevenue, totalCost, fixedCosts, variableCosts] =
+      await Promise.all([
+        this.prisma.revenueEntry.aggregate({
+          where: { date: { gte: start, lte: end } },
+          _sum: { amount: true },
+        }),
+        this.prisma.costEntry.aggregate({
+          where: { date: { gte: start, lte: end } },
+          _sum: { amount: true },
+        }),
+        this.prisma.costEntry.aggregate({
+          where: {
+            date: { gte: start, lte: end },
+            category: { type: CostType.FIXED },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.costEntry.aggregate({
+          where: {
+            date: { gte: start, lte: end },
+            category: { type: CostType.VARIABLE },
+          },
+          _sum: { amount: true },
+        }),
+      ]);
 
     const revenue = totalRevenue._sum?.amount || 0;
     const cost = totalCost._sum?.amount || 0;

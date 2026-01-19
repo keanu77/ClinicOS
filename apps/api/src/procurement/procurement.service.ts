@@ -443,7 +443,9 @@ export class ProcurementService {
       where: { orderId: dto.orderId },
     });
 
-    const allReceived = poItems.every((item) => item.receivedQty >= item.quantity);
+    const allReceived = poItems.every(
+      (item) => item.receivedQty >= item.quantity,
+    );
     const someReceived = poItems.some((item) => item.receivedQty > 0);
 
     await this.prisma.purchaseOrder.update({
@@ -452,8 +454,8 @@ export class ProcurementService {
         status: allReceived
           ? PurchaseOrderStatus.RECEIVED
           : someReceived
-          ? PurchaseOrderStatus.PARTIAL_RECEIVED
-          : order.status,
+            ? PurchaseOrderStatus.PARTIAL_RECEIVED
+            : order.status,
       },
     });
 
@@ -482,17 +484,26 @@ export class ProcurementService {
       }),
       this.prisma.purchaseOrder.count({
         where: {
-          status: { in: [PurchaseOrderStatus.PENDING, PurchaseOrderStatus.SENT] },
+          status: {
+            in: [PurchaseOrderStatus.PENDING, PurchaseOrderStatus.SENT],
+          },
         },
       }),
       this.prisma.purchaseOrder.count({
         where: {
-          status: { in: [PurchaseOrderStatus.CONFIRMED, PurchaseOrderStatus.PARTIAL_RECEIVED] },
+          status: {
+            in: [
+              PurchaseOrderStatus.CONFIRMED,
+              PurchaseOrderStatus.PARTIAL_RECEIVED,
+            ],
+          },
         },
       }),
       this.prisma.purchaseOrder.aggregate({
         where: {
-          status: { in: [PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.COMPLETED] },
+          status: {
+            in: [PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.COMPLETED],
+          },
           createdAt: { gte: thisMonth },
         },
         _sum: { totalAmount: true },

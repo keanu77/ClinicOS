@@ -83,10 +83,7 @@ export class FinanceController {
 
   @Delete("costs/:id")
   @Roles(Role.ADMIN)
-  deleteCostEntry(
-    @Param("id") id: string,
-    @CurrentUser("id") userId: string,
-  ) {
+  deleteCostEntry(@Param("id") id: string, @CurrentUser("id") userId: string) {
     return this.financeService.deleteCostEntry(id, userId);
   }
 
@@ -165,6 +162,10 @@ export class FinanceController {
     @Body() body: { year: number; month: number },
     @CurrentUser("id") userId: string,
   ) {
-    return this.financeService.createMonthlySnapshot(body.year, body.month, userId);
+    return this.financeService.createMonthlySnapshot(
+      body.year,
+      body.month,
+      userId,
+    );
   }
 }

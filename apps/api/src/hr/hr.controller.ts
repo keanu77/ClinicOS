@@ -23,7 +23,11 @@ import {
   AssignSkillDto,
   UpdateEmployeeSkillDto,
 } from "./dto/skill.dto";
-import { CreateLeaveDto, ApproveLeaveDto, QueryLeaveDto } from "./dto/leave.dto";
+import {
+  CreateLeaveDto,
+  ApproveLeaveDto,
+  QueryLeaveDto,
+} from "./dto/leave.dto";
 import { Roles } from "../common/decorators/roles.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
@@ -57,7 +61,10 @@ export class HRController {
     @Body() dto: Omit<CreateEmployeeProfileDto, "userId">,
     @CurrentUser("id") adminId: string,
   ) {
-    return this.hrService.createEmployeeProfile({ ...dto, userId: id }, adminId);
+    return this.hrService.createEmployeeProfile(
+      { ...dto, userId: id },
+      adminId,
+    );
   }
 
   @Patch("employees/:id/profile")
@@ -81,7 +88,9 @@ export class HRController {
   @Get("certifications/expiring")
   @Roles(Role.SUPERVISOR)
   getExpiringCertifications(@Query("days") days?: string) {
-    return this.hrService.getExpiringCertifications(days ? parseInt(days, 10) : 30);
+    return this.hrService.getExpiringCertifications(
+      days ? parseInt(days, 10) : 30,
+    );
   }
 
   @Get("employees/:id/certifications")
@@ -90,7 +99,9 @@ export class HRController {
     @CurrentUser() user: { id: string; role: string },
   ) {
     const isSelf = user.id === id;
-    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(user.role as Role);
+    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(
+      user.role as Role,
+    );
     if (!isSelf && !isSupervisorOrAdmin) {
       return [];
     }
