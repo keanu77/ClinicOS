@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
   Logger,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
@@ -12,10 +13,18 @@ import {
   HandoverStatus,
   HandoverPriority,
   NotificationType,
+  TaskCollaboratorRole,
 } from "../shared";
 import { CreateHandoverDto } from "./dto/create-handover.dto";
 import { UpdateHandoverDto } from "./dto/update-handover.dto";
 import { QueryHandoverDto } from "./dto/query-handover.dto";
+import {
+  SetCategoriesDto,
+  AddCollaboratorDto,
+  CreateChecklistDto,
+  UpdateChecklistDto,
+  CreateSubTaskDto,
+} from "./dto/task-enhanced.dto";
 
 @Injectable()
 export class HandoverService {
@@ -102,6 +111,33 @@ export class HandoverService {
           orderBy: { createdAt: "asc" },
         },
         shift: true,
+        // Enhanced Task Relations
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+        collaborators: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, role: true },
+            },
+          },
+        },
+        checklists: {
+          orderBy: { sortOrder: "asc" },
+        },
+        subTasks: {
+          include: {
+            assignee: {
+              select: { id: true, name: true },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        parent: {
+          select: { id: true, title: true },
+        },
       },
     });
 
@@ -141,6 +177,9 @@ export class HandoverService {
         createdById: userId,
         assigneeId: dto.assigneeId || null,
         shiftId: dto.shiftId || null,
+        // Enhanced Task Fields
+        estimatedHours: dto.estimatedHours || null,
+        parentId: dto.parentId || null,
       },
       include: {
         createdBy: {
@@ -151,6 +190,16 @@ export class HandoverService {
         },
       },
     });
+
+    // Set categories if provided
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      await this.prisma.taskCategoryAssignment.createMany({
+        data: dto.categoryIds.map((categoryId) => ({
+          handoverId: handover.id,
+          categoryId,
+        })),
+      });
+    }
 
     // Send notification if assigned
     if (dto.assigneeId) {
@@ -233,6 +282,23 @@ export class HandoverService {
       if (dto.status === HandoverStatus.COMPLETED) {
         updateData.completedAt = new Date();
       }
+      if (dto.status === HandoverStatus.BLOCKED && dto.blockedReason) {
+        updateData.blockedReason = dto.blockedReason;
+      }
+    }
+
+    // Enhanced Task Fields
+    if (dto.estimatedHours !== undefined) {
+      updateData.estimatedHours = dto.estimatedHours;
+    }
+    if (dto.actualHours !== undefined) {
+      updateData.actualHours = dto.actualHours;
+    }
+    if (dto.blockedReason !== undefined) {
+      updateData.blockedReason = dto.blockedReason;
+    }
+    if (dto.parentId !== undefined) {
+      updateData.parentId = dto.parentId;
     }
 
     return this.prisma.handover.update({
@@ -334,5 +400,254 @@ export class HandoverService {
       orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
       take: 10,
     });
+  }
+
+  // ==================== Task Categories ====================
+
+  async getTaskCategories() {
+    return this.prisma.taskCategory.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async createTaskCategory(name: string, color?: string, description?: string) {
+    return this.prisma.taskCategory.create({
+      data: { name, color: color || "#3B82F6", description },
+    });
+  }
+
+  async setCategories(handoverId: string, dto: SetCategoriesDto) {
+    await this.findOne(handoverId);
+
+    // Delete existing assignments
+    await this.prisma.taskCategoryAssignment.deleteMany({
+      where: { handoverId },
+    });
+
+    // Create new assignments
+    if (dto.categoryIds.length > 0) {
+      await this.prisma.taskCategoryAssignment.createMany({
+        data: dto.categoryIds.map((categoryId) => ({
+          handoverId,
+          categoryId,
+        })),
+      });
+    }
+
+    return this.findOne(handoverId);
+  }
+
+  // ==================== Collaborators ====================
+
+  async addCollaborator(
+    handoverId: string,
+    dto: AddCollaboratorDto,
+    user: { id: string; role: string },
+  ) {
+    const handover = await this.findOne(handoverId);
+
+    // Check permission
+    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(
+      user.role as Role,
+    );
+    if (!isSupervisorOrAdmin && handover.createdById !== user.id) {
+      throw new ForbiddenException("Only supervisors or the creator can add collaborators");
+    }
+
+    // Check if already a collaborator
+    const existing = await this.prisma.taskCollaborator.findUnique({
+      where: {
+        handoverId_userId: {
+          handoverId,
+          userId: dto.userId,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new BadRequestException("User is already a collaborator");
+    }
+
+    const collaborator = await this.prisma.taskCollaborator.create({
+      data: {
+        handoverId,
+        userId: dto.userId,
+        role: dto.role || TaskCollaboratorRole.COLLABORATOR,
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
+    });
+
+    // Notify the collaborator
+    await this.notificationsService.create({
+      userId: dto.userId,
+      type: NotificationType.HANDOVER_ASSIGNED,
+      title: "任務協作邀請",
+      message: `您被加入為任務「${handover.title}」的協作者`,
+      metadata: { handoverId },
+    });
+
+    return collaborator;
+  }
+
+  async removeCollaborator(handoverId: string, userId: string) {
+    await this.prisma.taskCollaborator.delete({
+      where: {
+        handoverId_userId: { handoverId, userId },
+      },
+    });
+    return { success: true };
+  }
+
+  // ==================== Checklists ====================
+
+  async addChecklist(handoverId: string, dto: CreateChecklistDto) {
+    await this.findOne(handoverId);
+
+    // Get max sort order
+    const maxSortOrder = await this.prisma.taskChecklist.aggregate({
+      where: { handoverId },
+      _max: { sortOrder: true },
+    });
+
+    return this.prisma.taskChecklist.create({
+      data: {
+        handoverId,
+        content: dto.content,
+        sortOrder: dto.sortOrder ?? (maxSortOrder._max.sortOrder ?? 0) + 1,
+      },
+    });
+  }
+
+  async updateChecklist(
+    handoverId: string,
+    checklistId: string,
+    dto: UpdateChecklistDto,
+  ) {
+    const checklist = await this.prisma.taskChecklist.findFirst({
+      where: { id: checklistId, handoverId },
+    });
+
+    if (!checklist) {
+      throw new NotFoundException("Checklist item not found");
+    }
+
+    const updateData: any = {};
+    if (dto.content !== undefined) updateData.content = dto.content;
+    if (dto.sortOrder !== undefined) updateData.sortOrder = dto.sortOrder;
+    if (dto.isCompleted !== undefined) {
+      updateData.isCompleted = dto.isCompleted;
+      updateData.completedAt = dto.isCompleted ? new Date() : null;
+    }
+
+    return this.prisma.taskChecklist.update({
+      where: { id: checklistId },
+      data: updateData,
+    });
+  }
+
+  async deleteChecklist(handoverId: string, checklistId: string) {
+    await this.prisma.taskChecklist.delete({
+      where: { id: checklistId },
+    });
+    return { success: true };
+  }
+
+  // ==================== SubTasks ====================
+
+  async createSubTask(
+    parentId: string,
+    dto: CreateSubTaskDto,
+    userId: string,
+  ) {
+    const parent = await this.findOne(parentId);
+
+    const subTask = await this.prisma.handover.create({
+      data: {
+        title: dto.title,
+        content: dto.content,
+        priority: dto.priority || HandoverPriority.MEDIUM,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+        createdById: userId,
+        assigneeId: dto.assigneeId || null,
+        parentId,
+      },
+      include: {
+        createdBy: {
+          select: { id: true, name: true },
+        },
+        assignee: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    // Notify assignee if any
+    if (dto.assigneeId) {
+      await this.notificationsService.create({
+        userId: dto.assigneeId,
+        type: NotificationType.HANDOVER_ASSIGNED,
+        title: "子任務指派",
+        message: `您被指派了任務「${parent.title}」的子任務：${dto.title}`,
+        metadata: { handoverId: subTask.id, parentId },
+      });
+    }
+
+    return subTask;
+  }
+
+  async getSubTasks(parentId: string) {
+    return this.prisma.handover.findMany({
+      where: { parentId },
+      include: {
+        assignee: {
+          select: { id: true, name: true },
+        },
+        _count: {
+          select: { checklists: true },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  // ==================== Task Stats ====================
+
+  async getTaskStats() {
+    const [pending, inProgress, blocked, completed, byCategory] = await Promise.all([
+      this.prisma.handover.count({
+        where: { status: HandoverStatus.PENDING },
+      }),
+      this.prisma.handover.count({
+        where: { status: HandoverStatus.IN_PROGRESS },
+      }),
+      this.prisma.handover.count({
+        where: { status: HandoverStatus.BLOCKED },
+      }),
+      this.prisma.handover.count({
+        where: {
+          status: HandoverStatus.COMPLETED,
+          completedAt: {
+            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+          },
+        },
+      }),
+      this.prisma.taskCategoryAssignment.groupBy({
+        by: ["categoryId"],
+        _count: true,
+      }),
+    ]);
+
+    return {
+      pending,
+      inProgress,
+      blocked,
+      completedThisWeek: completed,
+      byCategory,
+    };
   }
 }

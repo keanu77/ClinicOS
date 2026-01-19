@@ -1,6 +1,9 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, UseGuards } from "@nestjs/common";
 import { DashboardService } from "./dashboard.service";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
+import { Roles } from "../common/decorators/roles.decorator";
+import { RolesGuard } from "../common/guards/roles.guard";
+import { Role } from "../shared";
 
 @Controller("dashboard")
 export class DashboardController {
@@ -14,5 +17,12 @@ export class DashboardController {
   @Get("stats")
   getStats() {
     return this.dashboardService.getStats();
+  }
+
+  @Get("operations")
+  @UseGuards(RolesGuard)
+  @Roles(Role.SUPERVISOR)
+  getOperationsDashboard(@CurrentUser("id") userId: string) {
+    return this.dashboardService.getOperationsDashboard(userId);
   }
 }

@@ -11,6 +11,12 @@ import { SchedulingModule } from "./scheduling/scheduling.module";
 import { DashboardModule } from "./dashboard/dashboard.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { AuditModule } from "./audit/audit.module";
+import { HRModule } from "./hr/hr.module";
+import { AssetModule } from "./asset/asset.module";
+import { ProcurementModule } from "./procurement/procurement.module";
+import { QualityModule } from "./quality/quality.module";
+import { DocumentModule } from "./document/document.module";
+import { FinanceModule } from "./finance/finance.module";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { HealthController } from "./health.controller";
 
@@ -47,6 +53,12 @@ import { HealthController } from "./health.controller";
     DashboardModule,
     NotificationsModule,
     AuditModule,
+    HRModule,
+    AssetModule,
+    ProcurementModule,
+    QualityModule,
+    DocumentModule,
+    FinanceModule,
   ],
   controllers: [HealthController],
   providers: [

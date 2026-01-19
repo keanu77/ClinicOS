@@ -7,6 +7,47 @@ async function main() {
   console.log('🌱 Starting seed...');
 
   // Clear existing data (in reverse order of dependencies)
+  // Finance
+  await prisma.costSnapshot.deleteMany();
+  await prisma.revenueEntry.deleteMany();
+  await prisma.costEntry.deleteMany();
+  await prisma.costCategory.deleteMany();
+  // Documents
+  await prisma.announcementReadConfirmation.deleteMany();
+  await prisma.announcement.deleteMany();
+  await prisma.documentReadConfirmation.deleteMany();
+  await prisma.documentVersion.deleteMany();
+  await prisma.document.deleteMany();
+  await prisma.documentCategory.deleteMany();
+  // Quality
+  await prisma.incidentFollowUp.deleteMany();
+  await prisma.incident.deleteMany();
+  await prisma.incidentType.deleteMany();
+  await prisma.complaint.deleteMany();
+  // Procurement
+  await prisma.goodsReceipt.deleteMany();
+  await prisma.purchaseOrderItem.deleteMany();
+  await prisma.purchaseOrder.deleteMany();
+  await prisma.purchaseRequestItem.deleteMany();
+  await prisma.purchaseRequest.deleteMany();
+  await prisma.vendor.deleteMany();
+  // Assets
+  await prisma.assetUsageRecord.deleteMany();
+  await prisma.faultReport.deleteMany();
+  await prisma.maintenanceRecord.deleteMany();
+  await prisma.maintenanceSchedule.deleteMany();
+  await prisma.asset.deleteMany();
+  // HR
+  await prisma.leaveRecord.deleteMany();
+  await prisma.employeeSkill.deleteMany();
+  await prisma.skillDefinition.deleteMany();
+  await prisma.certification.deleteMany();
+  await prisma.employeeProfile.deleteMany();
+  // Tasks
+  await prisma.taskChecklist.deleteMany();
+  await prisma.taskCollaborator.deleteMany();
+  await prisma.taskCategory.deleteMany();
+  // Core
   await prisma.notification.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.inventoryTxn.deleteMany();
@@ -58,6 +99,384 @@ async function main() {
   });
 
   console.log('👥 Created users');
+
+  // Create employee profiles
+  await Promise.all([
+    prisma.employeeProfile.create({
+      data: {
+        userId: staff1.id,
+        employeeNo: 'EMP-001',
+        department: '護理部',
+        position: '護理師',
+        hireDate: new Date('2023-01-15'),
+        phone: '0912-345-678',
+        emergencyContact: '李媽媽 0923-456-789',
+      },
+    }),
+    prisma.employeeProfile.create({
+      data: {
+        userId: staff2.id,
+        employeeNo: 'EMP-002',
+        department: '護理部',
+        position: '護理師',
+        hireDate: new Date('2023-06-01'),
+        phone: '0922-333-444',
+        emergencyContact: '陳爸爸 0933-222-111',
+      },
+    }),
+    prisma.employeeProfile.create({
+      data: {
+        userId: supervisor.id,
+        employeeNo: 'EMP-003',
+        department: '護理部',
+        position: '護理長',
+        hireDate: new Date('2020-03-01'),
+        phone: '0933-111-222',
+      },
+    }),
+  ]);
+
+  console.log('👤 Created employee profiles');
+
+  // Create skill definitions
+  const skills = await Promise.all([
+    prisma.skillDefinition.create({
+      data: {
+        name: '靜脈注射',
+        description: '具備靜脈穿刺與輸液技術',
+        category: '臨床技能',
+      },
+    }),
+    prisma.skillDefinition.create({
+      data: {
+        name: '傷口護理',
+        description: '傷口清潔、換藥與評估',
+        category: '臨床技能',
+      },
+    }),
+    prisma.skillDefinition.create({
+      data: {
+        name: '心電圖判讀',
+        description: '基本心電圖判讀能力',
+        category: '診斷技能',
+      },
+    }),
+    prisma.skillDefinition.create({
+      data: {
+        name: 'BLS 急救',
+        description: '基本生命救援術',
+        category: '急救技能',
+      },
+    }),
+  ]);
+
+  // Assign skills to employees
+  await Promise.all([
+    prisma.employeeSkill.create({
+      data: {
+        userId: staff1.id,
+        skillId: skills[0].id,
+        level: 'ADVANCED',
+        certifiedAt: new Date('2023-06-01'),
+      },
+    }),
+    prisma.employeeSkill.create({
+      data: {
+        userId: staff1.id,
+        skillId: skills[1].id,
+        level: 'INTERMEDIATE',
+        certifiedAt: new Date('2023-06-01'),
+      },
+    }),
+    prisma.employeeSkill.create({
+      data: {
+        userId: staff2.id,
+        skillId: skills[0].id,
+        level: 'INTERMEDIATE',
+        certifiedAt: new Date('2023-08-01'),
+      },
+    }),
+    prisma.employeeSkill.create({
+      data: {
+        userId: staff2.id,
+        skillId: skills[3].id,
+        level: 'CERTIFIED',
+        certifiedAt: new Date('2023-07-01'),
+      },
+    }),
+  ]);
+
+  console.log('🎯 Created skills');
+
+  // Create certifications
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  const inThreeMonths = new Date();
+  inThreeMonths.setMonth(inThreeMonths.getMonth() + 3);
+
+  await Promise.all([
+    prisma.certification.create({
+      data: {
+        userId: staff1.id,
+        name: '護理師執照',
+        issuingOrg: '衛生福利部',
+        certNo: 'RN-2023-001234',
+        issueDate: new Date('2023-01-01'),
+        expiryDate: nextYear,
+        status: 'VALID',
+      },
+    }),
+    prisma.certification.create({
+      data: {
+        userId: staff2.id,
+        name: '護理師執照',
+        issuingOrg: '衛生福利部',
+        certNo: 'RN-2023-002345',
+        issueDate: new Date('2023-06-01'),
+        expiryDate: nextYear,
+        status: 'VALID',
+      },
+    }),
+    prisma.certification.create({
+      data: {
+        userId: staff1.id,
+        name: 'BLS 證照',
+        issuingOrg: '急救教育推廣中心',
+        certNo: 'BLS-2024-0001',
+        issueDate: new Date('2024-01-15'),
+        expiryDate: inThreeMonths,
+        status: 'EXPIRING_SOON',
+      },
+    }),
+  ]);
+
+  console.log('📜 Created certifications');
+
+  // Create task categories
+  const taskCategories = await Promise.all([
+    prisma.taskCategory.create({
+      data: { name: '行政', color: '#3B82F6', icon: 'FileText' },
+    }),
+    prisma.taskCategory.create({
+      data: { name: '人資', color: '#8B5CF6', icon: 'Users' },
+    }),
+    prisma.taskCategory.create({
+      data: { name: '設備', color: '#F59E0B', icon: 'Wrench' },
+    }),
+    prisma.taskCategory.create({
+      data: { name: '醫療品質', color: '#EF4444', icon: 'Shield' },
+    }),
+  ]);
+
+  console.log('🏷️ Created task categories');
+
+  // Create assets
+  const assets = await Promise.all([
+    prisma.asset.create({
+      data: {
+        assetNo: 'EQ-001',
+        name: '血壓計',
+        category: '醫療設備',
+        model: 'Omron HEM-7600T',
+        serialNo: 'SN-2023-001',
+        location: '1 號診間',
+        status: 'IN_USE',
+        condition: 'GOOD',
+        purchaseDate: new Date('2023-01-15'),
+        purchaseCost: 3500,
+        warrantyEnd: new Date('2026-01-15'),
+      },
+    }),
+    prisma.asset.create({
+      data: {
+        assetNo: 'EQ-002',
+        name: '血壓計',
+        category: '醫療設備',
+        model: 'Omron HEM-7600T',
+        serialNo: 'SN-2023-002',
+        location: '2 號診間',
+        status: 'IN_USE',
+        condition: 'GOOD',
+        purchaseDate: new Date('2023-01-15'),
+        purchaseCost: 3500,
+        warrantyEnd: new Date('2026-01-15'),
+      },
+    }),
+    prisma.asset.create({
+      data: {
+        assetNo: 'EQ-003',
+        name: '血壓計',
+        category: '醫療設備',
+        model: 'Omron HEM-7600T',
+        serialNo: 'SN-2023-003',
+        location: '3 號診間',
+        status: 'MAINTENANCE',
+        condition: 'FAIR',
+        purchaseDate: new Date('2023-01-15'),
+        purchaseCost: 3500,
+        warrantyEnd: new Date('2026-01-15'),
+      },
+    }),
+    prisma.asset.create({
+      data: {
+        assetNo: 'EQ-004',
+        name: '超音波機',
+        category: '醫療設備',
+        model: 'GE LOGIQ E10',
+        serialNo: 'SN-2022-100',
+        location: '超音波室',
+        status: 'IN_USE',
+        condition: 'EXCELLENT',
+        purchaseDate: new Date('2022-06-01'),
+        purchaseCost: 1500000,
+        warrantyEnd: new Date('2025-06-01'),
+      },
+    }),
+  ]);
+
+  // Create maintenance schedules
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+  await Promise.all([
+    prisma.maintenanceSchedule.create({
+      data: {
+        assetId: assets[3].id,
+        name: '超音波機定期保養',
+        frequency: 'MONTHLY',
+        frequencyDays: 30,
+        description: '超音波機定期保養與校正',
+        nextDueAt: nextMonth,
+      },
+    }),
+  ]);
+
+  console.log('🔧 Created assets and maintenance schedules');
+
+  // Create vendors
+  const vendors = await Promise.all([
+    prisma.vendor.create({
+      data: {
+        name: '醫療器材供應商',
+        code: 'V001',
+        contactName: '張經理',
+        phone: '02-2345-6789',
+        email: 'zhang@medical-supply.com',
+        address: '台北市中山區醫療街 100 號',
+      },
+    }),
+    prisma.vendor.create({
+      data: {
+        name: '耗材批發商',
+        code: 'V002',
+        contactName: '林小姐',
+        phone: '02-8765-4321',
+        email: 'lin@consumables.com',
+        address: '新北市板橋區物流路 50 號',
+      },
+    }),
+  ]);
+
+  console.log('🏪 Created vendors');
+
+  // Create incident types
+  const incidentTypes = await Promise.all([
+    prisma.incidentType.create({
+      data: {
+        name: '用藥錯誤',
+        description: '給藥劑量、時間或對象錯誤',
+        category: '醫療安全',
+        severity: 'HIGH',
+      },
+    }),
+    prisma.incidentType.create({
+      data: {
+        name: '跌倒',
+        description: '病患或訪客跌倒事件',
+        category: '環境安全',
+        severity: 'MEDIUM',
+      },
+    }),
+    prisma.incidentType.create({
+      data: {
+        name: '針扎',
+        description: '醫護人員遭針頭刺傷',
+        category: '職業安全',
+        severity: 'HIGH',
+      },
+    }),
+    prisma.incidentType.create({
+      data: {
+        name: '設備故障',
+        description: '醫療設備故障影響作業',
+        category: '設備安全',
+        severity: 'LOW',
+      },
+    }),
+  ]);
+
+  console.log('⚠️ Created incident types');
+
+  // Create document categories
+  const docCategories = await Promise.all([
+    prisma.documentCategory.create({
+      data: {
+        name: '標準作業程序 (SOP)',
+        description: '各項作業標準流程',
+        sortOrder: 1,
+      },
+    }),
+    prisma.documentCategory.create({
+      data: {
+        name: '政策規章',
+        description: '診所政策與規章制度',
+        sortOrder: 2,
+      },
+    }),
+    prisma.documentCategory.create({
+      data: {
+        name: '教育訓練',
+        description: '員工教育訓練資料',
+        sortOrder: 3,
+      },
+    }),
+  ]);
+
+  console.log('📚 Created document categories');
+
+  // Create cost categories
+  const costCategories = await Promise.all([
+    prisma.costCategory.create({
+      data: {
+        name: '人事成本',
+        description: '薪資、獎金、保險',
+        type: 'FIXED',
+      },
+    }),
+    prisma.costCategory.create({
+      data: {
+        name: '房租水電',
+        description: '場地租金與水電瓦斯',
+        type: 'FIXED',
+      },
+    }),
+    prisma.costCategory.create({
+      data: {
+        name: '醫療耗材',
+        description: '診療用耗材',
+        type: 'VARIABLE',
+      },
+    }),
+    prisma.costCategory.create({
+      data: {
+        name: '設備維護',
+        description: '設備保養與維修',
+        type: 'VARIABLE',
+      },
+    }),
+  ]);
+
+  console.log('💰 Created cost categories');
 
   // Create inventory items
   const items = await Promise.all([

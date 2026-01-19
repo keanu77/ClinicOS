@@ -4,6 +4,8 @@ import {
   IsOptional,
   IsDateString,
   MinLength,
+  IsNumber,
+  IsArray,
 } from "class-validator";
 import { HandoverPriority } from "../../shared";
 
@@ -31,4 +33,18 @@ export class CreateHandoverDto {
   @IsOptional()
   @IsString()
   shiftId?: string;
+
+  // Enhanced Task Fields
+  @IsOptional()
+  @IsNumber()
+  estimatedHours?: number;
+
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  categoryIds?: string[];
 }

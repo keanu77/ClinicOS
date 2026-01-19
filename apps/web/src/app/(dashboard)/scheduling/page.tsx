@@ -5,13 +5,20 @@ import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react';
 import {
   ShiftType,
   ShiftTypeLabels,
   ShiftTypeColors,
 } from '@/shared';
+
+interface User {
+  id: string;
+  name: string;
+}
 
 interface Shift {
   id: string;
@@ -36,6 +43,14 @@ export default function SchedulingPage() {
   const { toast } = useToast();
   const [schedule, setSchedule] = useState<WeeklySchedule | null>(null);
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [shiftForm, setShiftForm] = useState({
+    userId: '',
+    date: '',
+    type: 'MORNING' as string,
+    notes: '',
+  });
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -58,9 +73,35 @@ export default function SchedulingPage() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const result = await apiGet<User[]>('/users');
+      setUsers(result || []);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    }
+  };
+
   useEffect(() => {
     fetchSchedule();
+    fetchUsers();
   }, [currentWeekStart]);
+
+  const handleAddShift = async () => {
+    if (!shiftForm.userId || !shiftForm.date || !shiftForm.type) {
+      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+      return;
+    }
+    try {
+      await apiPost('/scheduling/shifts', shiftForm);
+      toast({ title: '班次新增成功' });
+      setShowAddModal(false);
+      setShiftForm({ userId: '', date: '', type: 'MORNING', notes: '' });
+      fetchSchedule();
+    } catch (error) {
+      toast({ title: '新增失敗', variant: 'destructive' });
+    }
+  };
 
   const goToPreviousWeek = () => {
     const newDate = new Date(currentWeekStart);
@@ -129,7 +170,76 @@ export default function SchedulingPage() {
           <h1 className="text-2xl font-bold text-gray-900">排班系統</h1>
           <p className="text-muted-foreground">管理人員班表</p>
         </div>
+        <Button onClick={() => setShowAddModal(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          新增班次
+        </Button>
       </div>
+
+      {/* Add Shift Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>新增班次</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setShowAddModal(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>選擇人員 *</Label>
+                <select
+                  className="w-full mt-1 p-2 border rounded-md"
+                  value={shiftForm.userId}
+                  onChange={(e) => setShiftForm({ ...shiftForm, userId: e.target.value })}
+                >
+                  <option value="">請選擇人員</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label>日期 *</Label>
+                <Input
+                  type="date"
+                  value={shiftForm.date}
+                  onChange={(e) => setShiftForm({ ...shiftForm, date: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>班別 *</Label>
+                <select
+                  className="w-full mt-1 p-2 border rounded-md"
+                  value={shiftForm.type}
+                  onChange={(e) => setShiftForm({ ...shiftForm, type: e.target.value })}
+                >
+                  {Object.values(ShiftType).map((type) => (
+                    <option key={type} value={type}>{ShiftTypeLabels[type]}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label>備註</Label>
+                <Input
+                  value={shiftForm.notes}
+                  onChange={(e) => setShiftForm({ ...shiftForm, notes: e.target.value })}
+                  placeholder="選填"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
+                  取消
+                </Button>
+                <Button className="flex-1" onClick={handleAddShift}>
+                  新增
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Week Navigation */}
       <Card>

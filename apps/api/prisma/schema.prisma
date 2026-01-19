@@ -30,6 +30,45 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
 
+  // HR Lite Relations
+  employeeProfile   EmployeeProfile?
+  certifications    Certification[]
+  employeeSkills    EmployeeSkill[]
+  leaveRequests     LeaveRecord[]     @relation("LeaveRequester")
+  leaveApprovals    LeaveRecord[]     @relation("LeaveApprover")
+  coveringFor       LeaveRecord[]     @relation("LeaveCoverage")
+
+  // Task Relations
+  taskCollaborations TaskCollaborator[]
+
+  // Asset Relations
+  faultReports      FaultReport[]     @relation("FaultReporter")
+  faultResolutions  FaultReport[]     @relation("FaultResolver")
+  maintenanceRecords MaintenanceRecord[] @relation("MaintenancePerformer")
+  assetUsageRecords AssetUsageRecord[]
+
+  // Procurement Relations
+  purchaseRequests  PurchaseRequest[] @relation("PRRequester")
+  purchaseApprovals PurchaseRequest[] @relation("PRApprover")
+  purchaseOrders    PurchaseOrder[]
+  goodsReceipts     GoodsReceipt[]
+
+  // Quality Relations
+  incidentReports   Incident[]        @relation("IncidentReporter")
+  incidentHandlers  Incident[]        @relation("IncidentHandler")
+  incidentFollowUps IncidentFollowUp[]
+  complaints        Complaint[]       @relation("ComplaintHandler")
+
+  // Document Relations
+  createdDocuments  Document[]        @relation("DocumentCreator")
+  documentReads     DocumentReadConfirmation[]
+  announcements     Announcement[]    @relation("AnnouncementCreator")
+  announcementReads AnnouncementReadConfirmation[]
+
+  // Finance Relations
+  costEntries       CostEntry[]
+  revenueEntries    RevenueEntry[]
+
   @@index([email])
   @@index([role, isActive])
 }
@@ -38,7 +77,7 @@ model Handover {
   id          String    @id @default(cuid())
   title       String
   content     String
-  status      String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+  status      String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED, BLOCKED
   priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   dueDate     DateTime?
 
@@ -55,7 +94,23 @@ model Handover {
   updatedAt   DateTime  @updatedAt
   completedAt DateTime?
 
-  comments    HandoverComment[]
+  // Enhanced Task Fields
+  estimatedHours Float?
+  actualHours    Float?
+  blockedReason  String?
+  parentId       String?
+  parent         Handover?  @relation("SubTasks", fields: [parentId], references: [id], onDelete: SetNull)
+  subTasks       Handover[] @relation("SubTasks")
+
+  // Relations
+  comments       HandoverComment[]
+  categories     TaskCategoryAssignment[]
+  collaborators  TaskCollaborator[]
+  checklists     TaskChecklist[]
+
+  // Quality Integration
+  relatedIncident   Incident? @relation(fields: [relatedIncidentId], references: [id], onDelete: SetNull)
+  relatedIncidentId String?
 
   @@index([createdById, status])
   @@index([assigneeId, status])
@@ -64,6 +119,8 @@ model Handover {
   @@index([dueDate, status])
   @@index([completedAt])
   @@index([assigneeId, status, dueDate])
+  @@index([parentId])
+  @@index([relatedIncidentId])
 }
 
 model HandoverComment {
@@ -115,15 +172,24 @@ model InventoryItem {
   expiryDate   DateTime?
   isActive     Boolean   @default(true)
 
+  // Procurement Integration
+  vendorId     String?
+  vendor       Vendor?   @relation("VendorItems", fields: [vendorId], references: [id], onDelete: SetNull)
+  unitPrice    Float?    // 單價
+  leadTimeDays Int?      // 前置時間(天)
+
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   transactions InventoryTxn[]
+  purchaseRequestItems PurchaseRequestItem[]
+  purchaseOrderItems   PurchaseOrderItem[]
 
   @@index([sku])
   @@index([name])
   @@index([quantity, minStock])
   @@index([isActive, quantity, minStock])
+  @@index([vendorId])
 }
 
 model InventoryTxn {
@@ -180,4 +246,825 @@ model Notification {
 
   @@index([userId, isRead, createdAt])
   @@index([type, createdAt])
+}
+
+// ============================================
+// HR LITE MODELS
+// ============================================
+
+model EmployeeProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  department   String?  // 部門
+  position     String?  // 職稱
+  employeeNo   String?  @unique // 員工編號
+  hireDate     DateTime? // 到職日
+  phone        String?
+  emergencyContact String?
+  emergencyPhone   String?
+  address      String?
+  notes        String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([department])
+  @@index([employeeNo])
+}
+
+model Certification {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String   // 證照名稱
+  issuingOrg   String?  // 發證單位
+  certNo       String?  // 證照號碼
+  issueDate    DateTime? // 發證日期
+  expiryDate   DateTime? // 到期日
+  status       String   @default("VALID") // VALID, EXPIRING_SOON, EXPIRED
+  notes        String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([expiryDate])
+  @@index([status])
+}
+
+model SkillDefinition {
+  id          String   @id @default(cuid())
+  name        String   @unique // 技能名稱 (靜脈注射、超音波等)
+  description String?
+  category    String?  // 技能類別
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employeeSkills EmployeeSkill[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model EmployeeSkill {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  skillId     String
+  skill       SkillDefinition @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  level       String   @default("BASIC") // BASIC, INTERMEDIATE, ADVANCED
+  certifiedAt DateTime?
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, skillId])
+  @@index([userId])
+  @@index([skillId])
+  @@index([level])
+}
+
+model LeaveRecord {
+  id          String   @id @default(cuid())
+  requesterId String
+  requester   User     @relation("LeaveRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  leaveType   String   // ANNUAL, SICK, PERSONAL, MATERNITY, etc.
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
+
+  approverId  String?
+  approver    User?    @relation("LeaveApprover", fields: [approverId], references: [id], onDelete: SetNull)
+  approvedAt  DateTime?
+  rejectReason String?
+
+  coverUserId String?
+  coverUser   User?    @relation("LeaveCoverage", fields: [coverUserId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([requesterId, status])
+  @@index([startDate, endDate])
+  @@index([status])
+  @@index([approverId])
+  @@index([coverUserId])
+}
+
+// ============================================
+// ENHANCED TASK MODELS
+// ============================================
+
+model TaskCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique // 行政、人資、設備、財務、行銷、醫療品質
+  color       String   @default("#3B82F6")
+  icon        String?
+  description String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignments TaskCategoryAssignment[]
+
+  @@index([isActive])
+}
+
+model TaskCategoryAssignment {
+  id          String   @id @default(cuid())
+  handoverId  String
+  handover    Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
+
+  categoryId  String
+  category    TaskCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([handoverId, categoryId])
+  @@index([handoverId])
+  @@index([categoryId])
+}
+
+model TaskCollaborator {
+  id          String   @id @default(cuid())
+  handoverId  String
+  handover    Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role        String   @default("COLLABORATOR") // COLLABORATOR, REVIEWER, OBSERVER
+
+  createdAt   DateTime @default(now())
+
+  @@unique([handoverId, userId])
+  @@index([handoverId])
+  @@index([userId])
+}
+
+model TaskChecklist {
+  id          String   @id @default(cuid())
+  handoverId  String
+  handover    Handover @relation(fields: [handoverId], references: [id], onDelete: Cascade)
+
+  content     String
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  sortOrder   Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([handoverId, sortOrder])
+  @@index([handoverId, isCompleted])
+}
+
+// ============================================
+// FACILITY & ASSET MODELS
+// ============================================
+
+model Asset {
+  id            String   @id @default(cuid())
+  name          String
+  assetNo       String   @unique // 資產編號
+  category      String   // 醫療設備、辦公設備、IT設備等
+  model         String?  // 型號
+  brand         String?  // 品牌
+  serialNo      String?  // 序號
+  location      String?  // 位置
+  department    String?  // 所屬部門
+
+  purchaseDate  DateTime? // 購置日
+  purchaseCost  Float?    // 購置成本
+  warrantyStart DateTime? // 保固開始
+  warrantyEnd   DateTime? // 保固結束
+  expectedLife  Int?      // 預期使用年限(月)
+
+  status        String   @default("IN_USE") // IN_USE, MAINTENANCE, RETIRED, DISPOSED
+  condition     String   @default("GOOD") // EXCELLENT, GOOD, FAIR, POOR
+
+  notes         String?
+  isActive      Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  maintenanceSchedules MaintenanceSchedule[]
+  maintenanceRecords   MaintenanceRecord[]
+  faultReports         FaultReport[]
+  usageRecords         AssetUsageRecord[]
+
+  @@index([assetNo])
+  @@index([category])
+  @@index([status])
+  @@index([warrantyEnd])
+  @@index([location])
+  @@index([department])
+}
+
+model MaintenanceSchedule {
+  id            String   @id @default(cuid())
+  assetId       String
+  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  name          String   // 保養項目名稱
+  description   String?
+  frequency     String   // DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+  frequencyDays Int      // 頻率天數
+  lastDoneAt    DateTime?
+  nextDueAt     DateTime?
+  isActive      Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  records       MaintenanceRecord[]
+
+  @@index([assetId])
+  @@index([nextDueAt])
+  @@index([isActive])
+}
+
+model MaintenanceRecord {
+  id          String   @id @default(cuid())
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  scheduleId  String?
+  schedule    MaintenanceSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+
+  type        String   // SCHEDULED, UNSCHEDULED, REPAIR
+  description String?
+  cost        Float?
+  performedAt DateTime @default(now())
+
+  performedById String
+  performedBy   User   @relation("MaintenancePerformer", fields: [performedById], references: [id], onDelete: Restrict)
+
+  notes       String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([assetId, performedAt])
+  @@index([scheduleId])
+  @@index([performedById])
+  @@index([type])
+}
+
+model FaultReport {
+  id          String   @id @default(cuid())
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  reporterId  String
+  reporter    User     @relation("FaultReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+
+  title       String
+  description String
+  severity    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  status      String   @default("REPORTED") // REPORTED, INVESTIGATING, IN_REPAIR, RESOLVED, CLOSED
+
+  resolverId  String?
+  resolver    User?    @relation("FaultResolver", fields: [resolverId], references: [id], onDelete: SetNull)
+  resolvedAt  DateTime?
+  resolution  String?  // 解決方式說明
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([assetId, status])
+  @@index([reporterId])
+  @@index([resolverId])
+  @@index([status])
+  @@index([severity])
+}
+
+model AssetUsageRecord {
+  id          String   @id @default(cuid())
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?     // 使用時間(分鐘)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([assetId, startTime])
+  @@index([userId])
+}
+
+// ============================================
+// PROCUREMENT MODELS
+// ============================================
+
+model Vendor {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique // 供應商代碼
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  taxId       String?  // 統編
+  bankAccount String?
+  paymentTerms String? // 付款條件
+  rating      Int?     // 評分 1-5
+  notes       String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+  inventoryItems InventoryItem[] @relation("VendorItems")
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model PurchaseRequest {
+  id          String   @id @default(cuid())
+  requestNo   String   @unique // 申請單號
+  title       String
+  description String?
+
+  requesterId String
+  requester   User     @relation("PRRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+
+  status      String   @default("DRAFT") // DRAFT, PENDING, APPROVED, REJECTED, ORDERED, COMPLETED, CANCELLED
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  totalAmount Float?
+
+  approverId  String?
+  approver    User?    @relation("PRApprover", fields: [approverId], references: [id], onDelete: SetNull)
+  approvedAt  DateTime?
+  rejectReason String?
+
+  notes       String?
+  dueDate     DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       PurchaseRequestItem[]
+  orders      PurchaseOrder[]
+
+  @@index([requestNo])
+  @@index([requesterId, status])
+  @@index([status])
+  @@index([approverId])
+  @@index([dueDate])
+}
+
+model PurchaseRequestItem {
+  id            String   @id @default(cuid())
+  requestId     String
+  request       PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+
+  description   String   // 品項描述
+  quantity      Int
+  unit          String   @default("個")
+  estimatedPrice Float?
+  notes         String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([requestId])
+  @@index([inventoryItemId])
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  orderNo     String   @unique // 訂單號
+  requestId   String?
+  request     PurchaseRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  status      String   @default("PENDING") // PENDING, SENT, CONFIRMED, PARTIAL_RECEIVED, RECEIVED, COMPLETED, CANCELLED
+  totalAmount Float?
+  tax         Float?
+  shippingCost Float?
+
+  orderDate   DateTime @default(now())
+  expectedDelivery DateTime?
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       PurchaseOrderItem[]
+  receipts    GoodsReceipt[]
+
+  @@index([orderNo])
+  @@index([vendorId])
+  @@index([requestId])
+  @@index([status])
+  @@index([createdById])
+}
+
+model PurchaseOrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+
+  description String
+  quantity    Int
+  unit        String   @default("個")
+  unitPrice   Float
+  totalPrice  Float
+  receivedQty Int      @default(0)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+
+  receiptItems GoodsReceiptItem[]
+
+  @@index([orderId])
+  @@index([inventoryItemId])
+}
+
+model GoodsReceipt {
+  id          String   @id @default(cuid())
+  receiptNo   String   @unique
+  orderId     String
+  order       PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  receivedById String
+  receivedBy   User    @relation(fields: [receivedById], references: [id], onDelete: Restrict)
+
+  receivedAt  DateTime @default(now())
+  notes       String?
+
+  createdAt   DateTime @default(now())
+
+  items       GoodsReceiptItem[]
+
+  @@index([receiptNo])
+  @@index([orderId])
+  @@index([receivedById])
+}
+
+model GoodsReceiptItem {
+  id            String   @id @default(cuid())
+  receiptId     String
+  receipt       GoodsReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  orderItemId   String
+  orderItem     PurchaseOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  receivedQty   Int
+  acceptedQty   Int      // 驗收合格數量
+  rejectedQty   Int      @default(0)
+  rejectReason  String?
+  notes         String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([receiptId])
+  @@index([orderItemId])
+}
+
+// ============================================
+// QUALITY & RISK MODELS
+// ============================================
+
+model IncidentType {
+  id          String   @id @default(cuid())
+  name        String   @unique // 用藥錯誤、跌倒、針扎等
+  category    String?  // 醫療事故、職安事故、設備故障
+  description String?
+  severity    String   @default("MEDIUM") // 預設嚴重度
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  incidents   Incident[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model Incident {
+  id          String   @id @default(cuid())
+  incidentNo  String   @unique // 事件編號
+  typeId      String
+  type        IncidentType @relation(fields: [typeId], references: [id], onDelete: Restrict)
+
+  title       String
+  description String
+  occurredAt  DateTime // 發生時間
+  location    String?  // 發生地點
+  severity    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  isNearMiss  Boolean  @default(false) // 是否為 Near-miss
+
+  reporterId  String
+  reporter    User     @relation("IncidentReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+
+  status      String   @default("REPORTED") // REPORTED, INVESTIGATING, ACTION_REQUIRED, CLOSED
+
+  handlerId   String?
+  handler     User?    @relation("IncidentHandler", fields: [handlerId], references: [id], onDelete: SetNull)
+
+  rootCause   String?  // 根本原因
+  correctiveAction String? // 矯正措施
+  preventiveAction String? // 預防措施
+  closedAt    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  followUps   IncidentFollowUp[]
+  relatedTasks Handover[]
+
+  @@index([incidentNo])
+  @@index([typeId])
+  @@index([reporterId])
+  @@index([handlerId])
+  @@index([status])
+  @@index([severity])
+  @@index([occurredAt])
+}
+
+model IncidentFollowUp {
+  id          String   @id @default(cuid())
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  content     String
+  actionTaken String?  // 採取的行動
+
+  createdAt   DateTime @default(now())
+
+  @@index([incidentId, createdAt])
+  @@index([authorId])
+}
+
+model Complaint {
+  id          String   @id @default(cuid())
+  complaintNo String   @unique
+  title       String
+  description String
+  source      String   // PATIENT, FAMILY, INTERNAL, EXTERNAL
+  severity    String   @default("MEDIUM")
+  status      String   @default("RECEIVED") // RECEIVED, INVESTIGATING, RESOLVED, CLOSED
+
+  handlerId   String?
+  handler     User?    @relation("ComplaintHandler", fields: [handlerId], references: [id], onDelete: SetNull)
+
+  resolution  String?
+  closedAt    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([complaintNo])
+  @@index([status])
+  @@index([handlerId])
+  @@index([source])
+}
+
+// ============================================
+// SOP & DOCUMENTS MODELS
+// ============================================
+
+model DocumentCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  parentId    String?
+  parent      DocumentCategory?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: SetNull)
+  children    DocumentCategory[] @relation("SubCategories")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documents   Document[]
+
+  @@index([parentId])
+  @@index([isActive])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  docNo       String   @unique // 文件編號
+  title       String
+  content     String   // 文件內容 (可以是 HTML/Markdown)
+  categoryId  String?
+  category    DocumentCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdById String
+  createdBy   User     @relation("DocumentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  status      String   @default("DRAFT") // DRAFT, REVIEW, PUBLISHED, ARCHIVED
+  version     Int      @default(1)
+  publishedAt DateTime?
+  effectiveDate DateTime?
+  reviewDate  DateTime? // 下次審閱日
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions    DocumentVersion[]
+  readConfirmations DocumentReadConfirmation[]
+
+  @@index([docNo])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdById])
+  @@index([effectiveDate])
+  @@index([reviewDate])
+}
+
+model DocumentVersion {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  version     Int
+  title       String
+  content     String
+  changeNotes String?  // 變更說明
+  publishedAt DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@unique([documentId, version])
+  @@index([documentId])
+}
+
+model DocumentReadConfirmation {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  version     Int      // 閱讀的版本
+  readAt      DateTime @default(now())
+
+  @@unique([documentId, userId, version])
+  @@index([documentId])
+  @@index([userId])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  priority    String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  isPinned    Boolean  @default(false)
+
+  createdById String
+  createdBy   User     @relation("AnnouncementCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  publishAt   DateTime @default(now())
+  expireAt    DateTime?
+  targetRoles String?  // JSON array of roles, null = all
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  readConfirmations AnnouncementReadConfirmation[]
+
+  @@index([publishAt])
+  @@index([expireAt])
+  @@index([isActive])
+  @@index([isPinned])
+}
+
+model AnnouncementReadConfirmation {
+  id             String   @id @default(cuid())
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  readAt         DateTime @default(now())
+
+  @@unique([announcementId, userId])
+  @@index([announcementId])
+  @@index([userId])
+}
+
+// ============================================
+// COST & FINANCE MODELS
+// ============================================
+
+model CostCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        String   // FIXED, VARIABLE
+  description String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  entries     CostEntry[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model CostEntry {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    CostCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  description String
+  amount      Float
+  date        DateTime
+  reference   String?  // 參考單號
+  notes       String?
+
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([date])
+  @@index([createdById])
+}
+
+model RevenueEntry {
+  id          String   @id @default(cuid())
+  source      String   // 收入來源 (診療收入、健檢收入等)
+  description String
+  amount      Float
+  date        DateTime
+  reference   String?
+  doctorId    String?  // 關聯醫師 (如果適用)
+  notes       String?
+
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([source])
+  @@index([date])
+  @@index([doctorId])
+  @@index([createdById])
+}
+
+model CostSnapshot {
+  id          String   @id @default(cuid())
+  year        Int
+  month       Int
+
+  totalRevenue Float
+  totalCost    Float
+  fixedCost    Float
+  variableCost Float
+  grossMargin  Float
+  marginRate   Float    // 毛利率
+
+  breakdown   String?  // JSON: 各類別金額明細
+
+  createdAt   DateTime @default(now())
+
+  @@unique([year, month])
+  @@index([year, month])
 }

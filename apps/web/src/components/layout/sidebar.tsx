@@ -12,6 +12,12 @@ import {
   Users,
   FileText,
   Settings,
+  UserCog,
+  Wrench,
+  ShoppingCart,
+  Shield,
+  BookOpen,
+  TrendingUp,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,9 +29,15 @@ interface SidebarProps {
 
 const navigation = [
   { name: '儀表板', href: '/dashboard', icon: LayoutDashboard, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
-  { name: '交班系統', href: '/handover', icon: ClipboardList, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
+  { name: '任務系統', href: '/handover', icon: ClipboardList, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
   { name: '庫存管理', href: '/inventory', icon: Package, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
   { name: '排班系統', href: '/scheduling', icon: Calendar, roles: ['SUPERVISOR', 'ADMIN'] },
+  { name: '人員管理', href: '/hr', icon: UserCog, roles: ['SUPERVISOR', 'ADMIN'] },
+  { name: '設備管理', href: '/assets', icon: Wrench, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
+  { name: '採購管理', href: '/procurement', icon: ShoppingCart, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
+  { name: '醫療品質', href: '/quality', icon: Shield, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
+  { name: '文件制度', href: '/documents', icon: BookOpen, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
+  { name: '成本分析', href: '/finance', icon: TrendingUp, roles: ['SUPERVISOR', 'ADMIN'] },
   { name: '通知中心', href: '/notifications', icon: Bell, roles: ['STAFF', 'SUPERVISOR', 'ADMIN'] },
   { name: '使用者管理', href: '/users', icon: Users, roles: ['ADMIN'] },
   { name: '稽核紀錄', href: '/audit', icon: FileText, roles: ['ADMIN'] },
