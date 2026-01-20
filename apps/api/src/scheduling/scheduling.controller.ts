@@ -24,16 +24,19 @@ export class SchedulingController {
   constructor(private schedulingService: SchedulingService) {}
 
   @Get("shifts")
+  @Roles(Role.SUPERVISOR)
   findAll(@Query() query: QueryShiftDto) {
     return this.schedulingService.findAll(query);
   }
 
   @Get("shifts/today")
+  @Roles(Role.STAFF)
   getTodayShifts() {
     return this.schedulingService.getTodayShifts();
   }
 
   @Get("shifts/weekly")
+  @Roles(Role.SUPERVISOR)
   getWeeklySchedule(@Query("start") start?: string) {
     const startDate = start ? new Date(start) : new Date();
     return this.schedulingService.getWeeklySchedule(startDate);

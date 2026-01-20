@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { formatRelativeTime } from '@/lib/utils';
 import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
 import { Plus, Search, Filter, MessageSquare } from 'lucide-react';
+import { ErrorState } from '@/components/error-boundary';
+import { Pagination } from '@/components/pagination';
 import {
   HandoverStatus,
   HandoverStatusLabels,
@@ -41,28 +43,36 @@ export default function HandoverListPage() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<HandoverListResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [page, setPage] = useState(1);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params: Record<string, string | number> = { limit: 20, page };
+      if (statusFilter) params.status = statusFilter;
+      if (priorityFilter) params.priority = priorityFilter;
+
+      const result = await apiGet<HandoverListResponse>('/handovers', params);
+      setData(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '載入交班資料失敗';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const params: Record<string, string | number> = { limit: 20 };
-        if (statusFilter) params.status = statusFilter;
-        if (priorityFilter) params.priority = priorityFilter;
-
-        const result = await apiGet<HandoverListResponse>('/handovers', params);
-        setData(result);
-      } catch (error) {
-        console.error('Failed to load handovers:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [statusFilter, priorityFilter]);
+  }, [statusFilter, priorityFilter, page]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   return (
     <div className="space-y-6">
@@ -120,6 +130,8 @@ export default function HandoverListPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-muted-foreground">載入中...</div>
         </div>
+      ) : error ? (
+        <ErrorState error={error} onRetry={fetchData} title="載入失敗" />
       ) : data?.data && data.data.length > 0 ? (
         <div className="space-y-4">
           {data.data.map((handover) => (
@@ -164,10 +176,16 @@ export default function HandoverListPage() {
             </Link>
           ))}
 
-          {/* Pagination info */}
-          <div className="text-center text-sm text-muted-foreground">
-            顯示 {data.data.length} 筆，共 {data.total} 筆
-          </div>
+          {/* Pagination */}
+          <Pagination
+            pagination={{
+              page: data.page,
+              limit: 20,
+              total: data.total,
+              totalPages: data.totalPages,
+            }}
+            onPageChange={handlePageChange}
+          />
         </div>
       ) : (
         <Card>

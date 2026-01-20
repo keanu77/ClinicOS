@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, apiPatch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,8 @@ import {
   RefreshCw,
   AlertTriangle,
   Package,
+  Edit,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -65,10 +67,27 @@ export default function InventoryDetailPage() {
   const [txnNote, setTxnNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Edit form
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    minStock: 0,
+    maxStock: 0,
+    location: '',
+  });
+
   const fetchItem = async () => {
     try {
       const result = await apiGet<InventoryItem>(`/inventory/items/${params.id}`);
       setItem(result);
+      setEditForm({
+        name: result.name,
+        description: result.description || '',
+        minStock: result.minStock,
+        maxStock: result.maxStock || 0,
+        location: result.location || '',
+      });
     } catch (error) {
       console.error('Failed to load item:', error);
       toast({
@@ -118,6 +137,22 @@ export default function InventoryDetailPage() {
     }
   };
 
+  const handleSaveEdit = async () => {
+    try {
+      await apiPatch(`/inventory/items/${params.id}`, editForm);
+      toast({ title: '品項已更新' });
+      setIsEditing(false);
+      await fetchItem();
+    } catch (error) {
+      toast({
+        title: '更新失敗',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const isAdmin = session?.user?.role === Role.ADMIN;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -159,7 +194,79 @@ export default function InventoryDetailPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{item.name}</h1>
         </div>
+        {isAdmin && !isEditing && (
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            編輯
+          </Button>
+        )}
       </div>
+
+      {/* Edit Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-lg">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>編輯品項</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>品項名稱</Label>
+                <Input
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>說明</Label>
+                <textarea
+                  className="w-full mt-1 p-3 border rounded-md min-h-[80px]"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>最低存量</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editForm.minStock}
+                    onChange={(e) => setEditForm({ ...editForm, minStock: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div>
+                  <Label>最高存量</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editForm.maxStock}
+                    onChange={(e) => setEditForm({ ...editForm, maxStock: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>儲存位置</Label>
+                <Input
+                  value={editForm.location}
+                  onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditing(false)}>
+                  取消
+                </Button>
+                <Button className="flex-1" onClick={handleSaveEdit}>
+                  儲存
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Item Info */}
       <Card>

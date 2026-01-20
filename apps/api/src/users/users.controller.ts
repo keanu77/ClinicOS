@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Body,
@@ -13,11 +14,18 @@ import { Roles } from "../common/decorators/roles.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Role } from "../shared";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { CreateUserDto } from "./dto/create-user.dto";
 
 @Controller("users")
 @UseGuards(RolesGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
+
+  @Post()
+  @Roles(Role.ADMIN)
+  create(@Body() dto: CreateUserDto) {
+    return this.usersService.createUser(dto);
+  }
 
   @Get()
   @Roles(Role.SUPERVISOR)
@@ -41,6 +49,12 @@ export class UsersController {
   @Roles(Role.ADMIN)
   remove(@Param("id") id: string) {
     return this.usersService.delete(id);
+  }
+
+  @Post(":id/reset-password")
+  @Roles(Role.ADMIN)
+  resetPassword(@Param("id") id: string) {
+    return this.usersService.resetPassword(id);
   }
 
   @Get("role/:role")

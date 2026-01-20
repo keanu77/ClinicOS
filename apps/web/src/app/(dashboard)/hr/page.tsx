@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +68,7 @@ const levelLabels: Record<string, string> = {
 };
 
 export default function HRPage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -291,7 +293,11 @@ export default function HRPage() {
                           )}
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/hr/${employee.id}`)}
+                      >
                         檢視
                       </Button>
                     </div>

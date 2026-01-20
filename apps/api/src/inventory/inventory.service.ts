@@ -21,6 +21,11 @@ export class InventoryService {
   async findAllItems(query: QueryItemDto) {
     const { search, lowStock, isActive = true, page = 1, limit = 20 } = query;
 
+    // 使用原始 SQL 處理 lowStock 查詢（比較兩個欄位）
+    if (lowStock) {
+      return this.findLowStockItemsPaginated(query);
+    }
+
     const where: any = {};
 
     if (isActive !== undefined) where.isActive = isActive;
@@ -32,24 +37,9 @@ export class InventoryService {
       ];
     }
 
-    if (lowStock) {
-      where.quantity = { lte: this.prisma.$queryRaw`minStock` };
-    }
-
     const [data, total] = await Promise.all([
       this.prisma.inventoryItem.findMany({
-        where: lowStock
-          ? {
-              ...where,
-              AND: [
-                {
-                  quantity: {
-                    lte: this.prisma.inventoryItem.fields.minStock,
-                  },
-                },
-              ],
-            }
-          : where,
+        where,
         orderBy: [{ name: "asc" }],
         skip: (page - 1) * limit,
         take: limit,
@@ -57,13 +47,64 @@ export class InventoryService {
       this.prisma.inventoryItem.count({ where }),
     ]);
 
-    // Filter low stock items in memory if needed
-    const filteredData = lowStock
-      ? data.filter((item) => item.quantity <= item.minStock)
-      : data;
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  private async findLowStockItemsPaginated(query: QueryItemDto) {
+    const { search, isActive = true, page = 1, limit = 20 } = query;
+    const offset = (page - 1) * limit;
+
+    // 建立搜尋條件
+    let searchCondition = "";
+    if (search) {
+      const escapedSearch = search.replace(/'/g, "''");
+      searchCondition = `AND (name LIKE '%${escapedSearch}%' OR sku LIKE '%${escapedSearch}%' OR location LIKE '%${escapedSearch}%')`;
+    }
+
+    const activeCondition = isActive ? "isActive = 1" : "1=1";
+
+    // 使用原始 SQL 在資料庫層面比較 quantity 和 minStock
+    const data = await this.prisma.$queryRawUnsafe<
+      Array<{
+        id: string;
+        name: string;
+        sku: string;
+        description: string | null;
+        unit: string;
+        quantity: number;
+        minStock: number;
+        maxStock: number | null;
+        location: string | null;
+        expiryDate: Date | null;
+        isActive: boolean;
+        vendorId: string | null;
+        unitPrice: number | null;
+        leadTimeDays: number | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>
+    >(
+      `SELECT * FROM InventoryItem
+       WHERE ${activeCondition} AND quantity <= minStock ${searchCondition}
+       ORDER BY name ASC
+       LIMIT ${limit} OFFSET ${offset}`,
+    );
+
+    const countResult = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
+      `SELECT COUNT(*) as count FROM InventoryItem
+       WHERE ${activeCondition} AND quantity <= minStock ${searchCondition}`,
+    );
+
+    const total = Number(countResult[0].count);
 
     return {
-      data: filteredData,
+      data,
       total,
       page,
       limit,
@@ -134,6 +175,16 @@ export class InventoryService {
         expiryDate: dto.expiryDate ? new Date(dto.expiryDate) : dto.expiryDate,
         isActive: dto.isActive,
       },
+    });
+  }
+
+  async deleteItem(id: string) {
+    await this.findItemById(id);
+
+    // Soft delete
+    return this.prisma.inventoryItem.update({
+      where: { id },
+      data: { isActive: false },
     });
   }
 

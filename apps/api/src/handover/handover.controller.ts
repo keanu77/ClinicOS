@@ -86,6 +86,7 @@ export class HandoverController {
   // ==================== Task Categories ====================
 
   @Get("categories/all")
+  @Roles(Role.STAFF)
   getTaskCategories() {
     return this.handoverService.getTaskCategories();
   }

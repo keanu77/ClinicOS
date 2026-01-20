@@ -5,6 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Date formatting utilities
 export function formatDate(date: Date | string) {
   const d = new Date(date);
   return d.toLocaleDateString('zh-TW', {
@@ -39,4 +40,72 @@ export function formatRelativeTime(date: Date | string) {
   if (diffDays < 7) return `${diffDays} 天前`;
 
   return formatDate(date);
+}
+
+// Additional date utilities
+export function getDateRange(range: 'today' | 'week' | 'month' | 'year'): {
+  start: Date;
+  end: Date;
+} {
+  const now = new Date();
+  const start = new Date(now);
+  const end = new Date(now);
+
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  switch (range) {
+    case 'today':
+      break;
+    case 'week':
+      start.setDate(start.getDate() - start.getDay());
+      end.setDate(start.getDate() + 6);
+      break;
+    case 'month':
+      start.setDate(1);
+      end.setMonth(end.getMonth() + 1, 0);
+      break;
+    case 'year':
+      start.setMonth(0, 1);
+      end.setMonth(11, 31);
+      break;
+  }
+
+  return { start, end };
+}
+
+export function toISODateString(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+export function getMonthYearString(date: Date): string {
+  return date.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: 'long',
+  });
+}
+
+// Currency formatting
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('zh-TW', {
+    style: 'currency',
+    currency: 'TWD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+// Number formatting
+export function formatNumber(num: number): string {
+  return new Intl.NumberFormat('zh-TW').format(num);
+}
+
+// String utilities
+export function truncate(str: string, maxLength: number): string {
+  if (str.length <= maxLength) return str;
+  return str.slice(0, maxLength - 3) + '...';
+}
+
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

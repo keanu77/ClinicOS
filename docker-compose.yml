@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # API Service (NestJS)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: clinic-os-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/clinic.db
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-7d}
+    volumes:
+      - api-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - clinic-network
+
+  # Web Service (Next.js)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: clinic-os-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:4000
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-nextauth-secret-change-in-production}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - clinic-network
+
+  # Optional: MySQL for production (uncomment if switching from SQLite)
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: clinic-os-mysql
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3306:3306"
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+  #     - MYSQL_DATABASE=clinic_os
+  #     - MYSQL_USER=clinic
+  #     - MYSQL_PASSWORD=${MYSQL_PASSWORD:-clinicpassword}
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 30s
+  #   networks:
+  #     - clinic-network
+
+volumes:
+  api-data:
+    driver: local
+  # mysql-data:
+  #   driver: local
+
+networks:
+  clinic-network:
+    driver: bridge

@@ -4,14 +4,24 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { ShiftType } from "../shared";
+import { NotificationsService } from "../notifications/notifications.service";
+import { ShiftType, NotificationType } from "../shared";
 import { CreateShiftDto } from "./dto/create-shift.dto";
 import { UpdateShiftDto } from "./dto/update-shift.dto";
 import { QueryShiftDto } from "./dto/query-shift.dto";
 
+const ShiftTypeLabels: Record<string, string> = {
+  [ShiftType.MORNING]: "早班",
+  [ShiftType.AFTERNOON]: "午班",
+  [ShiftType.NIGHT]: "晚班",
+};
+
 @Injectable()
 export class SchedulingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async findAll(query: QueryShiftDto) {
     const { start, end, userId, type } = query;
@@ -79,7 +89,7 @@ export class SchedulingService {
       );
     }
 
-    return this.prisma.shift.create({
+    const shift = await this.prisma.shift.create({
       data: {
         date,
         type: dto.type,
@@ -92,10 +102,21 @@ export class SchedulingService {
         },
       },
     });
+
+    // Notify the assigned user
+    await this.notificationsService.create({
+      userId: dto.userId,
+      type: NotificationType.SHIFT_ASSIGNED,
+      title: "新班次指派",
+      message: `您已被安排於 ${date.toLocaleDateString("zh-TW")} ${ShiftTypeLabels[dto.type] || dto.type} 班`,
+      metadata: { shiftId: shift.id },
+    });
+
+    return shift;
   }
 
   async update(id: string, dto: UpdateShiftDto) {
-    await this.findById(id);
+    const existingShift = await this.findById(id);
 
     const updateData: any = {};
 
@@ -108,7 +129,7 @@ export class SchedulingService {
     if (dto.userId) updateData.userId = dto.userId;
     if (dto.notes !== undefined) updateData.notes = dto.notes;
 
-    return this.prisma.shift.update({
+    const updatedShift = await this.prisma.shift.update({
       where: { id },
       data: updateData,
       include: {
@@ -117,6 +138,34 @@ export class SchedulingService {
         },
       },
     });
+
+    // Notify about shift change
+    const notifyUserId = dto.userId || existingShift.userId;
+    const shiftDate = dto.date
+      ? new Date(dto.date)
+      : existingShift.date;
+    const shiftType = dto.type || existingShift.type;
+
+    await this.notificationsService.create({
+      userId: notifyUserId,
+      type: NotificationType.SHIFT_CHANGED,
+      title: "班次變更",
+      message: `您的班次已更新：${shiftDate.toLocaleDateString("zh-TW")} ${ShiftTypeLabels[shiftType] || shiftType}`,
+      metadata: { shiftId: id },
+    });
+
+    // If user changed, notify the old user too
+    if (dto.userId && dto.userId !== existingShift.userId) {
+      await this.notificationsService.create({
+        userId: existingShift.userId,
+        type: NotificationType.SHIFT_CHANGED,
+        title: "班次變更",
+        message: `您原本 ${existingShift.date.toLocaleDateString("zh-TW")} ${ShiftTypeLabels[existingShift.type] || existingShift.type} 的班次已被調整`,
+        metadata: { shiftId: id },
+      });
+    }
+
+    return updatedShift;
   }
 
   async delete(id: string) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { apiGet, apiPost } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,6 +84,7 @@ const priorityLabels: Record<string, string> = {
 };
 
 export default function DocumentsPage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -349,7 +351,11 @@ export default function DocumentsPage() {
                           )}
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/documents/${doc.id}`)}
+                      >
                         檢視
                       </Button>
                     </div>
@@ -406,7 +412,11 @@ export default function DocumentsPage() {
                         {announcement.isRead && (
                           <CheckCircle className="h-4 w-4 text-green-500" />
                         )}
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/documents/announcements/${announcement.id}`)}
+                        >
                           檢視
                         </Button>
                       </div>

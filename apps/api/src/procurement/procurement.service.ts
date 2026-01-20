@@ -387,79 +387,106 @@ export class ProcurementService {
     const order = await this.getPurchaseOrder(dto.orderId);
     const receiptNo = `GR-${Date.now().toString(36).toUpperCase()}`;
 
-    const receipt = await this.prisma.goodsReceipt.create({
-      data: {
-        receiptNo,
-        orderId: dto.orderId,
-        receivedById: userId,
-        notes: dto.notes,
-        items: {
-          create: dto.items.map((item) => ({
-            orderItemId: item.orderItemId,
-            receivedQty: item.receivedQty,
-            acceptedQty: item.acceptedQty,
-            rejectedQty: item.rejectedQty || 0,
-            rejectReason: item.rejectReason,
-            notes: item.notes,
-          })),
+    // Use transaction to ensure data consistency
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Create receipt record
+      const receipt = await tx.goodsReceipt.create({
+        data: {
+          receiptNo,
+          orderId: dto.orderId,
+          receivedById: userId,
+          notes: dto.notes,
+          items: {
+            create: dto.items.map((item) => ({
+              orderItemId: item.orderItemId,
+              receivedQty: item.receivedQty,
+              acceptedQty: item.acceptedQty,
+              rejectedQty: item.rejectedQty || 0,
+              rejectReason: item.rejectReason,
+              notes: item.notes,
+            })),
+          },
         },
-      },
-      include: {
-        items: true,
-      },
-    });
-
-    // Update PO item received quantities
-    for (const item of dto.items) {
-      const orderItem = await this.prisma.purchaseOrderItem.findUnique({
-        where: { id: item.orderItemId },
+        include: {
+          items: true,
+        },
       });
 
-      if (orderItem) {
-        await this.prisma.purchaseOrderItem.update({
+      // Update PO item received quantities
+      const inventoryUpdates: {
+        itemId: string;
+        quantity: number;
+      }[] = [];
+
+      for (const item of dto.items) {
+        const orderItem = await tx.purchaseOrderItem.findUnique({
           where: { id: item.orderItemId },
-          data: {
-            receivedQty: orderItem.receivedQty + item.receivedQty,
-          },
         });
 
-        // Update inventory if linked
-        if (orderItem.inventoryItemId && item.acceptedQty > 0) {
-          await this.inventoryService.createTransaction(
-            {
-              itemId: orderItem.inventoryItemId,
-              type: InventoryTxnType.IN,
-              quantity: item.acceptedQty,
-              note: `採購收貨: ${receiptNo}`,
+        if (orderItem) {
+          await tx.purchaseOrderItem.update({
+            where: { id: item.orderItemId },
+            data: {
+              receivedQty: orderItem.receivedQty + item.receivedQty,
             },
-            userId,
-          );
+          });
+
+          // Collect inventory updates for later
+          if (orderItem.inventoryItemId && item.acceptedQty > 0) {
+            inventoryUpdates.push({
+              itemId: orderItem.inventoryItemId,
+              quantity: item.acceptedQty,
+            });
+          }
         }
+      }
+
+      // Check if all items received
+      const poItems = await tx.purchaseOrderItem.findMany({
+        where: { orderId: dto.orderId },
+      });
+
+      const allReceived = poItems.every(
+        (item) => item.receivedQty >= item.quantity,
+      );
+      const someReceived = poItems.some((item) => item.receivedQty > 0);
+
+      await tx.purchaseOrder.update({
+        where: { id: dto.orderId },
+        data: {
+          status: allReceived
+            ? PurchaseOrderStatus.RECEIVED
+            : someReceived
+              ? PurchaseOrderStatus.PARTIAL_RECEIVED
+              : order.status,
+        },
+      });
+
+      return { receipt, inventoryUpdates };
+    });
+
+    // Update inventory outside transaction (separate concern)
+    // This ensures receipt is recorded even if inventory update fails
+    for (const update of result.inventoryUpdates) {
+      try {
+        await this.inventoryService.createTransaction(
+          {
+            itemId: update.itemId,
+            type: InventoryTxnType.IN,
+            quantity: update.quantity,
+            note: `採購收貨: ${receiptNo}`,
+          },
+          userId,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to update inventory for item ${update.itemId}: ${error}`,
+        );
+        // Continue with other items - receipt is already recorded
       }
     }
 
-    // Check if all items received
-    const poItems = await this.prisma.purchaseOrderItem.findMany({
-      where: { orderId: dto.orderId },
-    });
-
-    const allReceived = poItems.every(
-      (item) => item.receivedQty >= item.quantity,
-    );
-    const someReceived = poItems.some((item) => item.receivedQty > 0);
-
-    await this.prisma.purchaseOrder.update({
-      where: { id: dto.orderId },
-      data: {
-        status: allReceived
-          ? PurchaseOrderStatus.RECEIVED
-          : someReceived
-            ? PurchaseOrderStatus.PARTIAL_RECEIVED
-            : order.status,
-      },
-    });
-
-    return receipt;
+    return result.receipt;
   }
 
   // ==================== Stats ====================

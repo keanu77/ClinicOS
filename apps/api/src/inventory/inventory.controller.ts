@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -47,6 +48,12 @@ export class InventoryController {
     return this.inventoryService.updateItem(id, dto);
   }
 
+  @Delete("items/:id")
+  @Roles(Role.ADMIN)
+  deleteItem(@Param("id") id: string) {
+    return this.inventoryService.deleteItem(id);
+  }
+
   @Post("txns")
   createTransaction(
     @Body() dto: CreateTxnDto,
@@ -65,6 +72,7 @@ export class InventoryController {
   }
 
   @Get("low-stock")
+  @Roles(Role.SUPERVISOR)
   getLowStockItems() {
     return this.inventoryService.getLowStockItems();
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiGet } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +76,7 @@ const poStatusLabels: Record<string, string> = {
 };
 
 export default function ProcurementPage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -165,7 +167,12 @@ export default function ProcurementPage() {
                         <div className="font-semibold">
                           ${request.totalAmount.toLocaleString()}
                         </div>
-                        <Button variant="outline" size="sm" className="mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => router.push(`/procurement/requests/${request.id}`)}
+                        >
                           檢視
                         </Button>
                       </div>

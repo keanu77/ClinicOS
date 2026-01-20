@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
-import { ArrowLeft, Send, User, Clock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Send, User, Clock, CheckCircle, Edit, X } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import {
   HandoverStatus,
@@ -51,11 +52,22 @@ export default function HandoverDetailPage() {
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    content: '',
+    priority: '',
+  });
 
   const fetchHandover = async () => {
     try {
       const result = await apiGet<Handover>(`/handovers/${params.id}`);
       setHandover(result);
+      setEditForm({
+        title: result.title,
+        content: result.content,
+        priority: result.priority,
+      });
     } catch (error) {
       console.error('Failed to load handover:', error);
       toast({
@@ -154,6 +166,20 @@ export default function HandoverDetailPage() {
     }
   };
 
+  const handleSaveEdit = async () => {
+    try {
+      await apiPatch(`/handovers/${params.id}`, editForm);
+      await fetchHandover();
+      setIsEditing(false);
+      toast({ title: '已更新' });
+    } catch (error) {
+      toast({
+        title: '更新失敗',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -179,6 +205,12 @@ export default function HandoverDetailPage() {
     session?.user?.role === Role.SUPERVISOR ||
     session?.user?.role === Role.ADMIN;
 
+  const canEdit =
+    handover.status !== HandoverStatus.COMPLETED &&
+    (session?.user?.id === handover.createdBy.id ||
+      session?.user?.role === Role.SUPERVISOR ||
+      session?.user?.role === Role.ADMIN);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
@@ -198,7 +230,65 @@ export default function HandoverDetailPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{handover.title}</h1>
         </div>
+        {canEdit && !isEditing && (
+          <Button variant="outline" onClick={() => setIsEditing(true)}>
+            <Edit className="h-4 w-4 mr-2" />
+            編輯
+          </Button>
+        )}
       </div>
+
+      {/* Edit Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-lg">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>編輯交班事項</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>標題</Label>
+                <Input
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>內容</Label>
+                <textarea
+                  className="w-full mt-1 p-3 border rounded-md min-h-[150px]"
+                  value={editForm.content}
+                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>優先級</Label>
+                <select
+                  className="w-full mt-1 p-2 border rounded-md"
+                  value={editForm.priority}
+                  onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
+                >
+                  <option value="LOW">低</option>
+                  <option value="MEDIUM">中</option>
+                  <option value="HIGH">高</option>
+                  <option value="URGENT">緊急</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1" onClick={() => setIsEditing(false)}>
+                  取消
+                </Button>
+                <Button className="flex-1" onClick={handleSaveEdit}>
+                  儲存
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Main Content */}
       <Card>
