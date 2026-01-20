@@ -5,7 +5,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: Dockerfile.api
     container_name: clinic-os-api
     restart: unless-stopped
     ports:
@@ -30,7 +30,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: Dockerfile.web
     container_name: clinic-os-web
     restart: unless-stopped
     ports:
