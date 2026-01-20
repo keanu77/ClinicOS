@@ -141,9 +141,7 @@ export class SchedulingService {
 
     // Notify about shift change
     const notifyUserId = dto.userId || existingShift.userId;
-    const shiftDate = dto.date
-      ? new Date(dto.date)
-      : existingShift.date;
+    const shiftDate = dto.date ? new Date(dto.date) : existingShift.date;
     const shiftType = dto.type || existingShift.type;
 
     await this.notificationsService.create({
