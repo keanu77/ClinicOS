@@ -139,7 +139,9 @@ describe("FinanceService", () => {
       ];
 
       mockPrismaService.costCategory.findMany.mockResolvedValue(mockCategories);
-      mockPrismaService.costEntry.groupBy.mockResolvedValue(mockCostsByCategory);
+      mockPrismaService.costEntry.groupBy.mockResolvedValue(
+        mockCostsByCategory,
+      );
 
       const result = await financeService.getBreakdown({});
 

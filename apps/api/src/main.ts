@@ -41,7 +41,7 @@ async function bootstrap() {
   await app.listen(port, "0.0.0.0");
 
   const logger = new Logger("Bootstrap");
-  logger.log(`Clinic OS API running on http://localhost:${port}/api`);
+  logger.log(`Clinic OS API running on http://0.0.0.0:${port}/api`);
 }
 
 bootstrap();
