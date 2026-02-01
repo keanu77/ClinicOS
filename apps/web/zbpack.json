@@ -1,5 +1,5 @@
 {
-  "build_command": "pnpm install && pnpm build",
-  "start_command": "pnpm start",
+  "build_command": "npm install && npm run build",
+  "start_command": "npm start",
   "node_version": "20"
 }
