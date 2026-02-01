@@ -265,13 +265,13 @@ export class DocumentService {
       Array<{ id: string; version: number; title: string; docNo: string }>
     >`
       SELECT d.id, d.version, d.title, d.docNo
-      FROM Document d
-      LEFT JOIN DocumentReadConfirmation drc
+      FROM "Document" d
+      LEFT JOIN "DocumentReadConfirmation" drc
         ON d.id = drc.documentId
         AND drc.userId = ${userId}
         AND drc.version = d.version
       WHERE d.status = ${DocumentStatus.PUBLISHED}
-        AND d.isActive = 1
+        AND d."isActive" = true
         AND drc.id IS NULL
     `;
 

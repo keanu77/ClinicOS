@@ -430,18 +430,18 @@ export class FinanceService {
     // instead of 24 queries (12 months x 2 tables)
     const [revenueByMonth, costByMonth] = await Promise.all([
       this.prisma.$queryRaw<Array<{ month: number; total: number }>>`
-        SELECT CAST(strftime('%m', date) AS INTEGER) as month,
+        SELECT EXTRACT(MONTH FROM date)::integer as month,
                SUM(amount) as total
-        FROM RevenueEntry
+        FROM "RevenueEntry"
         WHERE date >= ${yearStart} AND date <= ${yearEnd}
-        GROUP BY strftime('%m', date)
+        GROUP BY EXTRACT(MONTH FROM date)
       `,
       this.prisma.$queryRaw<Array<{ month: number; total: number }>>`
-        SELECT CAST(strftime('%m', date) AS INTEGER) as month,
+        SELECT EXTRACT(MONTH FROM date)::integer as month,
                SUM(amount) as total
-        FROM CostEntry
+        FROM "CostEntry"
         WHERE date >= ${yearStart} AND date <= ${yearEnd}
-        GROUP BY strftime('%m', date)
+        GROUP BY EXTRACT(MONTH FROM date)
       `,
     ]);
 

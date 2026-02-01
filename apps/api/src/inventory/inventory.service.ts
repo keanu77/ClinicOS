@@ -67,7 +67,7 @@ export class InventoryService {
       searchCondition = `AND (name LIKE '%${escapedSearch}%' OR sku LIKE '%${escapedSearch}%' OR location LIKE '%${escapedSearch}%')`;
     }
 
-    const activeCondition = isActive ? "isActive = 1" : "1=1";
+    const activeCondition = isActive ? '"isActive" = true' : "1=1";
 
     // 使用原始 SQL 在資料庫層面比較 quantity 和 minStock
     const data = await this.prisma.$queryRawUnsafe<
@@ -90,14 +90,14 @@ export class InventoryService {
         updatedAt: Date;
       }>
     >(
-      `SELECT * FROM InventoryItem
+      `SELECT * FROM "InventoryItem"
        WHERE ${activeCondition} AND quantity <= minStock ${searchCondition}
        ORDER BY name ASC
        LIMIT ${limit} OFFSET ${offset}`,
     );
 
     const countResult = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
-      `SELECT COUNT(*) as count FROM InventoryItem
+      `SELECT COUNT(*) as count FROM "InventoryItem"
        WHERE ${activeCondition} AND quantity <= minStock ${searchCondition}`,
     );
 
@@ -253,8 +253,8 @@ export class InventoryService {
       }>
     >`
       SELECT id, name, sku, quantity, minStock
-      FROM InventoryItem
-      WHERE isActive = 1 AND quantity <= minStock
+      FROM "InventoryItem"
+      WHERE "isActive" = true AND quantity <= minStock
       ORDER BY quantity ASC
     `;
 
@@ -272,8 +272,8 @@ export class InventoryService {
     // 提供一個只計算數量的方法，避免查詢完整資料
     const result = await this.prisma.$queryRaw<[{ count: number }]>`
       SELECT COUNT(*) as count
-      FROM InventoryItem
-      WHERE isActive = 1 AND quantity <= minStock
+      FROM "InventoryItem"
+      WHERE "isActive" = true AND quantity <= minStock
     `;
     return Number(result[0].count);
   }
