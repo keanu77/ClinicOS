@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 env:
-  DATABASE_URL: 'file:./test.db'
+  DATABASE_URL: 'postgresql://test:test@localhost:5432/test'
   JWT_SECRET: 'test-jwt-secret-for-ci-at-least-32-characters'
   NEXTAUTH_SECRET: 'test-nextauth-secret-for-ci-at-least-32-chars'
   NEXTAUTH_URL: 'http://localhost:3000'
