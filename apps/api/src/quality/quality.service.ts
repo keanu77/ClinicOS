@@ -8,6 +8,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
 import { HandoverService } from "../handover/handover.service";
+import { CacheService } from "../common/cache/cache.service";
+import { CACHE_KEYS, CACHE_TTL } from "../common/cache/cache.module";
 import {
   Role,
   IncidentStatus,
@@ -36,15 +38,21 @@ export class QualityService {
     private notificationsService: NotificationsService,
     private auditService: AuditService,
     private handoverService: HandoverService,
+    private cacheService: CacheService,
   ) {}
 
   // ==================== Incident Types ====================
 
   async getIncidentTypes() {
-    return this.prisma.incidentType.findMany({
-      where: { isActive: true },
-      orderBy: [{ category: "asc" }, { name: "asc" }],
-    });
+    return this.cacheService.wrap(
+      CACHE_KEYS.INCIDENT_TYPES,
+      () =>
+        this.prisma.incidentType.findMany({
+          where: { isActive: true },
+          orderBy: [{ category: "asc" }, { name: "asc" }],
+        }),
+      CACHE_TTL.LONG, // 1 hour cache
+    );
   }
 
   async createIncidentType(dto: CreateIncidentTypeDto, userId: string) {

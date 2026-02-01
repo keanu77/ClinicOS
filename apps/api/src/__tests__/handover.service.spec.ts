@@ -4,6 +4,7 @@ import { HandoverService } from "../handover/handover.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
+import { CacheService } from "../common/cache/cache.service";
 import { HandoverStatus, HandoverPriority, Role } from "../shared";
 
 describe("HandoverService", () => {
@@ -41,6 +42,13 @@ describe("HandoverService", () => {
     create: jest.fn(),
   };
 
+  const mockCacheService = {
+    wrap: jest.fn((key, fn) => fn()),
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,6 +56,7 @@ describe("HandoverService", () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: AuditService, useValue: mockAuditService },
+        { provide: CacheService, useValue: mockCacheService },
       ],
     }).compile();
 
@@ -236,6 +245,11 @@ describe("HandoverService", () => {
         handoverId: "handover-1",
         authorId: "user-1",
         createdAt: new Date(),
+        author: {
+          id: "user-1",
+          name: "Test User",
+          role: "STAFF",
+        },
       };
 
       mockPrismaService.handover.findUnique.mockResolvedValue(mockHandover);

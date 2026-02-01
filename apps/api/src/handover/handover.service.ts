@@ -8,6 +8,11 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
+import { CacheService } from "../common/cache/cache.service";
+import {
+  CACHE_KEYS,
+  CACHE_TTL,
+} from "../common/cache/cache.module";
 import {
   Role,
   HandoverStatus,
@@ -34,6 +39,7 @@ export class HandoverService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private auditService: AuditService,
+    private cacheService: CacheService,
   ) {}
 
   async findAll(query: QueryHandoverDto, user: { id: string; role: string }) {
@@ -405,10 +411,15 @@ export class HandoverService {
   // ==================== Task Categories ====================
 
   async getTaskCategories() {
-    return this.prisma.taskCategory.findMany({
-      where: { isActive: true },
-      orderBy: { name: "asc" },
-    });
+    return this.cacheService.wrap(
+      CACHE_KEYS.TASK_CATEGORIES,
+      () =>
+        this.prisma.taskCategory.findMany({
+          where: { isActive: true },
+          orderBy: { name: "asc" },
+        }),
+      CACHE_TTL.LONG, // 1 hour cache
+    );
   }
 
   async createTaskCategory(name: string, color?: string, description?: string) {

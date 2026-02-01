@@ -1,8 +1,10 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { LoggerModule } from "nestjs-pino";
 import { PrismaModule } from "./prisma/prisma.module";
+import { CacheModule } from "./common/cache/cache.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { HandoverModule } from "./handover/handover.module";
@@ -26,6 +28,38 @@ import { HealthController } from "./health.controller";
       isGlobal: true,
       envFilePath: [".env", ".env.local"],
     }),
+    // Structured logging with Pino
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        pinoHttp: {
+          level: configService.get("LOG_LEVEL", "info"),
+          transport:
+            configService.get("NODE_ENV") !== "production"
+              ? {
+                  target: "pino-pretty",
+                  options: {
+                    colorize: true,
+                    translateTime: "SYS:standard",
+                    ignore: "pid,hostname",
+                  },
+                }
+              : undefined,
+          autoLogging: {
+            ignore: (req: any) =>
+              req.url === "/api/health" || req.url === "/api/health/ready",
+          },
+          customProps: () => ({
+            context: "HTTP",
+          }),
+          customSuccessMessage: (req: any, res: any) =>
+            `${req.method} ${req.url} ${res.statusCode}`,
+          customErrorMessage: (req: any, res: any, err: any) =>
+            `${req.method} ${req.url} ${res.statusCode} - ${err.message}`,
+        },
+      }),
+    }),
     // 速率限制配置
     ThrottlerModule.forRoot([
       {
@@ -45,6 +79,7 @@ import { HealthController } from "./health.controller";
       },
     ]),
     PrismaModule,
+    CacheModule,
     AuthModule,
     UsersModule,
     HandoverModule,

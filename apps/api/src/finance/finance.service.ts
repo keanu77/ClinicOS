@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { CacheService } from "../common/cache/cache.service";
+import { CACHE_KEYS, CACHE_TTL } from "../common/cache/cache.module";
 import { CostType } from "../shared";
 import {
   CreateCostCategoryDto,
@@ -22,15 +24,21 @@ export class FinanceService {
   constructor(
     private prisma: PrismaService,
     private auditService: AuditService,
+    private cacheService: CacheService,
   ) {}
 
   // ==================== Cost Categories ====================
 
   async getCostCategories() {
-    return this.prisma.costCategory.findMany({
-      where: { isActive: true },
-      orderBy: { name: "asc" },
-    });
+    return this.cacheService.wrap(
+      CACHE_KEYS.COST_CATEGORIES,
+      () =>
+        this.prisma.costCategory.findMany({
+          where: { isActive: true },
+          orderBy: { name: "asc" },
+        }),
+      CACHE_TTL.LONG, // 1 hour cache
+    );
   }
 
   async createCostCategory(dto: CreateCostCategoryDto, userId: string) {
@@ -327,30 +335,32 @@ export class FinanceService {
       dateFilter = { gte: start, lte: end };
     }
 
-    const categories = await this.prisma.costCategory.findMany({
-      where: { isActive: true },
-    });
-
-    const breakdown = [];
-
-    for (const category of categories) {
-      const result = await this.prisma.costEntry.aggregate({
-        where: {
-          date: dateFilter,
-          categoryId: category.id,
-        },
+    // Optimized: Single query with groupBy instead of N+1 loop queries
+    const [categories, costsByCategory] = await Promise.all([
+      this.prisma.costCategory.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, type: true },
+      }),
+      this.prisma.costEntry.groupBy({
+        by: ["categoryId"],
+        where: { date: dateFilter },
         _sum: { amount: true },
-      });
+      }),
+    ]);
 
-      breakdown.push({
-        category: {
-          id: category.id,
-          name: category.name,
-          type: category.type,
-        },
-        amount: result._sum?.amount || 0,
-      });
-    }
+    // Create a map for O(1) lookup
+    const costMap = new Map(
+      costsByCategory.map((c) => [c.categoryId, c._sum?.amount || 0]),
+    );
+
+    const breakdown = categories.map((category) => ({
+      category: {
+        id: category.id,
+        name: category.name,
+        type: category.type,
+      },
+      amount: costMap.get(category.id) || 0,
+    }));
 
     return breakdown.sort((a, b) => b.amount - a.amount);
   }
@@ -385,21 +395,26 @@ export class FinanceService {
       _count: true,
     });
 
-    const result = [];
-    for (const item of revenues) {
-      if (item.doctorId) {
-        const doctor = await this.prisma.user.findUnique({
-          where: { id: item.doctorId },
-          select: { id: true, name: true },
-        });
+    // Optimized: Fetch all doctors in a single query instead of N queries
+    const doctorIds = revenues
+      .map((r) => r.doctorId)
+      .filter((id): id is string => id !== null);
 
-        result.push({
-          doctor,
-          revenue: item._sum?.amount || 0,
-          transactionCount: item._count,
-        });
-      }
-    }
+    const doctors = await this.prisma.user.findMany({
+      where: { id: { in: doctorIds } },
+      select: { id: true, name: true },
+    });
+
+    // Create a map for O(1) lookup
+    const doctorMap = new Map(doctors.map((d) => [d.id, d]));
+
+    const result = revenues
+      .filter((item) => item.doctorId !== null)
+      .map((item) => ({
+        doctor: doctorMap.get(item.doctorId!) || null,
+        revenue: item._sum?.amount || 0,
+        transactionCount: item._count,
+      }));
 
     return result.sort((a, b) => b.revenue - a.revenue);
   }
@@ -408,25 +423,36 @@ export class FinanceService {
     const { year } = query;
     const targetYear = year || new Date().getFullYear();
 
+    const yearStart = new Date(targetYear, 0, 1);
+    const yearEnd = new Date(targetYear, 11, 31, 23, 59, 59);
+
+    // Optimized: Use raw SQL to get monthly aggregates in a single query
+    // instead of 24 queries (12 months x 2 tables)
+    const [revenueByMonth, costByMonth] = await Promise.all([
+      this.prisma.$queryRaw<Array<{ month: number; total: number }>>`
+        SELECT CAST(strftime('%m', date) AS INTEGER) as month,
+               SUM(amount) as total
+        FROM RevenueEntry
+        WHERE date >= ${yearStart} AND date <= ${yearEnd}
+        GROUP BY strftime('%m', date)
+      `,
+      this.prisma.$queryRaw<Array<{ month: number; total: number }>>`
+        SELECT CAST(strftime('%m', date) AS INTEGER) as month,
+               SUM(amount) as total
+        FROM CostEntry
+        WHERE date >= ${yearStart} AND date <= ${yearEnd}
+        GROUP BY strftime('%m', date)
+      `,
+    ]);
+
+    // Create maps for O(1) lookup
+    const revenueMap = new Map(revenueByMonth.map((r) => [r.month, r.total]));
+    const costMap = new Map(costByMonth.map((c) => [c.month, c.total]));
+
     const monthlyData = [];
-
     for (let month = 1; month <= 12; month++) {
-      const start = new Date(targetYear, month - 1, 1);
-      const end = new Date(targetYear, month, 0);
-
-      const [revenue, cost] = await Promise.all([
-        this.prisma.revenueEntry.aggregate({
-          where: { date: { gte: start, lte: end } },
-          _sum: { amount: true },
-        }),
-        this.prisma.costEntry.aggregate({
-          where: { date: { gte: start, lte: end } },
-          _sum: { amount: true },
-        }),
-      ]);
-
-      const rev = revenue._sum?.amount || 0;
-      const cos = cost._sum?.amount || 0;
+      const rev = revenueMap.get(month) || 0;
+      const cos = costMap.get(month) || 0;
       const profit = rev - cos;
       const margin = rev > 0 ? (profit / rev) * 100 : 0;
 

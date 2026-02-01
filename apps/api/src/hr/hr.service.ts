@@ -8,6 +8,8 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
+import { CacheService } from "../common/cache/cache.service";
+import { CACHE_KEYS, CACHE_TTL } from "../common/cache/cache.module";
 import {
   Role,
   CertificationStatus,
@@ -42,6 +44,7 @@ export class HRService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private auditService: AuditService,
+    private cacheService: CacheService,
   ) {}
 
   // ==================== Employee Profile ====================
@@ -320,10 +323,15 @@ export class HRService {
   // ==================== Skills ====================
 
   async getSkillDefinitions() {
-    return this.prisma.skillDefinition.findMany({
-      where: { isActive: true },
-      orderBy: [{ category: "asc" }, { name: "asc" }],
-    });
+    return this.cacheService.wrap(
+      CACHE_KEYS.SKILL_DEFINITIONS,
+      () =>
+        this.prisma.skillDefinition.findMany({
+          where: { isActive: true },
+          orderBy: [{ category: "asc" }, { name: "asc" }],
+        }),
+      CACHE_TTL.LONG, // 1 hour cache
+    );
   }
 
   async createSkillDefinition(dto: CreateSkillDefinitionDto, adminId: string) {

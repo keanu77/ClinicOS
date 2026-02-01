@@ -7,6 +7,8 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { AuditService } from "../audit/audit.service";
+import { CacheService } from "../common/cache/cache.service";
+import { CACHE_KEYS, CACHE_TTL } from "../common/cache/cache.module";
 import {
   DocumentStatus,
   AnnouncementPriority,
@@ -31,21 +33,27 @@ export class DocumentService {
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
     private auditService: AuditService,
+    private cacheService: CacheService,
   ) {}
 
   // ==================== Document Categories ====================
 
   async getCategories() {
-    return this.prisma.documentCategory.findMany({
-      where: { isActive: true },
-      include: {
-        children: {
+    return this.cacheService.wrap(
+      CACHE_KEYS.DOCUMENT_CATEGORIES,
+      () =>
+        this.prisma.documentCategory.findMany({
           where: { isActive: true },
+          include: {
+            children: {
+              where: { isActive: true },
+              orderBy: { sortOrder: "asc" },
+            },
+          },
           orderBy: { sortOrder: "asc" },
-        },
-      },
-      orderBy: { sortOrder: "asc" },
-    });
+        }),
+      CACHE_TTL.LONG, // 1 hour cache
+    );
   }
 
   async createCategory(dto: CreateDocumentCategoryDto) {
@@ -195,19 +203,21 @@ export class DocumentService {
       },
     });
 
-    // Notify all users about new document
+    // Notify all users about new document - optimized with createMany
     const users = await this.prisma.user.findMany({
       where: { isActive: true },
       select: { id: true },
     });
 
-    for (const user of users) {
-      await this.notificationsService.create({
-        userId: user.id,
-        type: NotificationType.DOCUMENT_PUBLISHED,
-        title: "新文件發布",
-        message: `文件「${document.title}」已發布`,
-        metadata: { documentId: id },
+    if (users.length > 0) {
+      await this.prisma.notification.createMany({
+        data: users.map((user) => ({
+          userId: user.id,
+          type: NotificationType.DOCUMENT_PUBLISHED,
+          title: "新文件發布",
+          message: `文件「${document.title}」已發布`,
+          metadata: JSON.stringify({ documentId: id }),
+        })),
       });
     }
 
@@ -249,33 +259,23 @@ export class DocumentService {
   }
 
   async getMyUnreadDocuments(userId: string) {
-    const publishedDocs = await this.prisma.document.findMany({
-      where: {
-        status: DocumentStatus.PUBLISHED,
-        isActive: true,
-      },
-      select: { id: true, version: true, title: true, docNo: true },
-    });
+    // Optimized: Use raw SQL with LEFT JOIN + WHERE NULL pattern
+    // instead of N+1 loop queries (was 1 + N queries, now just 1 query)
+    const unreadDocs = await this.prisma.$queryRaw<
+      Array<{ id: string; version: number; title: string; docNo: string }>
+    >`
+      SELECT d.id, d.version, d.title, d.docNo
+      FROM Document d
+      LEFT JOIN DocumentReadConfirmation drc
+        ON d.id = drc.documentId
+        AND drc.userId = ${userId}
+        AND drc.version = d.version
+      WHERE d.status = ${DocumentStatus.PUBLISHED}
+        AND d.isActive = 1
+        AND drc.id IS NULL
+    `;
 
-    const unread = [];
-    for (const doc of publishedDocs) {
-      const confirmation =
-        await this.prisma.documentReadConfirmation.findUnique({
-          where: {
-            documentId_userId_version: {
-              documentId: doc.id,
-              userId,
-              version: doc.version,
-            },
-          },
-        });
-
-      if (!confirmation) {
-        unread.push(doc);
-      }
-    }
-
-    return unread;
+    return unreadDocs;
   }
 
   // ==================== Announcements ====================
@@ -369,13 +369,16 @@ export class DocumentService {
         select: { id: true },
       });
 
-      for (const user of users) {
-        await this.notificationsService.create({
-          userId: user.id,
-          type: NotificationType.ANNOUNCEMENT_NEW,
-          title: "新公告",
-          message: dto.title,
-          metadata: { announcementId: announcement.id },
+      // Optimized: Use createMany instead of N individual creates
+      if (users.length > 0) {
+        await this.prisma.notification.createMany({
+          data: users.map((user) => ({
+            userId: user.id,
+            type: NotificationType.ANNOUNCEMENT_NEW,
+            title: "新公告",
+            message: dto.title,
+            metadata: JSON.stringify({ announcementId: announcement.id }),
+          })),
         });
       }
     }

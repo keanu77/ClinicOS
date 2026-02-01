@@ -293,6 +293,7 @@ model Certification {
   @@index([userId, status])
   @@index([expiryDate])
   @@index([status])
+  @@index([userId, expiryDate]) // Optimized: for user certification expiry queries
 }
 
 model SkillDefinition {
@@ -494,6 +495,7 @@ model MaintenanceSchedule {
   @@index([assetId])
   @@index([nextDueAt])
   @@index([isActive])
+  @@index([assetId, nextDueAt]) // Optimized: for asset maintenance schedule queries
 }
 
 model MaintenanceRecord {
@@ -684,6 +686,7 @@ model PurchaseOrder {
   @@index([requestId])
   @@index([status])
   @@index([createdById])
+  @@index([status, createdAt]) // Optimized: for status-based listing queries
 }
 
 model PurchaseOrderItem {
@@ -941,6 +944,7 @@ model DocumentReadConfirmation {
   @@unique([documentId, userId, version])
   @@index([documentId])
   @@index([userId])
+  @@index([userId, version]) // Optimized: for unread document queries
 }
 
 model Announcement {
@@ -1025,6 +1029,7 @@ model CostEntry {
   @@index([categoryId])
   @@index([date])
   @@index([createdById])
+  @@index([categoryId, date]) // Optimized: for category-based date range queries
 }
 
 model RevenueEntry {

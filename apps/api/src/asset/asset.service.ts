@@ -305,19 +305,21 @@ export class AssetService {
       },
     });
 
-    // Notify supervisors
+    // Notify supervisors - optimized with createMany
     const supervisors = await this.prisma.user.findMany({
       where: { role: { in: ["SUPERVISOR", "ADMIN"] }, isActive: true },
       select: { id: true },
     });
 
-    for (const supervisor of supervisors) {
-      await this.notificationsService.create({
-        userId: supervisor.id,
-        type: NotificationType.ASSET_FAULT_REPORTED,
-        title: "設備故障回報",
-        message: `${asset.name} (${asset.assetNo}) 回報了故障：${dto.title}`,
-        metadata: { faultId: fault.id, assetId: dto.assetId },
+    if (supervisors.length > 0) {
+      await this.prisma.notification.createMany({
+        data: supervisors.map((supervisor) => ({
+          userId: supervisor.id,
+          type: NotificationType.ASSET_FAULT_REPORTED,
+          title: "設備故障回報",
+          message: `${asset.name} (${asset.assetNo}) 回報了故障：${dto.title}`,
+          metadata: JSON.stringify({ faultId: fault.id, assetId: dto.assetId }),
+        })),
       });
     }
 
