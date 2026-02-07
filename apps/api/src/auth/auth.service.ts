@@ -53,6 +53,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role as JwtPayload["role"],
+      position: user.position as JwtPayload["position"],
     };
 
     this.logger.log(`Login successful for user: ${user.id} (${user.email})`);

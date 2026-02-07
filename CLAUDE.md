@@ -69,12 +69,15 @@ pnpm dev
 
 ## 測試帳號
 
-| Email | Password | Role |
+| Email | Password | 職位 |
 |-------|----------|------|
-| admin@clinic.local | password123 | 管理員 |
-| supervisor@clinic.local | password123 | 主管 |
-| staff1@clinic.local | password123 | 員工 |
-| staff2@clinic.local | password123 | 員工 |
+| admin@clinic.local | password123 | 管理者 |
+| supervisor@clinic.local | password123 | 經理 |
+| staff1@clinic.local | password123 | 護理師 |
+| staff2@clinic.local | password123 | 護理師 |
+| doctor@clinic.local | password123 | 醫師 |
+| therapist@clinic.local | password123 | 運醫老師 |
+| receptionist@clinic.local | password123 | 櫃檯 |
 
 ## API 端點
 
@@ -118,7 +121,42 @@ pnpm dev
 ### Audit (稽核)
 - `GET /api/audit/logs` - 操作紀錄 (ADMIN)
 
-## 角色權限
+### Permissions (權限管理)
+- `GET /api/permissions/my` - 取得當前使用者權限
+- `GET /api/permissions/users/:id` - 取得指定使用者權限
+- `POST /api/permissions/users/:id/grant` - 授予權限
+- `POST /api/permissions/users/:id/revoke` - 撤銷權限
+- `POST /api/permissions/users/:id/position` - 更新使用者職位
+- `GET /api/permissions/requests` - 列出所有權限申請
+- `GET /api/permissions/requests/my` - 我的權限申請
+- `POST /api/permissions/requests` - 提交權限申請
+- `POST /api/permissions/requests/:id/review` - 審核權限申請
+- `GET /api/permissions/matrix` - 取得權限矩陣
+- `GET /api/permissions/definitions` - 取得權限定義
+
+## 職位與權限系統
+
+### 職位類型
+- **DOCTOR** - 醫師
+- **NURSE** - 護理師
+- **SPORTS_THERAPIST** - 運醫老師
+- **RECEPTIONIST** - 櫃檯
+- **MANAGER** - 經理
+- **ADMIN** - 管理者
+
+### 權限分類
+- 交班系統: HANDOVER_VIEW, HANDOVER_CREATE, HANDOVER_EDIT_OWN, HANDOVER_EDIT_ALL, HANDOVER_DELETE
+- 庫存管理: INVENTORY_VIEW, INVENTORY_TRANSACTION, INVENTORY_MANAGE
+- 排班系統: SCHEDULING_VIEW, SCHEDULING_MANAGE
+- 人員管理: HR_VIEW, HR_MANAGE
+- 設備管理: ASSETS_VIEW, ASSETS_REPORT_FAULT, ASSETS_MANAGE
+- 採購管理: PROCUREMENT_VIEW, PROCUREMENT_REQUEST, PROCUREMENT_APPROVE
+- 醫療品質: QUALITY_VIEW, QUALITY_REPORT, QUALITY_MANAGE
+- 文件制度: DOCUMENTS_VIEW, DOCUMENTS_MANAGE
+- 成本分析: FINANCE_VIEW, FINANCE_MANAGE
+- 系統管理: USERS_VIEW, USERS_MANAGE, AUDIT_VIEW, PERMISSIONS_MANAGE
+
+## 角色權限（舊版，保留相容）
 
 | 功能 | STAFF | SUPERVISOR | ADMIN |
 |------|-------|------------|-------|
@@ -137,7 +175,7 @@ pnpm dev
 ## 資料庫 Schema
 
 主要模型:
-- `User` - 使用者
+- `User` - 使用者（含 position 職位欄位）
 - `Handover` - 交班事項
 - `HandoverComment` - 交班註記
 - `Shift` - 班次
@@ -145,6 +183,8 @@ pnpm dev
 - `InventoryTxn` - 庫存異動
 - `Notification` - 通知
 - `AuditLog` - 稽核紀錄
+- `UserPermission` - 使用者自定義權限
+- `PermissionRequest` - 權限申請紀錄
 
 ## 開發指令
 

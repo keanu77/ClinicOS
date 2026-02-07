@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +15,8 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String
-  role         String   @default("STAFF") // STAFF, SUPERVISOR, ADMIN
+  role         String   @default("STAFF") // STAFF, SUPERVISOR, ADMIN (保留相容)
+  position     String   @default("RECEPTIONIST") // DOCTOR, NURSE, SPORTS_THERAPIST, RECEPTIONIST, ADMIN
   passwordHash String
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
@@ -29,6 +30,12 @@ model User {
   inventoryTxns     InventoryTxn[]
   auditLogs         AuditLog[]
   notifications     Notification[]
+
+  // Permission Relations
+  customPermissions  UserPermission[]
+  permissionRequests PermissionRequest[] @relation("PermissionRequester")
+  reviewedRequests   PermissionRequest[] @relation("PermissionReviewer")
+  grantedPermissions UserPermission[]    @relation("PermissionGranter")
 
   // HR Lite Relations
   employeeProfile   EmployeeProfile?
@@ -71,6 +78,7 @@ model User {
 
   @@index([email])
   @@index([role, isActive])
+  @@index([position])
 }
 
 model Handover {
@@ -1073,4 +1081,50 @@ model CostSnapshot {
 
   @@unique([year, month])
   @@index([year, month])
+}
+
+// ============================================
+// PERMISSION MANAGEMENT MODELS
+// ============================================
+
+model UserPermission {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  permission String   // Permission enum value
+  granted    Boolean  @default(true) // true=授予, false=撤銷(覆蓋預設)
+
+  grantedById String?
+  grantedBy   User?    @relation("PermissionGranter", fields: [grantedById], references: [id], onDelete: SetNull)
+  grantedAt   DateTime @default(now())
+  expiresAt   DateTime? // 可選：權限到期時間
+  reason      String?   // 授予/撤銷原因
+
+  @@unique([userId, permission])
+  @@index([userId])
+  @@index([permission])
+  @@index([expiresAt])
+}
+
+model PermissionRequest {
+  id          String   @id @default(cuid())
+  requesterId String
+  requester   User     @relation("PermissionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  permission  String   // 申請的權限
+  reason      String   // 申請原因
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+
+  reviewerId  String?
+  reviewer    User?    @relation("PermissionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  reviewedAt  DateTime?
+  reviewNote  String?  // 審核備註
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([requesterId, status])
+  @@index([status])
+  @@index([reviewerId])
 }

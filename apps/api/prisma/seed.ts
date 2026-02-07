@@ -7,6 +7,9 @@ async function main() {
   console.log('🌱 Starting seed...');
 
   // Clear existing data (in reverse order of dependencies)
+  // Permission
+  await prisma.permissionRequest.deleteMany();
+  await prisma.userPermission.deleteMany();
   // Finance
   await prisma.costSnapshot.deleteMany();
   await prisma.revenueEntry.deleteMany();
@@ -67,6 +70,7 @@ async function main() {
       email: 'admin@clinic.local',
       name: '系統管理員',
       role: 'ADMIN',
+      position: 'ADMIN',
       passwordHash: hashedPassword,
     },
   });
@@ -74,8 +78,9 @@ async function main() {
   const supervisor = await prisma.user.create({
     data: {
       email: 'supervisor@clinic.local',
-      name: '王主管',
+      name: '王經理',
       role: 'SUPERVISOR',
+      position: 'MANAGER',
       passwordHash: hashedPassword,
     },
   });
@@ -85,6 +90,7 @@ async function main() {
       email: 'staff1@clinic.local',
       name: '李護理師',
       role: 'STAFF',
+      position: 'NURSE',
       passwordHash: hashedPassword,
     },
   });
@@ -94,6 +100,38 @@ async function main() {
       email: 'staff2@clinic.local',
       name: '陳護理師',
       role: 'STAFF',
+      position: 'NURSE',
+      passwordHash: hashedPassword,
+    },
+  });
+
+  // 新增更多測試使用者以涵蓋不同職位
+  const doctor = await prisma.user.create({
+    data: {
+      email: 'doctor@clinic.local',
+      name: '林醫師',
+      role: 'STAFF',
+      position: 'DOCTOR',
+      passwordHash: hashedPassword,
+    },
+  });
+
+  const therapist = await prisma.user.create({
+    data: {
+      email: 'therapist@clinic.local',
+      name: '張運醫老師',
+      role: 'STAFF',
+      position: 'SPORTS_THERAPIST',
+      passwordHash: hashedPassword,
+    },
+  });
+
+  const receptionist = await prisma.user.create({
+    data: {
+      email: 'receptionist@clinic.local',
+      name: '周櫃檯',
+      role: 'STAFF',
+      position: 'RECEPTIONIST',
       passwordHash: hashedPassword,
     },
   });
@@ -803,10 +841,13 @@ async function main() {
 
   console.log('✅ Seed completed successfully!');
   console.log('\n📧 Test accounts:');
-  console.log('   admin@clinic.local / password123 (ADMIN)');
-  console.log('   supervisor@clinic.local / password123 (SUPERVISOR)');
-  console.log('   staff1@clinic.local / password123 (STAFF)');
-  console.log('   staff2@clinic.local / password123 (STAFF)');
+  console.log('   admin@clinic.local / password123 (管理者)');
+  console.log('   supervisor@clinic.local / password123 (經理)');
+  console.log('   staff1@clinic.local / password123 (護理師)');
+  console.log('   staff2@clinic.local / password123 (護理師)');
+  console.log('   doctor@clinic.local / password123 (醫師)');
+  console.log('   therapist@clinic.local / password123 (運醫老師)');
+  console.log('   receptionist@clinic.local / password123 (櫃檯)');
 }
 
 main()

@@ -19,6 +19,7 @@ import { ProcurementModule } from "./procurement/procurement.module";
 import { QualityModule } from "./quality/quality.module";
 import { DocumentModule } from "./document/document.module";
 import { FinanceModule } from "./finance/finance.module";
+import { PermissionsModule } from "./permissions/permissions.module";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { HealthController } from "./health.controller";
 
@@ -94,6 +95,7 @@ import { HealthController } from "./health.controller";
     QualityModule,
     DocumentModule,
     FinanceModule,
+    PermissionsModule,
   ],
   controllers: [HealthController],
   providers: [
