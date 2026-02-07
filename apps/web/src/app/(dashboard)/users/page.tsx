@@ -459,8 +459,8 @@ export default function UsersPage() {
                               <Checkbox
                                 id={permission}
                                 checked={isChecked}
-                                onCheckedChange={(checked) =>
-                                  handlePermissionChange(permission, checked as boolean)
+                                onChange={(e) =>
+                                  handlePermissionChange(permission, e.target.checked)
                                 }
                                 disabled={isSaving}
                               />
