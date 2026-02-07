@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  ConflictException,
   Logger,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
@@ -27,6 +28,7 @@ import {
   UpdateChecklistDto,
   CreateSubTaskDto,
 } from "./dto/task-enhanced.dto";
+import { BatchUpdateDto } from "./dto/batch-update.dto";
 
 @Injectable()
 export class HandoverService {
@@ -304,7 +306,18 @@ export class HandoverService {
       updateData.parentId = dto.parentId;
     }
 
-    return this.prisma.handover.update({
+    // Optimistic locking: check version if provided
+    if (dto.version !== undefined) {
+      if (dto.version !== (handover as any).version) {
+        throw new ConflictException("此交班已被其他人修改，請重新整理後再試。");
+      }
+      updateData.version = dto.version + 1;
+    } else {
+      // Increment version even if not provided for consistency
+      updateData.version = ((handover as any).version || 0) + 1;
+    }
+
+    const updated = await this.prisma.handover.update({
       where: { id },
       data: updateData,
       include: {
@@ -316,6 +329,20 @@ export class HandoverService {
         },
       },
     });
+
+    // Record audit log for update
+    await this.auditService.create({
+      action: "HANDOVER_UPDATE",
+      userId: user.id,
+      targetId: id,
+      targetType: "HANDOVER",
+      metadata: {
+        title: handover.title,
+        changes: Object.keys(updateData).filter((k) => k !== "version"),
+      },
+    });
+
+    return updated;
   }
 
   async delete(id: string, userId: string) {
@@ -334,6 +361,68 @@ export class HandoverService {
     });
 
     return { success: true };
+  }
+
+  async batchUpdate(dto: BatchUpdateDto, user: { id: string; role: string }) {
+    const isSupervisorOrAdmin = [Role.SUPERVISOR, Role.ADMIN].includes(
+      user.role as Role,
+    );
+
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException("只有主管或管理員可以進行批量更新");
+    }
+
+    const results: Array<{ id: string; success: boolean; error?: string }> = [];
+
+    for (const item of dto.items) {
+      try {
+        const updateData: any = {};
+
+        if (item.status !== undefined) {
+          updateData.status = item.status;
+          if (item.status === HandoverStatus.COMPLETED) {
+            updateData.completedAt = new Date();
+          }
+        }
+        if (item.priority !== undefined) {
+          updateData.priority = item.priority;
+        }
+        if (item.assigneeId !== undefined) {
+          updateData.assigneeId = item.assigneeId;
+        }
+
+        await this.prisma.handover.update({
+          where: { id: item.id },
+          data: updateData,
+        });
+
+        results.push({ id: item.id, success: true });
+      } catch (error) {
+        results.push({
+          id: item.id,
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+
+    // Record audit log for batch update
+    await this.auditService.create({
+      action: "HANDOVER_BATCH_UPDATE",
+      userId: user.id,
+      targetType: "HANDOVER",
+      metadata: {
+        updatedIds: results.filter((r) => r.success).map((r) => r.id),
+        failedIds: results.filter((r) => !r.success).map((r) => r.id),
+      },
+    });
+
+    return {
+      total: dto.items.length,
+      success: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
+    };
   }
 
   async addComment(id: string, content: string, userId: string) {
@@ -359,14 +448,16 @@ export class HandoverService {
       notifyUsers.add(handover.assigneeId);
     }
 
-    for (const targetUserId of notifyUsers) {
-      await this.notificationsService.create({
-        userId: targetUserId,
-        type: NotificationType.HANDOVER_COMMENTED,
-        title: "交班註記",
-        message: `${comment.author.name} 在交班事項中新增了註記`,
-        metadata: { handoverId: id, commentId: comment.id },
-      });
+    if (notifyUsers.size > 0) {
+      await this.notificationsService.createMany(
+        Array.from(notifyUsers).map((targetUserId) => ({
+          userId: targetUserId,
+          type: NotificationType.HANDOVER_COMMENTED,
+          title: "交班註記",
+          message: `${comment.author.name} 在交班事項中新增了註記`,
+          metadata: { handoverId: id, commentId: comment.id },
+        })),
+      );
     }
 
     return comment;

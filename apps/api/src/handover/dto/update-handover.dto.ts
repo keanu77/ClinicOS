@@ -5,10 +5,15 @@ import {
   IsDateString,
   MinLength,
   IsNumber,
+  IsInt,
 } from "class-validator";
 import { HandoverStatus, HandoverPriority } from "../../shared";
 
 export class UpdateHandoverDto {
+  @IsOptional()
+  @IsInt()
+  version?: number;
+
   @IsOptional()
   @IsString()
   @MinLength(1)

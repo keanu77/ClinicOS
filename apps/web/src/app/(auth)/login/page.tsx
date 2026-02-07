@@ -97,18 +97,20 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>測試帳號：</p>
-            <p className="text-xs mt-1">
-              admin@clinic.local / password123 (管理員)
-            </p>
-            <p className="text-xs">
-              supervisor@clinic.local / password123 (主管)
-            </p>
-            <p className="text-xs">
-              staff1@clinic.local / password123 (員工)
-            </p>
-          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              <p>測試帳號：</p>
+              <p className="text-xs mt-1">
+                admin@clinic.local / password123 (管理員)
+              </p>
+              <p className="text-xs">
+                supervisor@clinic.local / password123 (主管)
+              </p>
+              <p className="text-xs">
+                staff1@clinic.local / password123 (員工)
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

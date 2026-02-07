@@ -21,6 +21,7 @@ import {
   UpdateChecklistDto,
   CreateSubTaskDto,
 } from "./dto/task-enhanced.dto";
+import { BatchUpdateDto } from "./dto/batch-update.dto";
 import { Roles } from "../common/decorators/roles.decorator";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
@@ -57,6 +58,15 @@ export class HandoverController {
   @Post()
   create(@Body() dto: CreateHandoverDto, @CurrentUser("id") userId: string) {
     return this.handoverService.create(dto, userId);
+  }
+
+  @Patch("batch")
+  @Roles(Role.SUPERVISOR)
+  batchUpdate(
+    @Body() dto: BatchUpdateDto,
+    @CurrentUser() user: { id: string; role: string },
+  ) {
+    return this.handoverService.batchUpdate(dto, user);
   }
 
   @Patch(":id")

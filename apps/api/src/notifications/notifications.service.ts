@@ -49,6 +49,20 @@ export class NotificationsService {
     });
   }
 
+  async createMany(notifications: CreateNotificationDto[]) {
+    if (notifications.length === 0) return { count: 0 };
+
+    return this.prisma.notification.createMany({
+      data: notifications.map((dto) => ({
+        type: dto.type,
+        title: dto.title,
+        message: dto.message,
+        userId: dto.userId,
+        metadata: dto.metadata ? JSON.stringify(dto.metadata) : null,
+      })),
+    });
+  }
+
   async markAsRead(id: string, userId: string) {
     return this.prisma.notification.updateMany({
       where: { id, userId },

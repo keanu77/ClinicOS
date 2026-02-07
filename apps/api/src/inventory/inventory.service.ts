@@ -343,20 +343,21 @@ export class InventoryService {
     quantity: number;
     minStock: number;
   }) {
-    // Get all admins
     const admins = await this.prisma.user.findMany({
       where: { role: Role.ADMIN, isActive: true },
       select: { id: true },
     });
 
-    for (const admin of admins) {
-      await this.notificationsService.create({
+    if (admins.length === 0) return;
+
+    await this.notificationsService.createMany(
+      admins.map((admin) => ({
         userId: admin.id,
         type: NotificationType.INVENTORY_LOW_STOCK,
         title: "低庫存警示",
         message: `${item.name} 庫存低於安全存量，目前：${item.quantity}，最低：${item.minStock}`,
         metadata: { itemId: item.id },
-      });
-    }
+      })),
+    );
   }
 }

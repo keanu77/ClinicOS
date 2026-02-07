@@ -19,6 +19,7 @@ import {
   HandoverPriority,
   HandoverPriorityLabels,
 } from '@/shared';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 interface Handover {
   id: string;
@@ -127,9 +128,7 @@ export default function HandoverListPage() {
 
       {/* Handover List */}
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
-        </div>
+        <ListSkeleton items={5} />
       ) : error ? (
         <ErrorState error={error} onRetry={fetchData} title="載入失敗" />
       ) : data?.data && data.data.length > 0 ? (

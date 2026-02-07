@@ -23,6 +23,7 @@ import {
   ShiftTypeLabels,
   ShiftType,
 } from '@/shared';
+import { DashboardSkeleton } from '@/components/ui/skeleton';
 
 interface DashboardData {
   todayShifts: Array<{
@@ -73,11 +74,7 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">載入中...</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

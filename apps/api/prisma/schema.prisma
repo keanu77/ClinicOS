@@ -80,6 +80,7 @@ model Handover {
   status      String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, CANCELLED, BLOCKED
   priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   dueDate     DateTime?
+  version     Int       @default(1) // Optimistic locking version
 
   createdById String
   createdBy   User      @relation("CreatedHandovers", fields: [createdById], references: [id], onDelete: Restrict)

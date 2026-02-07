@@ -4,16 +4,24 @@ import { useEffect, useState } from 'react';
 import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { ChevronLeft, ChevronRight, Plus, Trash2, X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import {
   ShiftType,
   ShiftTypeLabels,
-  ShiftTypeColors,
 } from '@/shared';
+import { ScheduleSkeleton } from '@/components/ui/skeleton';
 
 interface User {
   id: string;
@@ -51,6 +59,10 @@ export default function SchedulingPage() {
     type: 'MORNING' as string,
     notes: '',
   });
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    shiftId: string | null;
+  }>({ open: false, shiftId: null });
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -122,11 +134,11 @@ export default function SchedulingPage() {
     setCurrentWeekStart(new Date(today.setDate(diff)));
   };
 
-  const handleDeleteShift = async (shiftId: string) => {
-    if (!confirm('確定要刪除此班次嗎？')) return;
+  const handleDeleteShift = async () => {
+    if (!deleteConfirm.shiftId) return;
 
     try {
-      await apiDelete(`/scheduling/shifts/${shiftId}`);
+      await apiDelete(`/scheduling/shifts/${deleteConfirm.shiftId}`);
       toast({ title: '班次已刪除' });
       await fetchSchedule();
     } catch (error) {
@@ -134,7 +146,13 @@ export default function SchedulingPage() {
         title: '刪除失敗',
         variant: 'destructive',
       });
+    } finally {
+      setDeleteConfirm({ open: false, shiftId: null });
     }
+  };
+
+  const openDeleteConfirm = (shiftId: string) => {
+    setDeleteConfirm({ open: true, shiftId });
   };
 
   const formatDateHeader = (dateStr: string) => {
@@ -176,70 +194,81 @@ export default function SchedulingPage() {
         </Button>
       </div>
 
-      {/* Add Shift Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增班次</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowAddModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>選擇人員 *</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={shiftForm.userId}
-                  onChange={(e) => setShiftForm({ ...shiftForm, userId: e.target.value })}
-                >
-                  <option value="">請選擇人員</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>{user.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label>日期 *</Label>
-                <Input
-                  type="date"
-                  value={shiftForm.date}
-                  onChange={(e) => setShiftForm({ ...shiftForm, date: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>班別 *</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={shiftForm.type}
-                  onChange={(e) => setShiftForm({ ...shiftForm, type: e.target.value })}
-                >
-                  {Object.values(ShiftType).map((type) => (
-                    <option key={type} value={type}>{ShiftTypeLabels[type]}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label>備註</Label>
-                <Input
-                  value={shiftForm.notes}
-                  onChange={(e) => setShiftForm({ ...shiftForm, notes: e.target.value })}
-                  placeholder="選填"
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleAddShift}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Add Shift Dialog */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增班次</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="shift-user">選擇人員 *</Label>
+              <select
+                id="shift-user"
+                className="w-full mt-1 p-2 border rounded-md"
+                value={shiftForm.userId}
+                onChange={(e) => setShiftForm({ ...shiftForm, userId: e.target.value })}
+              >
+                <option value="">請選擇人員</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="shift-date">日期 *</Label>
+              <Input
+                id="shift-date"
+                type="date"
+                value={shiftForm.date}
+                onChange={(e) => setShiftForm({ ...shiftForm, date: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="shift-type">班別 *</Label>
+              <select
+                id="shift-type"
+                className="w-full mt-1 p-2 border rounded-md"
+                value={shiftForm.type}
+                onChange={(e) => setShiftForm({ ...shiftForm, type: e.target.value })}
+              >
+                {Object.values(ShiftType).map((type) => (
+                  <option key={type} value={type}>{ShiftTypeLabels[type]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="shift-notes">備註</Label>
+              <Input
+                id="shift-notes"
+                value={shiftForm.notes}
+                onChange={(e) => setShiftForm({ ...shiftForm, notes: e.target.value })}
+                placeholder="選填"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowAddModal(false)}>
+              取消
+            </Button>
+            <Button onClick={handleAddShift}>
+              新增
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
+        title="確定要刪除此班次嗎？"
+        description="此操作無法復原。"
+        confirmText="刪除"
+        cancelText="取消"
+        variant="destructive"
+        onConfirm={handleDeleteShift}
+      />
 
       {/* Week Navigation */}
       <Card>
@@ -271,9 +300,11 @@ export default function SchedulingPage() {
 
       {/* Schedule Grid */}
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
-        </div>
+        <Card>
+          <CardContent className="p-6">
+            <ScheduleSkeleton />
+          </CardContent>
+        </Card>
       ) : schedule ? (
         <Card>
           <CardContent className="p-0">
@@ -337,7 +368,8 @@ export default function SchedulingPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                    onClick={() => handleDeleteShift(shift.id)}
+                                    onClick={() => openDeleteConfirm(shift.id)}
+                                    aria-label="刪除班次"
                                   >
                                     <Trash2 className="h-3 w-3 text-red-500" />
                                   </Button>

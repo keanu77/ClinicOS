@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Download, AlertTriangle, Package } from 'lucide-react';
 import { Role } from '@/shared';
+import { CardSkeleton } from '@/components/ui/skeleton';
 
 interface InventoryItem {
   id: string;
@@ -114,8 +115,10 @@ export default function InventoryListPage() {
 
       {/* Inventory List */}
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       ) : data?.data && data.data.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
