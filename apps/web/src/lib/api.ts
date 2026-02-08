@@ -35,14 +35,35 @@ function getErrorMessage(status: number, errorCode?: string, fallback?: string):
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+  token?: string; // 可選的 token，避免重複調用 getSession
+}
+
+// 緩存 session 以避免重複調用
+let sessionCache: { session: Awaited<ReturnType<typeof getSession>>; timestamp: number } | null = null;
+const SESSION_CACHE_TTL = 5000; // 5 秒緩存
+
+async function getCachedSession() {
+  const now = Date.now();
+  if (sessionCache && now - sessionCache.timestamp < SESSION_CACHE_TTL) {
+    return sessionCache.session;
+  }
+  const session = await getSession();
+  sessionCache = { session, timestamp: now };
+  return session;
 }
 
 export async function api<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const session = await getSession();
-  const { params, ...fetchOptions } = options;
+  const { params, token, ...fetchOptions } = options;
+
+  // 優先使用傳入的 token，否則從緩存的 session 獲取
+  let accessToken = token;
+  if (!accessToken) {
+    const session = await getCachedSession();
+    accessToken = session?.accessToken;
+  }
 
   let url = `${API_URL}/api${endpoint}`;
 
@@ -64,9 +85,9 @@ export async function api<T>(
     ...(options.headers || {}),
   };
 
-  if (session?.accessToken) {
+  if (accessToken) {
     (headers as Record<string, string>)['Authorization'] =
-      `Bearer ${session.accessToken}`;
+      `Bearer ${accessToken}`;
   }
 
   const response = await fetch(url, {

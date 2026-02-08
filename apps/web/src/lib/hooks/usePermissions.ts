@@ -1,8 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useEffect, useState, useCallback } from 'react';
-import { apiGet } from '../api';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { api } from '../api';
 import { Permission, Position, DefaultPermissionsByPosition } from '@/shared';
 
 interface UserPermissionDetails {
@@ -24,6 +24,8 @@ export function usePermissions() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
+  const lastTokenRef = useRef<string | null>(null);
 
   // 獲取使用者權限
   const fetchPermissions = useCallback(async () => {
@@ -32,10 +34,22 @@ export function usePermissions() {
       return;
     }
 
+    // 防止重複請求：如果已經用同一個 token 請求過就跳過
+    if (hasFetchedRef.current && lastTokenRef.current === session.accessToken) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const data = await apiGet<UserPermissionDetails>('/permissions/my');
+      hasFetchedRef.current = true;
+      lastTokenRef.current = session.accessToken;
+
+      // 直接傳入 token 避免 api 內部再次調用 getSession
+      const data = await api<UserPermissionDetails>('/permissions/my', {
+        method: 'GET',
+        token: session.accessToken,
+      });
       setPermissions(data.effectivePermissions);
     } catch (err) {
       console.error('Failed to fetch permissions:', err);
@@ -49,7 +63,7 @@ export function usePermissions() {
     } finally {
       setLoading(false);
     }
-  }, [session, status]);
+  }, [session?.accessToken, session?.user?.position, status]);
 
   useEffect(() => {
     fetchPermissions();
@@ -81,6 +95,7 @@ export function usePermissions() {
 
   // 重新載入權限
   const refetch = useCallback(() => {
+    hasFetchedRef.current = false; // 重置以允許重新請求
     return fetchPermissions();
   }, [fetchPermissions]);
 
