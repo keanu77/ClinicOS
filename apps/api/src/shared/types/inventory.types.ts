@@ -4,7 +4,7 @@ import { UserWithoutPassword } from "./user.types";
 export interface InventoryItem {
   id: string;
   name: string;
-  sku: string;
+  category?: string;
   description?: string | null;
   unit: string;
   quantity: number;
@@ -32,7 +32,7 @@ export interface InventoryTxn {
 
 export interface CreateInventoryItemDto {
   name: string;
-  sku: string;
+  category?: string;
   description?: string;
   unit?: string;
   quantity?: number;
@@ -79,7 +79,6 @@ export interface InventoryListResponse {
 export interface LowStockItem {
   id: string;
   name: string;
-  sku: string;
   quantity: number;
   minStock: number;
   shortage: number;

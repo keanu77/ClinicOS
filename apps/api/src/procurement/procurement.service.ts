@@ -140,7 +140,7 @@ export class ProcurementService {
         items: {
           include: {
             inventoryItem: {
-              select: { id: true, name: true, sku: true },
+              select: { id: true, name: true },
             },
           },
         },
@@ -299,7 +299,7 @@ export class ProcurementService {
         items: {
           include: {
             inventoryItem: {
-              select: { id: true, name: true, sku: true },
+              select: { id: true, name: true },
             },
           },
         },

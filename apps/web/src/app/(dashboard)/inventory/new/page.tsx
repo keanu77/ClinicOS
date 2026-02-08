@@ -14,7 +14,6 @@ import { InventoryCategory, InventoryCategoryLabels } from '@/shared';
 
 interface CreateItemForm {
   name: string;
-  sku: string;
   description: string;
   category: string;
   unit: string;
@@ -31,7 +30,6 @@ export default function NewInventoryItemPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<CreateItemForm>({
     name: '',
-    sku: '',
     description: '',
     category: InventoryCategory.OTHER,
     unit: '個',
@@ -45,10 +43,10 @@ export default function NewInventoryItemPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.name.trim() || !form.sku.trim()) {
+    if (!form.name.trim()) {
       toast({
         title: '請填寫必填欄位',
-        description: '品項名稱和 SKU 為必填',
+        description: '品項名稱為必填',
         variant: 'destructive',
       });
       return;
@@ -58,7 +56,6 @@ export default function NewInventoryItemPage() {
     try {
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
-        sku: form.sku.trim(),
         category: form.category,
         unit: form.unit || '個',
         quantity: form.quantity,
@@ -110,27 +107,15 @@ export default function NewInventoryItemPage() {
             <CardTitle>品項資訊</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">品項名稱 *</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="例：生理食鹽水"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="sku">SKU 編號 *</Label>
-                <Input
-                  id="sku"
-                  value={form.sku}
-                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                  placeholder="例：MED-001"
-                  required
-                />
-              </div>
+            <div>
+              <Label htmlFor="name">品項名稱 *</Label>
+              <Input
+                id="name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="例：生理食鹽水"
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -19,7 +19,6 @@ import { CardSkeleton } from '@/components/ui/skeleton';
 interface InventoryItem {
   id: string;
   name: string;
-  sku: string;
   category: string;
   unit: string;
   quantity: number;
@@ -103,7 +102,7 @@ export default function InventoryListPage() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="搜尋品項名稱、SKU..."
+                placeholder="搜尋品項名稱..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -154,21 +153,16 @@ export default function InventoryListPage() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {item.sku}
-                        </span>
-                      </div>
-                      <div className="flex gap-1">
                         <Badge variant="outline" className="text-xs">
                           {InventoryCategoryLabels[item.category as InventoryCategory] || '其他'}
                         </Badge>
-                        {isLowStock && (
-                          <Badge variant="warning">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            低庫存
-                          </Badge>
-                        )}
                       </div>
+                      {isLowStock && (
+                        <Badge variant="warning">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          低庫存
+                        </Badge>
+                      )}
                     </div>
                     <h3 className="font-semibold text-lg">{item.name}</h3>
                     <div className="mt-3 flex items-baseline gap-2">

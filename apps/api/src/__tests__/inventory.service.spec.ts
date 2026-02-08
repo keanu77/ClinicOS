@@ -3,7 +3,7 @@ import { NotFoundException, BadRequestException } from "@nestjs/common";
 import { InventoryService } from "../inventory/inventory.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
-import { InventoryTxnType } from "../shared";
+import { InventoryTxnType, InventoryCategory } from "../shared";
 
 describe("InventoryService", () => {
   let service: InventoryService;
@@ -57,7 +57,7 @@ describe("InventoryService", () => {
       const mockItem = {
         id: "item-1",
         name: "Test Item",
-        sku: "TEST-001",
+        category: InventoryCategory.OTHER,
         quantity: 100,
         minStock: 10,
         isActive: true,
@@ -88,12 +88,11 @@ describe("InventoryService", () => {
     it("should create a new item successfully", async () => {
       const createDto = {
         name: "New Item",
-        sku: "NEW-001",
+        category: InventoryCategory.OTHER,
         quantity: 50,
         minStock: 10,
       };
 
-      mockPrismaService.inventoryItem.findUnique.mockResolvedValue(null);
       mockPrismaService.inventoryItem.create.mockResolvedValue({
         id: "new-item-1",
         ...createDto,
@@ -104,22 +103,6 @@ describe("InventoryService", () => {
 
       expect(result.name).toBe("New Item");
       expect(mockPrismaService.inventoryItem.create).toHaveBeenCalled();
-    });
-
-    it("should throw BadRequestException when SKU already exists", async () => {
-      const createDto = {
-        name: "New Item",
-        sku: "EXISTING-001",
-      };
-
-      mockPrismaService.inventoryItem.findUnique.mockResolvedValue({
-        id: "existing-1",
-        sku: "EXISTING-001",
-      });
-
-      await expect(service.createItem(createDto)).rejects.toThrow(
-        BadRequestException,
-      );
     });
   });
 

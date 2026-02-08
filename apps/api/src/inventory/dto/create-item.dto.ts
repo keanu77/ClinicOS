@@ -14,10 +14,6 @@ export class CreateItemDto {
   @MinLength(1)
   name: string;
 
-  @IsString()
-  @MinLength(1)
-  sku: string;
-
   @IsOptional()
   @IsString()
   description?: string;

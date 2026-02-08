@@ -36,7 +36,6 @@ import {
 interface InventoryItem {
   id: string;
   name: string;
-  sku: string;
   description?: string;
   category: string;
   unit: string;
@@ -206,7 +205,6 @@ export default function InventoryDetailPage() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm text-muted-foreground">{item.sku}</span>
             <Badge variant="outline">
               {InventoryCategoryLabels[item.category as InventoryCategory] || '其他'}
             </Badge>

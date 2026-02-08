@@ -533,7 +533,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '生理食鹽水',
-        sku: 'MED-001',
+        category: 'MEDICAL_SUPPLIES',
         unit: '瓶',
         quantity: 100,
         minStock: 20,
@@ -543,7 +543,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '酒精棉片',
-        sku: 'MED-002',
+        category: 'MEDICAL_SUPPLIES',
         unit: '盒',
         quantity: 50,
         minStock: 10,
@@ -553,7 +553,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '注射針筒 5ml',
-        sku: 'MED-003',
+        category: 'INJECTION',
         unit: '支',
         quantity: 200,
         minStock: 50,
@@ -563,7 +563,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '紗布',
-        sku: 'MED-004',
+        category: 'MEDICAL_SUPPLIES',
         unit: '包',
         quantity: 80,
         minStock: 15,
@@ -573,7 +573,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '手套 (M)',
-        sku: 'MED-005',
+        category: 'MEDICAL_SUPPLIES',
         unit: '盒',
         quantity: 30,
         minStock: 10,
@@ -583,7 +583,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '手套 (L)',
-        sku: 'MED-006',
+        category: 'MEDICAL_SUPPLIES',
         unit: '盒',
         quantity: 25,
         minStock: 10,
@@ -593,7 +593,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '繃帶',
-        sku: 'MED-007',
+        category: 'MEDICAL_SUPPLIES',
         unit: '卷',
         quantity: 60,
         minStock: 20,
@@ -603,7 +603,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '優碘',
-        sku: 'MED-008',
+        category: 'MEDICAL_SUPPLIES',
         unit: '瓶',
         quantity: 15,
         minStock: 5,
@@ -613,7 +613,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '體溫計套',
-        sku: 'MED-009',
+        category: 'OTHER',
         unit: '盒',
         quantity: 8,
         minStock: 10,
@@ -623,7 +623,7 @@ async function main() {
     prisma.inventoryItem.create({
       data: {
         name: '口罩',
-        sku: 'MED-010',
+        category: 'MEDICAL_SUPPLIES',
         unit: '盒',
         quantity: 5,
         minStock: 20,

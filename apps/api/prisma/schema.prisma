@@ -214,7 +214,6 @@ model Shift {
 model InventoryItem {
   id           String    @id @default(cuid())
   name         String
-  sku          String    @unique
   description  String?
   category     String    @default("OTHER")  // MEDICAL_SUPPLIES, INJECTION, OTHER
   unit         String    @default("個")
@@ -238,7 +237,6 @@ model InventoryItem {
   purchaseRequestItems PurchaseRequestItem[]
   purchaseOrderItems   PurchaseOrderItem[]
 
-  @@index([sku])
   @@index([name])
   @@index([category])
   @@index([quantity, minStock])

@@ -40,7 +40,6 @@ export class InventoryService {
     if (search) {
       where.OR = [
         { name: { contains: search } },
-        { sku: { contains: search } },
         { location: { contains: search } },
       ];
     }
@@ -72,7 +71,7 @@ export class InventoryService {
     let searchCondition = "";
     if (search) {
       const escapedSearch = search.replace(/'/g, "''");
-      searchCondition = `AND (name LIKE '%${escapedSearch}%' OR sku LIKE '%${escapedSearch}%' OR location LIKE '%${escapedSearch}%')`;
+      searchCondition = `AND (name LIKE '%${escapedSearch}%' OR location LIKE '%${escapedSearch}%')`;
     }
 
     // 分類條件
@@ -88,7 +87,6 @@ export class InventoryService {
       Array<{
         id: string;
         name: string;
-        sku: string;
         description: string | null;
         unit: string;
         quantity: number;
@@ -150,20 +148,11 @@ export class InventoryService {
   }
 
   async createItem(dto: CreateItemDto) {
-    // Check SKU uniqueness
-    const existing = await this.prisma.inventoryItem.findUnique({
-      where: { sku: dto.sku },
-    });
-
-    if (existing) {
-      throw new BadRequestException("SKU already exists");
-    }
-
     return this.prisma.inventoryItem.create({
       data: {
         name: dto.name,
-        sku: dto.sku,
         description: dto.description,
+        category: dto.category || "OTHER",
         unit: dto.unit || "個",
         quantity: dto.quantity || 0,
         minStock: dto.minStock || 0,
@@ -261,21 +250,19 @@ export class InventoryService {
       Array<{
         id: string;
         name: string;
-        sku: string;
         quantity: number;
         minStock: number;
       }>
     >`
-      SELECT id, name, sku, quantity, minStock
+      SELECT id, name, quantity, "minStock"
       FROM "InventoryItem"
-      WHERE "isActive" = true AND quantity <= minStock
+      WHERE "isActive" = true AND quantity <= "minStock"
       ORDER BY quantity ASC
     `;
 
     return items.map((item) => ({
       id: item.id,
       name: item.name,
-      sku: item.sku,
       quantity: item.quantity,
       minStock: item.minStock,
       shortage: item.minStock - item.quantity,
@@ -327,7 +314,7 @@ export class InventoryService {
 
     const headers = [
       "品項名稱",
-      "SKU",
+      "分類",
       "單位",
       "庫存量",
       "最低庫存",
@@ -337,7 +324,7 @@ export class InventoryService {
     ];
     const rows = items.map((item) => [
       item.name,
-      item.sku,
+      item.category || "其他",
       item.unit,
       item.quantity.toString(),
       item.minStock.toString(),

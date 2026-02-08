@@ -32,7 +32,6 @@ interface PurchaseRequestItem {
   inventoryItem?: {
     id: string;
     name: string;
-    sku: string;
   };
 }
 
@@ -265,11 +264,6 @@ export default function PurchaseRequestDetailPage() {
                     <div className="font-medium">
                       {item.inventoryItem?.name || item.description || `品項 ${index + 1}`}
                     </div>
-                    {item.inventoryItem?.sku && (
-                      <div className="text-sm text-muted-foreground">
-                        {item.inventoryItem.sku}
-                      </div>
-                    )}
                   </div>
                   <div className="text-right">
                     <div className="font-medium">
