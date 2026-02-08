@@ -781,7 +781,7 @@ export class HandoverService {
 
     if (completedHandovers.length === 0) {
       this.logger.log(`${year}年${month}月 沒有需要封存的任務`);
-      return { archivedCount: 0, message: '沒有需要封存的任務' };
+      return { archivedCount: 0, message: "沒有需要封存的任務" };
     }
 
     // 使用 transaction 確保資料一致性
@@ -860,7 +860,7 @@ export class HandoverService {
    */
   async getArchives() {
     return this.prisma.handoverArchive.findMany({
-      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      orderBy: [{ year: "desc" }, { month: "desc" }],
       select: {
         id: true,
         year: true,
@@ -880,7 +880,7 @@ export class HandoverService {
     const [items, total] = await Promise.all([
       this.prisma.archivedHandover.findMany({
         where: { archiveId },
-        orderBy: { completedAt: 'desc' },
+        orderBy: { completedAt: "desc" },
         skip,
         take: limit,
       }),
@@ -905,7 +905,7 @@ export class HandoverService {
       where: { year_month: { year, month } },
       include: {
         items: {
-          orderBy: { completedAt: 'desc' },
+          orderBy: { completedAt: "desc" },
           take: 100,
         },
       },

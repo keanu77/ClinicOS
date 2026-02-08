@@ -79,9 +79,7 @@ export class HandoverController {
 
   @Post("archives/run")
   @Roles(Role.ADMIN)
-  archiveCompletedHandovers(
-    @Body() dto: { year: number; month: number },
-  ) {
+  archiveCompletedHandovers(@Body() dto: { year: number; month: number }) {
     return this.handoverService.archiveCompletedHandovers(dto.year, dto.month);
   }
 

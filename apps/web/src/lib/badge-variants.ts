@@ -36,6 +36,8 @@ export function getStatusBadgeVariant(status: string): BadgeVariant {
       return 'success';
     case 'IN_PROGRESS':
       return 'default';
+    case 'BLOCKED':
+      return 'danger';
     case 'CANCELLED':
       return 'secondary';
     default:
