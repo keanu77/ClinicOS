@@ -57,6 +57,8 @@ export default function HandoverDetailPage() {
     title: '',
     content: '',
     priority: '',
+    dueDate: '',
+    status: '',
   });
 
   const fetchHandover = async () => {
@@ -67,6 +69,8 @@ export default function HandoverDetailPage() {
         title: result.title,
         content: result.content,
         priority: result.priority,
+        dueDate: result.dueDate ? result.dueDate.slice(0, 16) : '',
+        status: result.status,
       });
     } catch (error) {
       console.error('Failed to load handover:', error);
@@ -168,7 +172,19 @@ export default function HandoverDetailPage() {
 
   const handleSaveEdit = async () => {
     try {
-      await apiPatch(`/handovers/${params.id}`, editForm);
+      const updateData: Record<string, unknown> = {
+        title: editForm.title,
+        content: editForm.content,
+        priority: editForm.priority,
+        status: editForm.status,
+      };
+      // 處理截止日期：空字串表示清除，否則傳送日期
+      if (editForm.dueDate) {
+        updateData.dueDate = new Date(editForm.dueDate).toISOString();
+      } else {
+        updateData.dueDate = null;
+      }
+      await apiPatch(`/handovers/${params.id}`, updateData);
       await fetchHandover();
       setIsEditing(false);
       toast({ title: '已更新' });
@@ -205,11 +221,11 @@ export default function HandoverDetailPage() {
     session?.user?.role === Role.SUPERVISOR ||
     session?.user?.role === Role.ADMIN;
 
+  // 允許創建者或主管/管理員編輯（包括已完成的任務，可將狀態改回）
   const canEdit =
-    handover.status !== HandoverStatus.COMPLETED &&
-    (session?.user?.id === handover.createdBy.id ||
-      session?.user?.role === Role.SUPERVISOR ||
-      session?.user?.role === Role.ADMIN);
+    session?.user?.id === handover.createdBy.id ||
+    session?.user?.role === Role.SUPERVISOR ||
+    session?.user?.role === Role.ADMIN;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -264,18 +280,42 @@ export default function HandoverDetailPage() {
                   onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>優先級</Label>
+                  <select
+                    className="w-full mt-1 p-2 border rounded-md"
+                    value={editForm.priority}
+                    onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
+                  >
+                    <option value="LOW">低</option>
+                    <option value="MEDIUM">中</option>
+                    <option value="HIGH">高</option>
+                    <option value="URGENT">緊急</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>狀態</Label>
+                  <select
+                    className="w-full mt-1 p-2 border rounded-md"
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  >
+                    <option value="PENDING">待處理</option>
+                    <option value="IN_PROGRESS">處理中</option>
+                    <option value="BLOCKED">卡關</option>
+                    <option value="COMPLETED">已完成</option>
+                    <option value="CANCELLED">已取消</option>
+                  </select>
+                </div>
+              </div>
               <div>
-                <Label>優先級</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={editForm.priority}
-                  onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
-                >
-                  <option value="LOW">低</option>
-                  <option value="MEDIUM">中</option>
-                  <option value="HIGH">高</option>
-                  <option value="URGENT">緊急</option>
-                </select>
+                <Label>截止日期</Label>
+                <Input
+                  type="datetime-local"
+                  value={editForm.dueDate}
+                  onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
+                />
               </div>
               <div className="flex gap-2 pt-4">
                 <Button variant="outline" className="flex-1" onClick={() => setIsEditing(false)}>
