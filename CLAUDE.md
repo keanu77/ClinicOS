@@ -69,16 +69,19 @@ pnpm dev
 
 ## 測試帳號
 
+> ⚠️ **安全警告**: 以下為開發環境測試帳號，請在部署至生產環境前更改所有密碼！
+
 | Email | Password | 職位 |
 |-------|----------|------|
-| admin@clinic.local | password123 | 管理者 |
-| keanu.firefox@gmail.com | 9313412 | 管理者 |
-| supervisor@clinic.local | password123 | 經理 |
-| staff1@clinic.local | password123 | 護理師 |
-| staff2@clinic.local | password123 | 護理師 |
-| doctor@clinic.local | password123 | 醫師 |
-| therapist@clinic.local | password123 | 運醫老師 |
-| receptionist@clinic.local | password123 | 櫃檯 |
+| admin@clinic.local | [請在部署時更改] | 管理者 |
+| supervisor@clinic.local | [請在部署時更改] | 經理 |
+| staff1@clinic.local | [請在部署時更改] | 護理師 |
+| staff2@clinic.local | [請在部署時更改] | 護理師 |
+| doctor@clinic.local | [請在部署時更改] | 醫師 |
+| therapist@clinic.local | [請在部署時更改] | 運醫老師 |
+| receptionist@clinic.local | [請在部署時更改] | 櫃檯 |
+
+> 開發環境密碼請查看 `apps/api/prisma/seed.ts`
 
 ## API 端點
 

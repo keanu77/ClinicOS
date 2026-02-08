@@ -99,13 +99,15 @@ import { HealthController } from "./health.controller";
   ],
   controllers: [HealthController],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
+    // 注意：Guard 執行順序很重要
+    // ThrottlerGuard 應該先執行，避免在認證前消耗過多資源
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
     },
   ],
 })

@@ -67,51 +67,109 @@ export class InventoryService {
     const { search, category, isActive = true, page = 1, limit = 20 } = query;
     const offset = (page - 1) * limit;
 
-    // 建立搜尋條件
-    let searchCondition = "";
+    // 使用 Prisma 的安全查詢方式，避免 SQL 注入
+    // 建立動態條件
+    const conditions: any = {
+      isActive,
+    };
+
     if (search) {
-      const escapedSearch = search.replace(/'/g, "''");
-      searchCondition = `AND (name LIKE '%${escapedSearch}%' OR location LIKE '%${escapedSearch}%')`;
+      conditions.OR = [
+        { name: { contains: search } },
+        { location: { contains: search } },
+      ];
     }
 
-    // 分類條件
-    let categoryCondition = "";
     if (category) {
-      categoryCondition = `AND category = '${category}'`;
+      conditions.category = category;
     }
 
-    const activeCondition = isActive ? '"isActive" = true' : "1=1";
+    // 使用 Prisma 的 $queryRaw 搭配參數化查詢
+    // 由於 Prisma 不支援欄位間比較，使用原始 SQL 但透過標籤模板確保安全
+    const searchPattern = search ? `%${search}%` : null;
 
-    // 使用原始 SQL 在資料庫層面比較 quantity 和 minStock
-    const data = await this.prisma.$queryRawUnsafe<
-      Array<{
-        id: string;
-        name: string;
-        description: string | null;
-        unit: string;
-        quantity: number;
-        minStock: number;
-        maxStock: number | null;
-        location: string | null;
-        expiryDate: Date | null;
-        isActive: boolean;
-        vendorId: string | null;
-        unitPrice: number | null;
-        leadTimeDays: number | null;
-        createdAt: Date;
-        updatedAt: Date;
-      }>
-    >(
-      `SELECT * FROM "InventoryItem"
-       WHERE ${activeCondition} AND quantity <= "minStock" ${searchCondition} ${categoryCondition}
-       ORDER BY name ASC
-       LIMIT ${limit} OFFSET ${offset}`,
-    );
+    let data: Array<{
+      id: string;
+      name: string;
+      description: string | null;
+      category: string | null;
+      unit: string;
+      quantity: number;
+      minStock: number;
+      maxStock: number | null;
+      location: string | null;
+      expiryDate: Date | null;
+      isActive: boolean;
+      vendorId: string | null;
+      unitPrice: number | null;
+      leadTimeDays: number | null;
+      createdAt: Date;
+      updatedAt: Date;
+    }>;
 
-    const countResult = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
-      `SELECT COUNT(*) as count FROM "InventoryItem"
-       WHERE ${activeCondition} AND quantity <= "minStock" ${searchCondition} ${categoryCondition}`,
-    );
+    let countResult: [{ count: bigint }];
+
+    if (search && category) {
+      data = await this.prisma.$queryRaw`
+        SELECT * FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+          AND (name LIKE ${searchPattern} OR location LIKE ${searchPattern})
+          AND category = ${category}
+        ORDER BY name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await this.prisma.$queryRaw`
+        SELECT COUNT(*) as count FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+          AND (name LIKE ${searchPattern} OR location LIKE ${searchPattern})
+          AND category = ${category}
+      `;
+    } else if (search) {
+      data = await this.prisma.$queryRaw`
+        SELECT * FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+          AND (name LIKE ${searchPattern} OR location LIKE ${searchPattern})
+        ORDER BY name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await this.prisma.$queryRaw`
+        SELECT COUNT(*) as count FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+          AND (name LIKE ${searchPattern} OR location LIKE ${searchPattern})
+      `;
+    } else if (category) {
+      data = await this.prisma.$queryRaw`
+        SELECT * FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+          AND category = ${category}
+        ORDER BY name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await this.prisma.$queryRaw`
+        SELECT COUNT(*) as count FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+          AND category = ${category}
+      `;
+    } else {
+      data = await this.prisma.$queryRaw`
+        SELECT * FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+        ORDER BY name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      countResult = await this.prisma.$queryRaw`
+        SELECT COUNT(*) as count FROM "InventoryItem"
+        WHERE "isActive" = ${isActive}
+          AND quantity <= "minStock"
+      `;
+    }
 
     const total = Number(countResult[0].count);
 
@@ -322,14 +380,28 @@ export class InventoryService {
       "位置",
       "狀態",
     ];
+
+    // CSV 注入防護：轉義可能被 Excel 解釋為公式的字元
+    const escapeCsvValue = (value: string): string => {
+      // 如果值以危險字元開頭，添加單引號前綴
+      if (/^[=+\-@\t\r]/.test(value)) {
+        return `'${value}`;
+      }
+      // 如果值包含逗號或雙引號，需要用雙引號包裹並轉義內部雙引號
+      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
     const rows = items.map((item) => [
-      item.name,
-      item.category || "其他",
-      item.unit,
+      escapeCsvValue(item.name),
+      escapeCsvValue(item.category || "其他"),
+      escapeCsvValue(item.unit),
       item.quantity.toString(),
       item.minStock.toString(),
       item.maxStock?.toString() || "",
-      item.location || "",
+      escapeCsvValue(item.location || ""),
       item.quantity <= item.minStock ? "低庫存" : "正常",
     ]);
 

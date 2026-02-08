@@ -54,6 +54,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: {
     strategy: 'jwt',
+    maxAge: 60 * 60, // 1 小時（與 JWT 過期時間一致）
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Host-next-auth.csrf-token' : 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -78,7 +108,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'build-time-secret-placeholder',
+  secret: (() => {
+    const secret = process.env.NEXTAUTH_SECRET;
+    if (!secret && process.env.NODE_ENV === 'production') {
+      throw new Error('NEXTAUTH_SECRET environment variable is required in production');
+    }
+    return secret || 'development-only-secret-do-not-use-in-production';
+  })(),
   trustHost: true,
 });
 

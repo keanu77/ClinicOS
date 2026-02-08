@@ -78,6 +78,7 @@ export class InventoryController {
   }
 
   @Get("export.csv")
+  @Roles(Role.SUPERVISOR) // 需要 SUPERVISOR 以上權限才能導出
   async exportCsv(@Res() res: Response) {
     const csv = await this.inventoryService.exportToCsv();
 

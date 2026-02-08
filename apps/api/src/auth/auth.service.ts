@@ -10,6 +10,9 @@ import { UsersService } from "../users/users.service";
 import { AuditService } from "../audit/audit.service";
 import { JwtPayload } from "../shared";
 
+// Bcrypt cost factor - 建議生產環境使用 12
+const BCRYPT_ROUNDS = 12;
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -24,7 +27,8 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      this.logger.warn(`Login failed: user not found for email: ${email}`);
+      // 安全：不在日誌中記錄電子郵件，使用通用訊息
+      this.logger.warn("Login failed: user not found");
       throw new UnauthorizedException("Invalid email or password");
     }
 
@@ -35,7 +39,8 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      this.logger.warn(`Login failed: invalid password for email: ${email}`);
+      // 安全：不在日誌中記錄電子郵件
+      this.logger.warn(`Login failed: invalid password for user: ${user.id}`);
       throw new UnauthorizedException("Invalid email or password");
     }
 
@@ -45,7 +50,8 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    this.logger.log(`Login attempt for email: ${email}`);
+    // 安全：只記錄嘗試登入，不記錄電子郵件
+    this.logger.log("Login attempt received");
 
     const user = await this.validateUser(email, password);
 
@@ -56,7 +62,8 @@ export class AuthService {
       position: user.position as JwtPayload["position"],
     };
 
-    this.logger.log(`Login successful for user: ${user.id} (${user.email})`);
+    // 安全：只記錄用戶 ID，不記錄電子郵件
+    this.logger.log(`Login successful for user: ${user.id}`);
 
     // 記錄登入審計日誌
     await this.auditService.create({
@@ -80,7 +87,7 @@ export class AuthService {
       throw new BadRequestException("Email already registered");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const user = await this.usersService.create({
       email,

@@ -22,6 +22,11 @@ interface ErrorResponse {
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
+  private readonly isProduction: boolean;
+
+  constructor() {
+    this.isProduction = process.env.NODE_ENV === "production";
+  }
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -42,13 +47,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       } else if (typeof exceptionResponse === "object") {
         const res = exceptionResponse as any;
         message = res.message || exception.message;
-        details = res.errors || res.details;
+        // 生產環境不返回詳細錯誤信息，避免信息洩露
+        if (!this.isProduction) {
+          details = res.errors || res.details;
+        }
       }
 
       // 映射 HTTP 狀態碼到錯誤代碼
       code = this.getErrorCode(status);
+
+      // 生產環境：對於認證相關錯誤使用通用訊息，防止帳戶枚舉
+      if (this.isProduction && status === HttpStatus.UNAUTHORIZED) {
+        message = "認證失敗";
+      }
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // 生產環境不暴露內部錯誤訊息
+      message = this.isProduction ? "伺服器內部錯誤" : exception.message;
       this.logger.error(
         `Unhandled exception: ${exception.message}`,
         exception.stack,
