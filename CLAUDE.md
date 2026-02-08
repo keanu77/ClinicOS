@@ -72,6 +72,7 @@ pnpm dev
 | Email | Password | 職位 |
 |-------|----------|------|
 | admin@clinic.local | password123 | 管理者 |
+| keanu.firefox@gmail.com | 9313412 | 管理者 |
 | supervisor@clinic.local | password123 | 經理 |
 | staff1@clinic.local | password123 | 護理師 |
 | staff2@clinic.local | password123 | 護理師 |

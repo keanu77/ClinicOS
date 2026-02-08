@@ -75,6 +75,18 @@ async function main() {
     },
   });
 
+  // 新增管理者帳號 keanu.firefox@gmail.com
+  const keanuPassword = await bcrypt.hash('9313412', 10);
+  const keanu = await prisma.user.create({
+    data: {
+      email: 'keanu.firefox@gmail.com',
+      name: 'Keanu',
+      role: 'ADMIN',
+      position: 'ADMIN',
+      passwordHash: keanuPassword,
+    },
+  });
+
   const supervisor = await prisma.user.create({
     data: {
       email: 'supervisor@clinic.local',
@@ -842,6 +854,7 @@ async function main() {
   console.log('✅ Seed completed successfully!');
   console.log('\n📧 Test accounts:');
   console.log('   admin@clinic.local / password123 (管理者)');
+  console.log('   keanu.firefox@gmail.com / 9313412 (管理者)');
   console.log('   supervisor@clinic.local / password123 (經理)');
   console.log('   staff1@clinic.local / password123 (護理師)');
   console.log('   staff2@clinic.local / password123 (護理師)');
