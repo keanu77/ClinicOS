@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { apiGet, apiPost, apiPatch } from '@/lib/api';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import {
   Package,
   Edit,
   X,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -151,6 +152,22 @@ export default function InventoryDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('確定要刪除此品項嗎？此操作無法復原，所有異動紀錄也會一併刪除。')) {
+      return;
+    }
+    try {
+      await apiDelete(`/inventory/items/${params.id}`);
+      toast({ title: '品項已刪除' });
+      router.push('/inventory');
+    } catch (error) {
+      toast({
+        title: '刪除失敗',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const isAdmin = session?.user?.role === Role.ADMIN;
 
   if (loading) {
@@ -261,6 +278,16 @@ export default function InventoryDetailPage() {
                 </Button>
                 <Button className="flex-1" onClick={handleSaveEdit}>
                   儲存
+                </Button>
+              </div>
+              <div className="pt-4 border-t">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  刪除此品項
                 </Button>
               </div>
             </CardContent>
