@@ -216,6 +216,7 @@ model InventoryItem {
   name         String
   sku          String    @unique
   description  String?
+  category     String    @default("OTHER")  // MEDICAL_SUPPLIES, INJECTION, OTHER
   unit         String    @default("個")
   quantity     Int       @default(0)
   minStock     Int       @default(0)
@@ -239,6 +240,7 @@ model InventoryItem {
 
   @@index([sku])
   @@index([name])
+  @@index([category])
   @@index([quantity, minStock])
   @@index([isActive, quantity, minStock])
   @@index([vendorId])

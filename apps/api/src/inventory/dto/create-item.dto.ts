@@ -5,7 +5,9 @@ import {
   Min,
   IsDateString,
   MinLength,
+  IsEnum,
 } from "class-validator";
+import { InventoryCategory } from "../../shared";
 
 export class CreateItemDto {
   @IsString()
@@ -19,6 +21,10 @@ export class CreateItemDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsEnum(InventoryCategory)
+  category?: InventoryCategory;
 
   @IsOptional()
   @IsString()

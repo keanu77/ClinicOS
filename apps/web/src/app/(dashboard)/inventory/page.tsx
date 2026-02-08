@@ -6,16 +6,21 @@ import { useSession } from 'next-auth/react';
 import { apiGet } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Download, AlertTriangle, Package } from 'lucide-react';
-import { Role } from '@/shared';
+import {
+  Role,
+  InventoryCategory,
+  InventoryCategoryLabels,
+} from '@/shared';
 import { CardSkeleton } from '@/components/ui/skeleton';
 
 interface InventoryItem {
   id: string;
   name: string;
   sku: string;
+  category: string;
   unit: string;
   quantity: number;
   minStock: number;
@@ -34,6 +39,7 @@ export default function InventoryListPage() {
   const [data, setData] = useState<InventoryListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [showLowStock, setShowLowStock] = useState(false);
 
   useEffect(() => {
@@ -42,6 +48,7 @@ export default function InventoryListPage() {
       try {
         const params: Record<string, string | boolean> = {};
         if (search) params.search = search;
+        if (categoryFilter) params.category = categoryFilter;
         if (showLowStock) params.lowStock = true;
 
         const result = await apiGet<InventoryListResponse>('/inventory/items', params);
@@ -55,7 +62,7 @@ export default function InventoryListPage() {
 
     const debounce = setTimeout(fetchData, 300);
     return () => clearTimeout(debounce);
-  }, [search, showLowStock]);
+  }, [search, categoryFilter, showLowStock]);
 
   const handleExport = () => {
     window.open(
@@ -102,6 +109,18 @@ export default function InventoryListPage() {
                 className="pl-9"
               />
             </div>
+            <select
+              className="px-3 py-2 border rounded-md bg-white min-w-[120px]"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="">全部分類</option>
+              {Object.values(InventoryCategory).map((cat) => (
+                <option key={cat} value={cat}>
+                  {InventoryCategoryLabels[cat]}
+                </option>
+              ))}
+            </select>
             <Button
               variant={showLowStock ? 'default' : 'outline'}
               onClick={() => setShowLowStock(!showLowStock)}
@@ -139,12 +158,17 @@ export default function InventoryListPage() {
                           {item.sku}
                         </span>
                       </div>
-                      {isLowStock && (
-                        <Badge variant="warning">
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          低庫存
+                      <div className="flex gap-1">
+                        <Badge variant="outline" className="text-xs">
+                          {InventoryCategoryLabels[item.category as InventoryCategory] || '其他'}
                         </Badge>
-                      )}
+                        {isLowStock && (
+                          <Badge variant="warning">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            低庫存
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <h3 className="font-semibold text-lg">{item.name}</h3>
                     <div className="mt-3 flex items-baseline gap-2">
@@ -175,9 +199,9 @@ export default function InventoryListPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              {search || showLowStock ? '沒有符合條件的品項' : '目前沒有庫存品項'}
+              {search || categoryFilter || showLowStock ? '沒有符合條件的品項' : '目前沒有庫存品項'}
             </p>
-            {isAdmin && !search && !showLowStock && (
+            {isAdmin && !search && !categoryFilter && !showLowStock && (
               <Link href="/inventory/new">
                 <Button className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />

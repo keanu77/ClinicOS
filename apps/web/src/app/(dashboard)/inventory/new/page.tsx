@@ -10,11 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { InventoryCategory, InventoryCategoryLabels } from '@/shared';
 
 interface CreateItemForm {
   name: string;
   sku: string;
   description: string;
+  category: string;
   unit: string;
   quantity: number;
   minStock: number;
@@ -31,6 +33,7 @@ export default function NewInventoryItemPage() {
     name: '',
     sku: '',
     description: '',
+    category: InventoryCategory.OTHER,
     unit: '個',
     quantity: 0,
     minStock: 10,
@@ -56,6 +59,7 @@ export default function NewInventoryItemPage() {
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
         sku: form.sku.trim(),
+        category: form.category,
         unit: form.unit || '個',
         quantity: form.quantity,
         minStock: form.minStock,
@@ -129,6 +133,33 @@ export default function NewInventoryItemPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="category">分類 *</Label>
+                <select
+                  id="category"
+                  className="w-full mt-1 p-2 border rounded-md"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                >
+                  {Object.values(InventoryCategory).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {InventoryCategoryLabels[cat]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="unit">單位</Label>
+                <Input
+                  id="unit"
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                  placeholder="例：個、瓶、盒"
+                />
+              </div>
+            </div>
+
             <div>
               <Label htmlFor="description">描述</Label>
               <textarea
@@ -141,15 +172,6 @@ export default function NewInventoryItemPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="unit">單位</Label>
-                <Input
-                  id="unit"
-                  value={form.unit}
-                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                  placeholder="例：個、瓶、盒"
-                />
-              </div>
               <div>
                 <Label htmlFor="quantity">初始數量</Label>
                 <Input

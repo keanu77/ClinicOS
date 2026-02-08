@@ -19,7 +19,14 @@ export class InventoryService {
   ) {}
 
   async findAllItems(query: QueryItemDto) {
-    const { search, lowStock, isActive = true, page = 1, limit = 20 } = query;
+    const {
+      search,
+      category,
+      lowStock,
+      isActive = true,
+      page = 1,
+      limit = 20,
+    } = query;
 
     // 使用原始 SQL 處理 lowStock 查詢（比較兩個欄位）
     if (lowStock) {
@@ -29,6 +36,7 @@ export class InventoryService {
     const where: any = {};
 
     if (isActive !== undefined) where.isActive = isActive;
+    if (category) where.category = category;
     if (search) {
       where.OR = [
         { name: { contains: search } },
@@ -57,7 +65,7 @@ export class InventoryService {
   }
 
   private async findLowStockItemsPaginated(query: QueryItemDto) {
-    const { search, isActive = true, page = 1, limit = 20 } = query;
+    const { search, category, isActive = true, page = 1, limit = 20 } = query;
     const offset = (page - 1) * limit;
 
     // 建立搜尋條件
@@ -65,6 +73,12 @@ export class InventoryService {
     if (search) {
       const escapedSearch = search.replace(/'/g, "''");
       searchCondition = `AND (name LIKE '%${escapedSearch}%' OR sku LIKE '%${escapedSearch}%' OR location LIKE '%${escapedSearch}%')`;
+    }
+
+    // 分類條件
+    let categoryCondition = "";
+    if (category) {
+      categoryCondition = `AND category = '${category}'`;
     }
 
     const activeCondition = isActive ? '"isActive" = true' : "1=1";
@@ -91,14 +105,14 @@ export class InventoryService {
       }>
     >(
       `SELECT * FROM "InventoryItem"
-       WHERE ${activeCondition} AND quantity <= minStock ${searchCondition}
+       WHERE ${activeCondition} AND quantity <= "minStock" ${searchCondition} ${categoryCondition}
        ORDER BY name ASC
        LIMIT ${limit} OFFSET ${offset}`,
     );
 
     const countResult = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
       `SELECT COUNT(*) as count FROM "InventoryItem"
-       WHERE ${activeCondition} AND quantity <= minStock ${searchCondition}`,
+       WHERE ${activeCondition} AND quantity <= "minStock" ${searchCondition} ${categoryCondition}`,
     );
 
     const total = Number(countResult[0].count);

@@ -1,3 +1,15 @@
+export enum InventoryCategory {
+  MEDICAL_SUPPLIES = "MEDICAL_SUPPLIES",
+  INJECTION = "INJECTION",
+  OTHER = "OTHER",
+}
+
+export const InventoryCategoryLabels: Record<InventoryCategory, string> = {
+  [InventoryCategory.MEDICAL_SUPPLIES]: "衛耗材",
+  [InventoryCategory.INJECTION]: "注射針劑",
+  [InventoryCategory.OTHER]: "其他",
+};
+
 export enum InventoryTxnType {
   IN = "IN",
   OUT = "OUT",

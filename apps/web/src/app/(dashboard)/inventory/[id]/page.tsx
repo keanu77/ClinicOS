@@ -28,6 +28,8 @@ import {
   InventoryTxnType,
   InventoryTxnTypeLabels,
   InventoryTxnTypeColors,
+  InventoryCategory,
+  InventoryCategoryLabels,
   Role,
 } from '@/shared';
 
@@ -36,6 +38,7 @@ interface InventoryItem {
   name: string;
   sku: string;
   description?: string;
+  category: string;
   unit: string;
   quantity: number;
   minStock: number;
@@ -73,6 +76,7 @@ export default function InventoryDetailPage() {
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
+    category: '',
     minStock: 0,
     maxStock: 0,
     location: '',
@@ -85,6 +89,7 @@ export default function InventoryDetailPage() {
       setEditForm({
         name: result.name,
         description: result.description || '',
+        category: result.category || InventoryCategory.OTHER,
         minStock: result.minStock,
         maxStock: result.maxStock || 0,
         location: result.location || '',
@@ -202,6 +207,9 @@ export default function InventoryDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm text-muted-foreground">{item.sku}</span>
+            <Badge variant="outline">
+              {InventoryCategoryLabels[item.category as InventoryCategory] || '其他'}
+            </Badge>
             {isLowStock && (
               <Badge variant="warning">
                 <AlertTriangle className="h-3 w-3 mr-1" />
@@ -244,6 +252,20 @@ export default function InventoryDetailPage() {
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                 />
+              </div>
+              <div>
+                <Label>分類</Label>
+                <select
+                  className="w-full mt-1 p-2 border rounded-md"
+                  value={editForm.category}
+                  onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                >
+                  {Object.values(InventoryCategory).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {InventoryCategoryLabels[cat]}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

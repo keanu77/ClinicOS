@@ -1,10 +1,22 @@
-import { IsOptional, IsString, IsBoolean, IsInt, Min } from "class-validator";
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsInt,
+  Min,
+  IsEnum,
+} from "class-validator";
 import { Type, Transform } from "class-transformer";
+import { InventoryCategory } from "../../shared";
 
 export class QueryItemDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsEnum(InventoryCategory)
+  category?: InventoryCategory;
 
   @IsOptional()
   @Transform(({ value }) => value === "true")
