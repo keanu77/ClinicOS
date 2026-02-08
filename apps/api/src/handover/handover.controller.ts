@@ -50,6 +50,47 @@ export class HandoverController {
     return this.handoverService.getUrgentHandovers();
   }
 
+  // ==================== Archives ====================
+
+  @Get("archives")
+  @Roles(Role.SUPERVISOR)
+  getArchives() {
+    return this.handoverService.getArchives();
+  }
+
+  @Get("archives/:archiveId")
+  @Roles(Role.SUPERVISOR)
+  getArchivedHandovers(
+    @Param("archiveId") archiveId: string,
+    @Query("page") page = 1,
+    @Query("limit") limit = 20,
+  ) {
+    return this.handoverService.getArchivedHandovers(archiveId, +page, +limit);
+  }
+
+  @Get("archives/year/:year/month/:month")
+  @Roles(Role.SUPERVISOR)
+  getArchiveByYearMonth(
+    @Param("year") year: string,
+    @Param("month") month: string,
+  ) {
+    return this.handoverService.getArchiveByYearMonth(+year, +month);
+  }
+
+  @Post("archives/run")
+  @Roles(Role.ADMIN)
+  archiveCompletedHandovers(
+    @Body() dto: { year: number; month: number },
+  ) {
+    return this.handoverService.archiveCompletedHandovers(dto.year, dto.month);
+  }
+
+  @Post("archives/auto")
+  @Roles(Role.ADMIN)
+  autoArchiveLastMonth() {
+    return this.handoverService.autoArchiveLastMonth();
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.handoverService.findOne(id);

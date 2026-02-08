@@ -149,6 +149,49 @@ model HandoverComment {
   @@index([authorId])
 }
 
+// 月度封存記錄
+model HandoverArchive {
+  id          String   @id @default(cuid())
+  year        Int
+  month       Int
+  archivedAt  DateTime @default(now())
+  archivedCount Int    @default(0)
+
+  // 封存的任務資料 (JSON 格式儲存完整任務資訊)
+  items       ArchivedHandover[]
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+// 封存的任務記錄
+model ArchivedHandover {
+  id             String   @id @default(cuid())
+  originalId     String   // 原始 Handover ID
+  title          String
+  content        String
+  status         String
+  priority       String
+  createdById    String
+  createdByName  String
+  assigneeId     String?
+  assigneeName   String?
+  createdAt      DateTime
+  completedAt    DateTime?
+  commentsCount  Int      @default(0)
+
+  // 關聯到月度封存
+  archiveId      String
+  archive        HandoverArchive @relation(fields: [archiveId], references: [id], onDelete: Cascade)
+
+  archivedAt     DateTime @default(now())
+
+  @@index([archiveId])
+  @@index([originalId])
+  @@index([createdAt])
+  @@index([completedAt])
+}
+
 model Shift {
   id        String   @id @default(cuid())
   date      DateTime

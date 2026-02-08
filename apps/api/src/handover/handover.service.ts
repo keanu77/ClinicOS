@@ -748,4 +748,185 @@ export class HandoverService {
       byCategory,
     };
   }
+
+  // ==================== Archive ====================
+
+  /**
+   * 封存指定月份的已完成任務
+   * @param year 年份
+   * @param month 月份 (1-12)
+   */
+  async archiveCompletedHandovers(year: number, month: number) {
+    this.logger.log(`開始封存 ${year}年${month}月 的已完成任務`);
+
+    // 計算月份範圍
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // 查詢該月份已完成的任務
+    const completedHandovers = await this.prisma.handover.findMany({
+      where: {
+        status: HandoverStatus.COMPLETED,
+        completedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true } },
+        _count: { select: { comments: true } },
+      },
+    });
+
+    if (completedHandovers.length === 0) {
+      this.logger.log(`${year}年${month}月 沒有需要封存的任務`);
+      return { archivedCount: 0, message: '沒有需要封存的任務' };
+    }
+
+    // 使用 transaction 確保資料一致性
+    const result = await this.prisma.$transaction(async (tx) => {
+      // 建立或更新月度封存記錄
+      const archive = await tx.handoverArchive.upsert({
+        where: { year_month: { year, month } },
+        create: {
+          year,
+          month,
+          archivedCount: completedHandovers.length,
+        },
+        update: {
+          archivedCount: { increment: completedHandovers.length },
+          archivedAt: new Date(),
+        },
+      });
+
+      // 建立封存的任務記錄
+      await tx.archivedHandover.createMany({
+        data: completedHandovers.map((h) => ({
+          originalId: h.id,
+          title: h.title,
+          content: h.content,
+          status: h.status,
+          priority: h.priority,
+          createdById: h.createdById,
+          createdByName: h.createdBy.name,
+          assigneeId: h.assigneeId,
+          assigneeName: h.assignee?.name || null,
+          createdAt: h.createdAt,
+          completedAt: h.completedAt,
+          commentsCount: h._count.comments,
+          archiveId: archive.id,
+        })),
+      });
+
+      // 刪除已封存的原始任務（包括相關的評論、檢查清單等）
+      const handoverIds = completedHandovers.map((h) => h.id);
+
+      // 先刪除相關資料
+      await tx.handoverComment.deleteMany({
+        where: { handoverId: { in: handoverIds } },
+      });
+      await tx.taskChecklist.deleteMany({
+        where: { handoverId: { in: handoverIds } },
+      });
+      await tx.taskCollaborator.deleteMany({
+        where: { handoverId: { in: handoverIds } },
+      });
+      await tx.taskCategoryAssignment.deleteMany({
+        where: { handoverId: { in: handoverIds } },
+      });
+
+      // 最後刪除任務本身
+      await tx.handover.deleteMany({
+        where: { id: { in: handoverIds } },
+      });
+
+      return archive;
+    });
+
+    this.logger.log(
+      `成功封存 ${completedHandovers.length} 個任務到 ${year}年${month}月`,
+    );
+
+    return {
+      archivedCount: completedHandovers.length,
+      archiveId: result.id,
+      message: `成功封存 ${completedHandovers.length} 個已完成任務`,
+    };
+  }
+
+  /**
+   * 取得所有月度封存列表
+   */
+  async getArchives() {
+    return this.prisma.handoverArchive.findMany({
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      select: {
+        id: true,
+        year: true,
+        month: true,
+        archivedCount: true,
+        archivedAt: true,
+      },
+    });
+  }
+
+  /**
+   * 取得特定月度封存的任務列表
+   */
+  async getArchivedHandovers(archiveId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.archivedHandover.findMany({
+        where: { archiveId },
+        orderBy: { completedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.archivedHandover.count({
+        where: { archiveId },
+      }),
+    ]);
+
+    return {
+      data: items,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * 取得特定年月的封存記錄
+   */
+  async getArchiveByYearMonth(year: number, month: number) {
+    const archive = await this.prisma.handoverArchive.findUnique({
+      where: { year_month: { year, month } },
+      include: {
+        items: {
+          orderBy: { completedAt: 'desc' },
+          take: 100,
+        },
+      },
+    });
+
+    if (!archive) {
+      throw new NotFoundException(`找不到 ${year}年${month}月 的封存記錄`);
+    }
+
+    return archive;
+  }
+
+  /**
+   * 自動封存上個月的已完成任務（供排程任務使用）
+   */
+  async autoArchiveLastMonth() {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const year = lastMonth.getFullYear();
+    const month = lastMonth.getMonth() + 1;
+
+    return this.archiveCompletedHandovers(year, month);
+  }
 }
