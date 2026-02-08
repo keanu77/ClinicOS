@@ -1,3 +1,4 @@
 build:
   type: "dockerfile"
-  dockerfile: "../../Dockerfile.web"
+  dockerfile: "./Dockerfile"
+  context: "../.."
