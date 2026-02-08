@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { apiGet, apiPost, apiPatch } from '@/lib/api';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
-import { ArrowLeft, Send, User, Clock, CheckCircle, Edit, X } from 'lucide-react';
+import { ArrowLeft, Send, User, Clock, CheckCircle, Edit, X, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import {
@@ -196,6 +196,22 @@ export default function HandoverDetailPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('確定要刪除此交班事項嗎？此操作無法復原。')) {
+      return;
+    }
+    try {
+      await apiDelete(`/handovers/${params.id}`);
+      toast({ title: '已刪除' });
+      router.push('/handover');
+    } catch (error) {
+      toast({
+        title: '刪除失敗',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -224,6 +240,11 @@ export default function HandoverDetailPage() {
   // 允許創建者或主管/管理員編輯（包括已完成的任務，可將狀態改回）
   const canEdit =
     session?.user?.id === handover.createdBy.id ||
+    session?.user?.role === Role.SUPERVISOR ||
+    session?.user?.role === Role.ADMIN;
+
+  // 只有主管或管理員可以刪除
+  const canDelete =
     session?.user?.role === Role.SUPERVISOR ||
     session?.user?.role === Role.ADMIN;
 
@@ -325,6 +346,18 @@ export default function HandoverDetailPage() {
                   儲存
                 </Button>
               </div>
+              {canDelete && (
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    刪除此任務
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
