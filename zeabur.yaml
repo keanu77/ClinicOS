@@ -1,4 +1,12 @@
-# Clinic OS - Monorepo
-# 請在 Zeabur 控制台分別設定每個服務的根目錄：
-# - API 服務：Root Directory = apps/api
-# - Web 服務：Root Directory = apps/web
+# Clinic OS - Monorepo Zeabur Deployment
+#
+# 重要：這是 monorepo 專案，兩個服務都必須從根目錄部署
+#
+# Zeabur 控制台設定：
+# 1. Web 服務：Root Directory = .（留空或 .）
+#    - 選擇 Dockerfile.web
+# 2. API 服務：Root Directory = .（留空或 .）
+#    - 選擇 Dockerfile.api
+#
+# 不要將 Root Directory 設為 apps/web 或 apps/api，
+# 因為 Docker build 需要存取整個 monorepo（pnpm-lock.yaml、packages/shared 等）
