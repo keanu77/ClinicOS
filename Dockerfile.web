@@ -25,6 +25,11 @@ RUN pnpm build
 # Build the web application
 WORKDIR /app/apps/web
 RUN mkdir -p public
+
+# Provide build-time env vars (only used during build, not in production image)
+ARG NEXTAUTH_SECRET=build-time-placeholder
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+
 RUN pnpm build
 
 # Production stage - use standalone output
