@@ -24,6 +24,7 @@ RUN pnpm build
 
 # Build the web application
 WORKDIR /app/apps/web
+RUN mkdir -p public
 RUN pnpm build
 
 # Production stage - use standalone output
