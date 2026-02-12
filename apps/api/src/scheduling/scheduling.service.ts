@@ -5,7 +5,14 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
-import { ShiftType, NotificationType, NON_WORKING_SHIFT_CODES, ActivityTypeLabels, ActivityType, ShiftCode } from "../shared";
+import {
+  ShiftType,
+  NotificationType,
+  NON_WORKING_SHIFT_CODES,
+  ActivityTypeLabels,
+  ActivityType,
+  ShiftCode,
+} from "../shared";
 import { CreateShiftDto } from "./dto/create-shift.dto";
 import { UpdateShiftDto } from "./dto/update-shift.dto";
 import { QueryShiftDto } from "./dto/query-shift.dto";
@@ -317,9 +324,9 @@ export class SchedulingService {
         date,
         department: entry.department,
         shiftCode: entry.shiftCode,
-        periodA: isNonWorking ? null : (entry.periodA || null),
-        periodB: isNonWorking ? null : (entry.periodB || null),
-        periodC: isNonWorking ? null : (entry.periodC || null),
+        periodA: isNonWorking ? null : entry.periodA || null,
+        periodB: isNonWorking ? null : entry.periodB || null,
+        periodC: isNonWorking ? null : entry.periodC || null,
         notes: entry.notes || null,
         userId: entry.userId,
       };
@@ -372,15 +379,18 @@ export class SchedulingService {
     });
 
     // Group by user
-    const userMap: Record<string, {
-      userId: string;
-      userName: string;
-      position: string;
-      stats: Record<string, number>;
-      workingDays: number;
-      offDays: number;
-      totalDays: number;
-    }> = {};
+    const userMap: Record<
+      string,
+      {
+        userId: string;
+        userName: string;
+        position: string;
+        stats: Record<string, number>;
+        workingDays: number;
+        offDays: number;
+        totalDays: number;
+      }
+    > = {};
 
     for (const entry of entries) {
       if (!userMap[entry.userId]) {
@@ -543,7 +553,9 @@ export class SchedulingService {
       const periodCRow = data[r + 3] || [];
 
       for (const { col, day } of dateColumns) {
-        const rawShiftCode = String(shiftRow[col] || "").trim().toUpperCase();
+        const rawShiftCode = String(shiftRow[col] || "")
+          .trim()
+          .toUpperCase();
         if (!rawShiftCode || !validShiftCodes.has(rawShiftCode as ShiftCode)) {
           continue;
         }
@@ -583,10 +595,13 @@ export class SchedulingService {
     const daysInMonth = new Date(year, month, 0).getDate();
 
     // Group entries by user
-    const userEntries: Record<string, {
-      userName: string;
-      entries: Record<number, typeof entries[0]>;
-    }> = {};
+    const userEntries: Record<
+      string,
+      {
+        userName: string;
+        entries: Record<number, (typeof entries)[0]>;
+      }
+    > = {};
 
     for (const entry of entries) {
       if (!userEntries[entry.userId]) {
@@ -624,17 +639,20 @@ export class SchedulingService {
           shiftRow.push(e.shiftCode);
           aRow.push(
             e.periodA
-              ? (ActivityTypeLabels as Record<string, string>)[e.periodA] || e.periodA
+              ? (ActivityTypeLabels as Record<string, string>)[e.periodA] ||
+                  e.periodA
               : "-",
           );
           bRow.push(
             e.periodB
-              ? (ActivityTypeLabels as Record<string, string>)[e.periodB] || e.periodB
+              ? (ActivityTypeLabels as Record<string, string>)[e.periodB] ||
+                  e.periodB
               : "-",
           );
           cRow.push(
             e.periodC
-              ? (ActivityTypeLabels as Record<string, string>)[e.periodC] || e.periodC
+              ? (ActivityTypeLabels as Record<string, string>)[e.periodC] ||
+                  e.periodC
               : "-",
           );
         } else {
