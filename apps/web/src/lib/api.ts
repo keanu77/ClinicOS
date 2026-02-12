@@ -1,6 +1,16 @@
 import { getSession } from 'next-auth/react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+let _apiUrl: string | null = null;
+function getApiUrl(): string {
+  if (!_apiUrl) {
+    if (typeof window !== 'undefined' && (window as any).__ENV?.NEXT_PUBLIC_API_URL) {
+      _apiUrl = (window as any).__ENV.NEXT_PUBLIC_API_URL;
+    } else {
+      _apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    }
+  }
+  return _apiUrl;
+}
 
 const ERROR_MESSAGES: Record<string, string> = {
   // HTTP Status Codes
@@ -65,7 +75,7 @@ export async function api<T>(
     accessToken = session?.accessToken;
   }
 
-  let url = `${API_URL}/api${endpoint}`;
+  let url = `${getApiUrl()}/api${endpoint}`;
 
   if (params) {
     const searchParams = new URLSearchParams();
