@@ -94,7 +94,7 @@ export function ScheduleGrid({
     <Card>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="border-collapse text-xs" style={{ minWidth: `${80 + daysInMonth * 48}px` }}>
+          <table className="border-collapse text-xs" style={{ minWidth: `${80 + daysInMonth * 56}px` }}>
             <thead>
               <tr className="border-b">
                 <th className="p-1 text-left font-medium w-20 sticky left-0 bg-white z-20 border-r">
@@ -103,7 +103,7 @@ export function ScheduleGrid({
                 {days.map(({ day, weekday, isWeekend }) => (
                   <th
                     key={day}
-                    className={`p-1 text-center font-medium min-w-[48px] ${
+                    className={`p-1 text-center font-medium min-w-[56px] ${
                       isWeekend ? 'bg-gray-100' : ''
                     } ${day === todayStr ? 'bg-blue-50' : ''}`}
                   >

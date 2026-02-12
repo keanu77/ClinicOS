@@ -40,17 +40,27 @@ function ShiftCodeCell({
 }) {
   const bgColor = value
     ? ShiftCodeColors[value as ShiftCode] || '#F3F4F6'
-    : 'transparent';
+    : undefined;
   const isNonWorking = value
     ? NON_WORKING_SHIFT_CODES.includes(value as ShiftCode)
     : false;
 
   return (
     <select
-      className="w-full h-7 text-xs text-center border-0 rounded cursor-pointer font-semibold focus:ring-1 focus:ring-blue-400"
+      className={`
+        w-full h-8 text-xs text-center rounded cursor-pointer font-semibold
+        appearance-auto
+        border border-gray-200 hover:border-blue-400
+        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400
+        transition-colors
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        ${!value ? 'text-gray-400' : ''}
+      `}
       style={{
-        backgroundColor: value ? `${bgColor}30` : 'transparent',
-        color: isNonWorking ? '#9CA3AF' : (bgColor !== 'transparent' ? bgColor : '#374151'),
+        backgroundColor: bgColor ? `${bgColor}25` : '#FAFAFA',
+        color: value
+          ? (isNonWorking ? '#9CA3AF' : bgColor || '#374151')
+          : '#9CA3AF',
       }}
       value={value || ''}
       onChange={(e) => onChange(e.target.value || null)}
@@ -77,14 +87,24 @@ function ActivityCell({
 }) {
   const color = value
     ? ActivityTypeColors[value as ActivityType] || '#6B7280'
-    : '#D1D5DB';
+    : undefined;
 
   return (
     <select
-      className="w-full h-6 text-xs text-center border-0 rounded cursor-pointer focus:ring-1 focus:ring-blue-400"
+      className={`
+        w-full h-7 text-xs text-center rounded cursor-pointer
+        appearance-auto
+        border border-gray-100 hover:border-blue-300
+        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400
+        transition-colors
+        ${disabled ? 'opacity-40 cursor-not-allowed bg-gray-50' : ''}
+        ${!value ? 'text-gray-400' : ''}
+      `}
       style={{
-        backgroundColor: value ? `${color}20` : 'transparent',
-        color: value ? color : '#9CA3AF',
+        backgroundColor: disabled
+          ? undefined
+          : (color ? `${color}15` : '#FDFDFD'),
+        color: value && !disabled ? color : '#C0C0C0',
       }}
       value={value || ''}
       onChange={(e) => onChange(e.target.value || null)}
