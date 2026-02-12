@@ -1,15 +1,10 @@
 import { getSession } from 'next-auth/react';
 
-let _apiUrl: string | null = null;
 function getApiUrl(): string {
-  if (!_apiUrl) {
-    if (typeof window !== 'undefined' && (window as any).__ENV?.NEXT_PUBLIC_API_URL) {
-      _apiUrl = (window as any).__ENV.NEXT_PUBLIC_API_URL;
-    } else {
-      _apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    }
+  if (typeof window !== 'undefined' && (window as any).__ENV?.NEXT_PUBLIC_API_URL) {
+    return (window as any).__ENV.NEXT_PUBLIC_API_URL;
   }
-  return _apiUrl;
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 }
 
 const ERROR_MESSAGES: Record<string, string> = {

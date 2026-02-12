@@ -28,10 +28,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-TW">
-      <head>
-        <EnvScript />
-      </head>
       <body className={inter.className}>
+        <EnvScript />
         <Providers>
           {children}
           <Toaster />
