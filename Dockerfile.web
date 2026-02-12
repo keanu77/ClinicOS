@@ -26,9 +26,11 @@ RUN pnpm build
 WORKDIR /app/apps/web
 RUN mkdir -p public
 
-# Provide build-time env vars (only used during build, not in production image)
+# Provide build-time env vars (NEXT_PUBLIC_* are inlined at build time)
 ARG NEXTAUTH_SECRET=build-time-placeholder
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 RUN pnpm build
 

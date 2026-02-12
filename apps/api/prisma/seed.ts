@@ -63,7 +63,7 @@ async function main() {
   console.log('🗑️  Cleared existing data');
 
   // Create users
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await bcrypt.hash('Password123', 10);
 
   const admin = await prisma.user.create({
     data: {
@@ -76,7 +76,7 @@ async function main() {
   });
 
   // 新增管理者帳號 keanu.firefox@gmail.com
-  const keanuPassword = await bcrypt.hash('9313412', 10);
+  const keanuPassword = await bcrypt.hash('Keanu9313', 10);
   const keanu = await prisma.user.create({
     data: {
       email: 'keanu.firefox@gmail.com',
@@ -853,14 +853,14 @@ async function main() {
 
   console.log('✅ Seed completed successfully!');
   console.log('\n📧 Test accounts:');
-  console.log('   admin@clinic.local / password123 (管理者)');
-  console.log('   keanu.firefox@gmail.com / 9313412 (管理者)');
-  console.log('   supervisor@clinic.local / password123 (經理)');
-  console.log('   staff1@clinic.local / password123 (護理師)');
-  console.log('   staff2@clinic.local / password123 (護理師)');
-  console.log('   doctor@clinic.local / password123 (醫師)');
-  console.log('   therapist@clinic.local / password123 (運醫老師)');
-  console.log('   receptionist@clinic.local / password123 (櫃檯)');
+  console.log('   admin@clinic.local / Password123 (管理者)');
+  console.log('   keanu.firefox@gmail.com / Keanu9313 (管理者)');
+  console.log('   supervisor@clinic.local / Password123 (經理)');
+  console.log('   staff1@clinic.local / Password123 (護理師)');
+  console.log('   staff2@clinic.local / Password123 (護理師)');
+  console.log('   doctor@clinic.local / Password123 (醫師)');
+  console.log('   therapist@clinic.local / Password123 (運醫老師)');
+  console.log('   receptionist@clinic.local / Password123 (櫃檯)');
 }
 
 main()
