@@ -5,6 +5,7 @@ export * from './enums/permission.enum';
 export * from './enums/handover.enum';
 export * from './enums/shift.enum';
 export * from './enums/inventory.enum';
+export * from './enums/scheduling.enum';
 
 // Types
 export * from './types/user.types';

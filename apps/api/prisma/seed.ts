@@ -50,6 +50,8 @@ async function main() {
   await prisma.taskChecklist.deleteMany();
   await prisma.taskCollaborator.deleteMany();
   await prisma.taskCategory.deleteMany();
+  // Schedule
+  await prisma.scheduleEntry.deleteMany();
   // Core
   await prisma.notification.deleteMany();
   await prisma.auditLog.deleteMany();
@@ -850,6 +852,55 @@ async function main() {
   ]);
 
   console.log('📜 Created audit logs');
+
+  // Create schedule entries (月排班範例)
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+  const scheduleData = [
+    { user: therapist, dept: 'SPORTS_MEDICINE', pattern: 'GM', activities: ['SPORTS', 'SPORTS', 'SPORTS'] },
+    { user: staff1, dept: 'CLINIC', pattern: 'GM', activities: ['NURSING', 'NURSING', 'NURSING'] },
+    { user: staff2, dept: 'CLINIC', pattern: 'BX', activities: ['NURSING', null, 'NURSING'] },
+    { user: receptionist, dept: 'CLINIC', pattern: 'BE', activities: ['RECEPTION', 'RECEPTION', null] },
+    { user: doctor, dept: 'CLINIC', pattern: 'GM', activities: ['NURSING', 'NURSING', null] },
+  ];
+
+  for (const sd of scheduleData) {
+    for (let d = 1; d <= Math.min(daysInMonth, 28); d++) {
+      const date = new Date(currentYear, currentMonth - 1, d);
+      const dayOfWeek = date.getDay();
+
+      // Weekends → QQ
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        await prisma.scheduleEntry.create({
+          data: {
+            date,
+            department: sd.dept,
+            shiftCode: 'QQ',
+            periodA: null,
+            periodB: null,
+            periodC: null,
+            userId: sd.user.id,
+          },
+        });
+      } else {
+        await prisma.scheduleEntry.create({
+          data: {
+            date,
+            department: sd.dept,
+            shiftCode: sd.pattern,
+            periodA: sd.activities[0] || null,
+            periodB: sd.activities[1] || null,
+            periodC: sd.activities[2] || null,
+            userId: sd.user.id,
+          },
+        });
+      }
+    }
+  }
+
+  console.log('📅 Created schedule entries');
 
   console.log('✅ Seed completed successfully!');
   console.log('\n📧 Test accounts:');

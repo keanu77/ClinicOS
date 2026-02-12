@@ -1,413 +1,350 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { useEffect, useState, useCallback } from 'react';
+import { apiGet, apiPost } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import { Save, Upload, Download } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import {
-  ShiftType,
-  ShiftTypeLabels,
+  ScheduleDepartment,
+  ScheduleDepartmentLabels,
+  NON_WORKING_SHIFT_CODES,
+  ShiftCode,
+  ShiftCodeLabels,
+  ActivityTypeLabels,
+  ActivityType,
 } from '@/shared';
-import { ScheduleSkeleton } from '@/components/ui/skeleton';
+import { MonthNavigator } from './components/month-navigator';
+import { ScheduleGrid, type GridState, type CellData } from './components/schedule-grid';
+import { ScheduleStats } from './components/schedule-stats';
+import { ImportDialog } from './components/import-dialog';
+import { ExportButton } from './components/export-button';
 
-interface User {
-  id: string;
-  name: string;
-}
-
-interface Shift {
+interface ScheduleEntry {
   id: string;
   date: string;
-  type: string;
-  user: { id: string; name: string };
-  notes?: string;
+  department: string;
+  shiftCode: string;
+  periodA: string | null;
+  periodB: string | null;
+  periodC: string | null;
+  notes: string | null;
+  userId: string;
+  user: { id: string; name: string; position: string };
 }
 
-interface WeeklySchedule {
-  startDate: string;
-  endDate: string;
-  schedule: Array<{
-    date: string;
-    shifts: Record<string, Shift[]>;
-  }>;
+interface UserStat {
+  userId: string;
+  userName: string;
+  position: string;
+  stats: Record<string, number>;
+  workingDays: number;
+  offDays: number;
+  totalDays: number;
 }
 
-const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+interface StaffUser {
+  id: string;
+  name: string;
+  position: string;
+  role: string;
+}
 
 export default function SchedulingPage() {
   const { toast } = useToast();
-  const [schedule, setSchedule] = useState<WeeklySchedule | null>(null);
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [department, setDepartment] = useState<string>(ScheduleDepartment.SPORTS_MEDICINE);
+  const [entries, setEntries] = useState<ScheduleEntry[]>([]);
+  const [users, setUsers] = useState<StaffUser[]>([]);
+  const [stats, setStats] = useState<UserStat[] | null>(null);
+  const [gridState, setGridState] = useState<GridState>({});
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<User[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [shiftForm, setShiftForm] = useState({
-    userId: '',
-    date: '',
-    type: 'MORNING' as string,
-    notes: '',
-  });
-  const [deleteConfirm, setDeleteConfirm] = useState<{
-    open: boolean;
-    shiftId: string | null;
-  }>({ open: false, shiftId: null });
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = today.getDate() - dayOfWeek;
-    return new Date(today.setDate(diff));
-  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
-  const fetchSchedule = async () => {
+  // Track original state to detect changes
+  const [originalGridState, setOriginalGridState] = useState<GridState>({});
+
+  const fetchSchedule = useCallback(async () => {
     setLoading(true);
     try {
-      const startStr = currentWeekStart.toISOString().split('T')[0];
-      const result = await apiGet<WeeklySchedule>(
-        `/scheduling/shifts/weekly?start=${startStr}`
-      );
-      setSchedule(result);
+      const result = await apiGet<{
+        year: number;
+        month: number;
+        entries: ScheduleEntry[];
+      }>('/scheduling/monthly', {
+        year,
+        month,
+        department,
+      });
+
+      setEntries(result.entries);
+
+      // Build grid state from entries
+      const state: GridState = {};
+      for (const entry of result.entries) {
+        const day = new Date(entry.date).getDate();
+        const key = `${entry.userId}_${day}`;
+        state[key] = {
+          shiftCode: entry.shiftCode,
+          periodA: entry.periodA,
+          periodB: entry.periodB,
+          periodC: entry.periodC,
+        };
+      }
+      setGridState(state);
+      setOriginalGridState(JSON.parse(JSON.stringify(state)));
+      setHasChanges(false);
     } catch (error) {
       console.error('Failed to load schedule:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [year, month, department]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const result = await apiGet<User[]>('/users');
-      setUsers(result || []);
+      const result = await apiGet<StaffUser[] | Record<string, StaffUser[]>>(
+        '/scheduling/departments/staff',
+        { department },
+      );
+
+      if (Array.isArray(result)) {
+        setUsers(result);
+      } else {
+        // Grouped response
+        setUsers((result as any)[department] || []);
+      }
     } catch (error) {
-      console.error('Failed to load users:', error);
+      console.error('Failed to load staff:', error);
     }
-  };
+  }, [department]);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const result = await apiGet<{
+        year: number;
+        month: number;
+        userStats: UserStat[];
+      }>('/scheduling/monthly/stats', {
+        year,
+        month,
+        department,
+      });
+      setStats(result.userStats);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [year, month, department]);
 
   useEffect(() => {
     fetchSchedule();
     fetchUsers();
-  }, [currentWeekStart]);
+    fetchStats();
+  }, [fetchSchedule, fetchUsers, fetchStats]);
 
-  const handleAddShift = async () => {
-    if (!shiftForm.userId || !shiftForm.date || !shiftForm.type) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
-      return;
-    }
+  const handleNavigate = (newYear: number, newMonth: number) => {
+    setYear(newYear);
+    setMonth(newMonth);
+  };
+
+  const handleCellChange = (
+    userId: string,
+    day: number,
+    field: keyof CellData,
+    value: string | null,
+  ) => {
+    setGridState((prev) => {
+      const key = `${userId}_${day}`;
+      const current = prev[key] || {
+        shiftCode: null,
+        periodA: null,
+        periodB: null,
+        periodC: null,
+      };
+
+      const updated = { ...current, [field]: value };
+
+      // If shiftCode changed to a non-working code, clear activities
+      if (field === 'shiftCode' && value && NON_WORKING_SHIFT_CODES.includes(value as ShiftCode)) {
+        updated.periodA = null;
+        updated.periodB = null;
+        updated.periodC = null;
+      }
+
+      return { ...prev, [key]: updated };
+    });
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      await apiPost('/scheduling/shifts', shiftForm);
-      toast({ title: '班次新增成功' });
-      setShowAddModal(false);
-      setShiftForm({ userId: '', date: '', type: 'MORNING', notes: '' });
-      fetchSchedule();
-    } catch (error) {
-      toast({ title: '新增失敗', variant: 'destructive' });
-    }
-  };
+      // Collect all cells that have data
+      const entriesToSave: Array<{
+        date: string;
+        department: string;
+        shiftCode: string;
+        periodA?: string;
+        periodB?: string;
+        periodC?: string;
+        userId: string;
+      }> = [];
 
-  const goToPreviousWeek = () => {
-    const newDate = new Date(currentWeekStart);
-    newDate.setDate(newDate.getDate() - 7);
-    setCurrentWeekStart(newDate);
-  };
+      for (const [key, cell] of Object.entries(gridState)) {
+        if (!cell.shiftCode) continue; // Skip empty cells
 
-  const goToNextWeek = () => {
-    const newDate = new Date(currentWeekStart);
-    newDate.setDate(newDate.getDate() + 7);
-    setCurrentWeekStart(newDate);
-  };
+        const [userId, dayStr] = key.split('_');
+        const day = parseInt(dayStr, 10);
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-  const goToCurrentWeek = () => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = today.getDate() - dayOfWeek;
-    setCurrentWeekStart(new Date(today.setDate(diff)));
-  };
+        entriesToSave.push({
+          date: dateStr,
+          department,
+          shiftCode: cell.shiftCode,
+          periodA: cell.periodA || undefined,
+          periodB: cell.periodB || undefined,
+          periodC: cell.periodC || undefined,
+          userId,
+        });
+      }
 
-  const handleDeleteShift = async () => {
-    if (!deleteConfirm.shiftId) return;
+      if (entriesToSave.length === 0) {
+        toast({ title: '沒有需要儲存的排班資料' });
+        setSaving(false);
+        return;
+      }
 
-    try {
-      await apiDelete(`/scheduling/shifts/${deleteConfirm.shiftId}`);
-      toast({ title: '班次已刪除' });
-      await fetchSchedule();
-    } catch (error) {
-      toast({
-        title: '刪除失敗',
-        variant: 'destructive',
-      });
+      await apiPost('/scheduling/monthly/bulk', { entries: entriesToSave });
+      toast({ title: `已儲存 ${entriesToSave.length} 筆排班資料` });
+      setHasChanges(false);
+      setOriginalGridState(JSON.parse(JSON.stringify(gridState)));
+
+      // Refresh stats
+      fetchStats();
+    } catch (error: any) {
+      toast({ title: error.message || '儲存失敗', variant: 'destructive' });
     } finally {
-      setDeleteConfirm({ open: false, shiftId: null });
+      setSaving(false);
     }
   };
 
-  const openDeleteConfirm = (shiftId: string) => {
-    setDeleteConfirm({ open: true, shiftId });
+  const handleDepartmentChange = (dept: string) => {
+    setDepartment(dept);
   };
 
-  const formatDateHeader = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const weekday = WEEKDAYS[date.getDay()];
-    return { month, day, weekday };
-  };
-
-  const isToday = (dateStr: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    return dateStr === today;
-  };
-
-  const getShiftBadgeColor = (type: string) => {
-    switch (type) {
-      case 'MORNING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'AFTERNOON':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'NIGHT':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return '';
-    }
-  };
+  // Legend items
+  const shiftLegend = (Object.values(ShiftCode) as ShiftCode[]).map((code) => ({
+    code,
+    label: ShiftCodeLabels[code],
+  }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">排班系統</h1>
-          <p className="text-muted-foreground">管理人員班表</p>
+          <p className="text-muted-foreground">月班表管理</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          新增班次
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            匯入
+          </Button>
+          <ExportButton year={year} month={month} department={department} />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || saving}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? '儲存中...' : '儲存'}
+          </Button>
+        </div>
       </div>
 
-      {/* Add Shift Dialog */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>新增班次</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="shift-user">選擇人員 *</Label>
-              <select
-                id="shift-user"
-                className="w-full mt-1 p-2 border rounded-md"
-                value={shiftForm.userId}
-                onChange={(e) => setShiftForm({ ...shiftForm, userId: e.target.value })}
-              >
-                <option value="">請選擇人員</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="shift-date">日期 *</Label>
-              <Input
-                id="shift-date"
-                type="date"
-                value={shiftForm.date}
-                onChange={(e) => setShiftForm({ ...shiftForm, date: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="shift-type">班別 *</Label>
-              <select
-                id="shift-type"
-                className="w-full mt-1 p-2 border rounded-md"
-                value={shiftForm.type}
-                onChange={(e) => setShiftForm({ ...shiftForm, type: e.target.value })}
-              >
-                {Object.values(ShiftType).map((type) => (
-                  <option key={type} value={type}>{ShiftTypeLabels[type]}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="shift-notes">備註</Label>
-              <Input
-                id="shift-notes"
-                value={shiftForm.notes}
-                onChange={(e) => setShiftForm({ ...shiftForm, notes: e.target.value })}
-                placeholder="選填"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowAddModal(false)}>
-              取消
-            </Button>
-            <Button onClick={handleAddShift}>
-              新增
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirm Dialog */}
-      <ConfirmDialog
-        open={deleteConfirm.open}
-        onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
-        title="確定要刪除此班次嗎？"
-        description="此操作無法復原。"
-        confirmText="刪除"
-        cancelText="取消"
-        variant="destructive"
-        onConfirm={handleDeleteShift}
-      />
-
-      {/* Week Navigation */}
+      {/* Month Navigator */}
       <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-4">
-              <span className="font-medium">
-                {schedule?.startDate
-                  ? new Date(schedule.startDate).toLocaleDateString('zh-TW')
-                  : ''}{' '}
-                -{' '}
-                {schedule?.endDate
-                  ? new Date(schedule.endDate).toLocaleDateString('zh-TW')
-                  : ''}
-              </span>
-              <Button variant="outline" size="sm" onClick={goToCurrentWeek}>
-                本週
-              </Button>
-            </div>
-            <Button variant="outline" size="icon" onClick={goToNextWeek}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+        <CardContent className="py-3">
+          <MonthNavigator year={year} month={month} onNavigate={handleNavigate} />
         </CardContent>
       </Card>
 
-      {/* Schedule Grid */}
-      {loading ? (
-        <Card>
-          <CardContent className="p-6">
-            <ScheduleSkeleton />
-          </CardContent>
-        </Card>
-      ) : schedule ? (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-3 text-left font-medium w-24">班別</th>
-                    {schedule.schedule.map((day) => {
-                      const { month, day: d, weekday } = formatDateHeader(day.date);
-                      const today = isToday(day.date);
-                      return (
-                        <th
-                          key={day.date}
-                          className={`p-3 text-center font-medium ${
-                            today ? 'bg-primary/10' : ''
-                          }`}
-                        >
-                          <div className="text-xs text-muted-foreground">
-                            週{weekday}
-                          </div>
-                          <div className={today ? 'text-primary font-bold' : ''}>
-                            {month}/{d}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.values(ShiftType).map((shiftType) => (
-                    <tr key={shiftType} className="border-b">
-                      <td className="p-3">
-                        <Badge
-                          variant="outline"
-                          className={getShiftBadgeColor(shiftType)}
-                        >
-                          {ShiftTypeLabels[shiftType]}
-                        </Badge>
-                      </td>
-                      {schedule.schedule.map((day) => {
-                        const shifts = day.shifts[shiftType] || [];
-                        const today = isToday(day.date);
-                        return (
-                          <td
-                            key={`${day.date}-${shiftType}`}
-                            className={`p-2 min-w-[120px] ${
-                              today ? 'bg-primary/5' : ''
-                            }`}
-                          >
-                            <div className="space-y-1">
-                              {shifts.map((shift) => (
-                                <div
-                                  key={shift.id}
-                                  className="flex items-center justify-between group p-1 rounded hover:bg-gray-100"
-                                >
-                                  <span className="text-sm">
-                                    {shift.user.name}
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                    onClick={() => openDeleteConfirm(shift.id)}
-                                    aria-label="刪除班次"
-                                  >
-                                    <Trash2 className="h-3 w-3 text-red-500" />
-                                  </Button>
-                                </div>
-                              ))}
-                              {shifts.length === 0 && (
-                                <div className="text-xs text-muted-foreground text-center py-1">
-                                  -
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+      {/* Department Tabs */}
+      <Tabs value={department} onValueChange={handleDepartmentChange}>
+        <TabsList>
+          {(Object.values(ScheduleDepartment) as ScheduleDepartment[]).map((dept) => (
+            <TabsTrigger key={dept} value={dept}>
+              {ScheduleDepartmentLabels[dept]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {(Object.values(ScheduleDepartment) as ScheduleDepartment[]).map((dept) => (
+          <TabsContent key={dept} value={dept} className="space-y-4">
+            {/* Schedule Grid */}
+            <ScheduleGrid
+              year={year}
+              month={month}
+              entries={entries.filter((e) => e.department === dept)}
+              users={users}
+              gridState={gridState}
+              onCellChange={handleCellChange}
+              loading={loading}
+            />
+
+            {/* Stats Panel */}
+            <ScheduleStats stats={stats} loading={statsLoading} />
+          </TabsContent>
+        ))}
+      </Tabs>
 
       {/* Legend */}
       <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center gap-6 text-sm">
-            <span className="text-muted-foreground">班別說明：</span>
-            {Object.values(ShiftType).map((type) => (
-              <div key={type} className="flex items-center gap-2">
-                <Badge variant="outline" className={getShiftBadgeColor(type)}>
-                  {ShiftTypeLabels[type]}
-                </Badge>
-              </div>
-            ))}
+        <CardContent className="py-3">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="text-muted-foreground font-medium">班別：</span>
+              {shiftLegend.map(({ code, label }) => (
+                <span key={code} className="px-1.5 py-0.5 rounded bg-gray-100">
+                  <span className="font-semibold">{code}</span> {label}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="text-muted-foreground font-medium">活動：</span>
+              {(Object.values(ActivityType) as ActivityType[]).map((at) => (
+                <span key={at} className="px-1.5 py-0.5 rounded bg-gray-100">
+                  {ActivityTypeLabels[at]}
+                </span>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Import Dialog */}
+      <ImportDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        department={department}
+        year={year}
+        month={month}
+        onSuccess={() => {
+          fetchSchedule();
+          fetchStats();
+        }}
+      />
     </div>
   );
 }
