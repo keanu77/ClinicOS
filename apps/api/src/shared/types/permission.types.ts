@@ -13,6 +13,8 @@ export const DefaultPermissionsByPosition: Record<Position, Permission[]> = {
     Permission.INVENTORY_TRANSACTION,
     // 排班
     Permission.SCHEDULING_VIEW,
+    // 門診
+    Permission.CLINIC_SCHEDULE_VIEW,
     // 設備
     Permission.ASSETS_VIEW,
     Permission.ASSETS_REPORT_FAULT,
@@ -35,6 +37,8 @@ export const DefaultPermissionsByPosition: Record<Position, Permission[]> = {
     Permission.INVENTORY_TRANSACTION,
     // 排班
     Permission.SCHEDULING_VIEW,
+    // 門診
+    Permission.CLINIC_SCHEDULE_VIEW,
     // 設備
     Permission.ASSETS_VIEW,
     Permission.ASSETS_REPORT_FAULT,
@@ -57,6 +61,8 @@ export const DefaultPermissionsByPosition: Record<Position, Permission[]> = {
     Permission.INVENTORY_TRANSACTION,
     // 排班
     Permission.SCHEDULING_VIEW,
+    // 門診
+    Permission.CLINIC_SCHEDULE_VIEW,
     // 設備
     Permission.ASSETS_VIEW,
     Permission.ASSETS_REPORT_FAULT,
@@ -78,6 +84,8 @@ export const DefaultPermissionsByPosition: Record<Position, Permission[]> = {
     Permission.INVENTORY_VIEW,
     // 排班
     Permission.SCHEDULING_VIEW,
+    // 門診
+    Permission.CLINIC_SCHEDULE_VIEW,
     // 設備
     Permission.ASSETS_VIEW,
     Permission.ASSETS_REPORT_FAULT,
@@ -101,6 +109,9 @@ export const DefaultPermissionsByPosition: Record<Position, Permission[]> = {
     // 排班
     Permission.SCHEDULING_VIEW,
     Permission.SCHEDULING_MANAGE,
+    // 門診
+    Permission.CLINIC_SCHEDULE_VIEW,
+    Permission.CLINIC_SCHEDULE_MANAGE,
     // 人員
     Permission.HR_VIEW,
     Permission.HR_MANAGE,
@@ -136,6 +147,8 @@ export const DefaultPermissionsByPosition: Record<Position, Permission[]> = {
     Permission.INVENTORY_MANAGE,
     Permission.SCHEDULING_VIEW,
     Permission.SCHEDULING_MANAGE,
+    Permission.CLINIC_SCHEDULE_VIEW,
+    Permission.CLINIC_SCHEDULE_MANAGE,
     Permission.HR_VIEW,
     Permission.HR_MANAGE,
     Permission.ASSETS_VIEW,
