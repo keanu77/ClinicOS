@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import { formatRelativeTime } from '@/lib/utils';
-import { Bell, Check, CheckCheck, Trash2, Mail, MailOpen } from 'lucide-react';
-import { NotificationTypeLabels, NotificationType } from '@/shared';
+import { useEffect, useState } from "react";
+import { apiGet, apiPost, apiDelete } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { formatRelativeTime } from "@/lib/utils";
+import { Bell, Check, CheckCheck, Trash2, Mail, MailOpen } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { NotificationTypeLabels, NotificationType } from "@/shared";
 
 interface Notification {
   id: string;
@@ -32,21 +33,21 @@ export default function NotificationsPage() {
   const { toast } = useToast();
   const [data, setData] = useState<NotificationListResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<"all" | "unread">("all");
 
   const fetchNotifications = async () => {
     setLoading(true);
     try {
       const params: Record<string, string | boolean | number> = { limit: 50 };
-      if (filter === 'unread') params.isRead = false;
+      if (filter === "unread") params.isRead = false;
 
       const result = await apiGet<NotificationListResponse>(
-        '/notifications',
-        params
+        "/notifications",
+        params,
       );
       setData(result);
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      console.error("Failed to load notifications:", error);
     } finally {
       setLoading(false);
     }
@@ -62,21 +63,21 @@ export default function NotificationsPage() {
       await fetchNotifications();
     } catch (error) {
       toast({
-        title: '操作失敗',
-        variant: 'destructive',
+        title: "操作失敗",
+        variant: "destructive",
       });
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
-      await apiPost('/notifications/read-all');
-      toast({ title: '已全部標記為已讀' });
+      await apiPost("/notifications/read-all");
+      toast({ title: "已全部標記為已讀" });
       await fetchNotifications();
     } catch (error) {
       toast({
-        title: '操作失敗',
-        variant: 'destructive',
+        title: "操作失敗",
+        variant: "destructive",
       });
     }
   };
@@ -87,25 +88,25 @@ export default function NotificationsPage() {
       await fetchNotifications();
     } catch (error) {
       toast({
-        title: '刪除失敗',
-        variant: 'destructive',
+        title: "刪除失敗",
+        variant: "destructive",
       });
     }
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'HANDOVER_ASSIGNED':
-      case 'HANDOVER_COMMENTED':
-      case 'HANDOVER_STATUS_CHANGED':
-        return 'bg-blue-100 text-blue-600';
-      case 'INVENTORY_LOW_STOCK':
-        return 'bg-orange-100 text-orange-600';
-      case 'SHIFT_ASSIGNED':
-      case 'SHIFT_CHANGED':
-        return 'bg-purple-100 text-purple-600';
+      case "HANDOVER_ASSIGNED":
+      case "HANDOVER_COMMENTED":
+      case "HANDOVER_STATUS_CHANGED":
+        return "bg-blue-100 text-blue-600";
+      case "INVENTORY_LOW_STOCK":
+        return "bg-orange-100 text-orange-600";
+      case "SHIFT_ASSIGNED":
+      case "SHIFT_CHANGED":
+        return "bg-purple-100 text-purple-600";
       default:
-        return 'bg-gray-100 text-gray-600';
+        return "bg-gray-100 text-gray-600";
     }
   };
 
@@ -117,7 +118,7 @@ export default function NotificationsPage() {
           <p className="text-muted-foreground">
             {data?.unreadCount
               ? `您有 ${data.unreadCount} 則未讀通知`
-              : '所有通知都已讀取'}
+              : "所有通知都已讀取"}
           </p>
         </div>
         {data?.unreadCount ? (
@@ -131,16 +132,16 @@ export default function NotificationsPage() {
       {/* Filters */}
       <div className="flex gap-2">
         <Button
-          variant={filter === 'all' ? 'default' : 'outline'}
+          variant={filter === "all" ? "default" : "outline"}
           size="sm"
-          onClick={() => setFilter('all')}
+          onClick={() => setFilter("all")}
         >
           全部
         </Button>
         <Button
-          variant={filter === 'unread' ? 'default' : 'outline'}
+          variant={filter === "unread" ? "default" : "outline"}
           size="sm"
-          onClick={() => setFilter('unread')}
+          onClick={() => setFilter("unread")}
         >
           未讀
           {data?.unreadCount ? (
@@ -153,21 +154,19 @@ export default function NotificationsPage() {
 
       {/* Notification List */}
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
-        </div>
+        <LoadingSpinner />
       ) : data?.data && data.data.length > 0 ? (
         <div className="space-y-2">
           {data.data.map((notification) => (
             <Card
               key={notification.id}
-              className={notification.isRead ? 'bg-gray-50' : 'bg-white'}
+              className={notification.isRead ? "bg-gray-50" : "bg-white"}
             >
               <CardContent className="py-4">
                 <div className="flex items-start gap-4">
                   <div
                     className={`p-2 rounded-full ${getNotificationIcon(
-                      notification.type
+                      notification.type,
                     )}`}
                   >
                     {notification.isRead ? (
@@ -193,7 +192,11 @@ export default function NotificationsPage() {
                         {formatRelativeTime(notification.createdAt)}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {NotificationTypeLabels[notification.type as NotificationType]}
+                        {
+                          NotificationTypeLabels[
+                            notification.type as NotificationType
+                          ]
+                        }
                       </span>
                     </div>
                   </div>
@@ -229,7 +232,7 @@ export default function NotificationsPage() {
           <CardContent className="py-12 text-center">
             <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              {filter === 'unread' ? '沒有未讀通知' : '沒有通知'}
+              {filter === "unread" ? "沒有未讀通知" : "沒有通知"}
             </p>
           </CardContent>
         </Card>

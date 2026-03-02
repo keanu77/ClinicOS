@@ -1,19 +1,34 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { formatRelativeTime } from '@/lib/utils';
-import { UserCog, Award, Calendar, AlertTriangle, Plus, X } from 'lucide-react';
-import { Role } from '@/shared';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { formatRelativeTime } from "@/lib/utils";
+import { UserCog, Award, Calendar, AlertTriangle, Plus } from "lucide-react";
+import { Role } from "@/shared";
 
 interface Employee {
   id: string;
@@ -55,16 +70,16 @@ interface Certification {
 }
 
 const statusColors: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-800',
-  EXPIRING: 'bg-yellow-100 text-yellow-800',
-  EXPIRED: 'bg-red-100 text-red-800',
+  ACTIVE: "bg-green-100 text-green-800",
+  EXPIRING: "bg-yellow-100 text-yellow-800",
+  EXPIRED: "bg-red-100 text-red-800",
 };
 
 const levelLabels: Record<string, string> = {
-  BEGINNER: '初級',
-  INTERMEDIATE: '中級',
-  ADVANCED: '高級',
-  CERTIFIED: '認證',
+  BEGINNER: "初級",
+  INTERMEDIATE: "中級",
+  ADVANCED: "高級",
+  CERTIFIED: "認證",
 };
 
 export default function HRPage() {
@@ -75,25 +90,25 @@ export default function HRPage() {
   const [expiringCerts, setExpiringCerts] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCertModal, setShowCertModal] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<string>('');
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("__none__");
   const [certForm, setCertForm] = useState({
-    name: '',
-    certNo: '',
-    issuingOrg: '',
-    issueDate: '',
-    expiryDate: '',
+    name: "",
+    certNo: "",
+    issuingOrg: "",
+    issueDate: "",
+    expiryDate: "",
   });
 
   const fetchData = async () => {
     try {
       const [employeesRes, certsRes] = await Promise.all([
-        apiGet<{ data: Employee[] }>('/hr/employees'),
-        apiGet<Certification[]>('/hr/certifications/expiring'),
+        apiGet<{ data: Employee[] }>("/hr/employees"),
+        apiGet<Certification[]>("/hr/certifications/expiring"),
       ]);
       setEmployees(employeesRes.data || []);
       setExpiringCerts(certsRes || []);
     } catch (error) {
-      console.error('Failed to load HR data:', error);
+      console.error("Failed to load HR data:", error);
     } finally {
       setLoading(false);
     }
@@ -104,22 +119,33 @@ export default function HRPage() {
   }, []);
 
   const handleAddCert = async () => {
-    if (!selectedEmployee || !certForm.name || !certForm.certNo) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+    if (
+      !selectedEmployee ||
+      selectedEmployee === "__none__" ||
+      !certForm.name ||
+      !certForm.certNo
+    ) {
+      toast({ title: "請填寫必填欄位", variant: "destructive" });
       return;
     }
     try {
-      await apiPost('/hr/certifications', {
+      await apiPost("/hr/certifications", {
         userId: selectedEmployee,
         ...certForm,
       });
-      toast({ title: '證照新增成功' });
+      toast({ title: "證照新增成功" });
       setShowCertModal(false);
-      setCertForm({ name: '', certNo: '', issuingOrg: '', issueDate: '', expiryDate: '' });
-      setSelectedEmployee('');
+      setCertForm({
+        name: "",
+        certNo: "",
+        issuingOrg: "",
+        issueDate: "",
+        expiryDate: "",
+      });
+      setSelectedEmployee("__none__");
       fetchData();
     } catch (error) {
-      toast({ title: '新增失敗', variant: 'destructive' });
+      toast({ title: "新增失敗", variant: "destructive" });
     }
   };
 
@@ -145,84 +171,92 @@ export default function HRPage() {
         </Button>
       </div>
 
-      {/* Add Certification Modal */}
-      {showCertModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增證照</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowCertModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>選擇員工 *</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={selectedEmployee}
-                  onChange={(e) => setSelectedEmployee(e.target.value)}
-                >
-                  <option value="">請選擇員工</option>
+      <Dialog open={showCertModal} onOpenChange={setShowCertModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增證照</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>選擇員工 *</Label>
+              <Select
+                value={selectedEmployee}
+                onValueChange={setSelectedEmployee}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="請選擇員工" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">請選擇員工</SelectItem>
                   {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>證照名稱 *</Label>
+              <Input
+                value={certForm.name}
+                onChange={(e) =>
+                  setCertForm({ ...certForm, name: e.target.value })
+                }
+                placeholder="例：護理師執照"
+              />
+            </div>
+            <div>
+              <Label>證照編號 *</Label>
+              <Input
+                value={certForm.certNo}
+                onChange={(e) =>
+                  setCertForm({ ...certForm, certNo: e.target.value })
+                }
+                placeholder="證照編號"
+              />
+            </div>
+            <div>
+              <Label>發照機構</Label>
+              <Input
+                value={certForm.issuingOrg}
+                onChange={(e) =>
+                  setCertForm({ ...certForm, issuingOrg: e.target.value })
+                }
+                placeholder="例：衛生福利部"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>證照名稱 *</Label>
+                <Label>發照日期</Label>
                 <Input
-                  value={certForm.name}
-                  onChange={(e) => setCertForm({ ...certForm, name: e.target.value })}
-                  placeholder="例：護理師執照"
+                  type="date"
+                  value={certForm.issueDate}
+                  onChange={(e) =>
+                    setCertForm({ ...certForm, issueDate: e.target.value })
+                  }
                 />
               </div>
               <div>
-                <Label>證照編號 *</Label>
+                <Label>到期日期</Label>
                 <Input
-                  value={certForm.certNo}
-                  onChange={(e) => setCertForm({ ...certForm, certNo: e.target.value })}
-                  placeholder="證照編號"
+                  type="date"
+                  value={certForm.expiryDate}
+                  onChange={(e) =>
+                    setCertForm({ ...certForm, expiryDate: e.target.value })
+                  }
                 />
               </div>
-              <div>
-                <Label>發照機構</Label>
-                <Input
-                  value={certForm.issuingOrg}
-                  onChange={(e) => setCertForm({ ...certForm, issuingOrg: e.target.value })}
-                  placeholder="例：衛生福利部"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>發照日期</Label>
-                  <Input
-                    type="date"
-                    value={certForm.issueDate}
-                    onChange={(e) => setCertForm({ ...certForm, issueDate: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>到期日期</Label>
-                  <Input
-                    type="date"
-                    value={certForm.expiryDate}
-                    onChange={(e) => setCertForm({ ...certForm, expiryDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowCertModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleAddCert}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCertModal(false)}>
+              取消
+            </Button>
+            <Button onClick={handleAddCert}>新增</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Alert for expiring certifications */}
       {expiringCerts.length > 0 && (
@@ -246,9 +280,7 @@ export default function HRPage() {
 
         <TabsContent value="employees">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-muted-foreground">載入中...</div>
-            </div>
+            <LoadingSpinner />
           ) : employees.length > 0 ? (
             <div className="grid gap-4">
               {employees.map((employee) => (
@@ -281,7 +313,8 @@ export default function HRPage() {
                                   variant="secondary"
                                   className="text-xs"
                                 >
-                                  {skill.skill.name} ({levelLabels[skill.level]})
+                                  {skill.skill.name} ({levelLabels[skill.level]}
+                                  )
                                 </Badge>
                               ))}
                               {employee.skills.length > 4 && (
@@ -334,10 +367,12 @@ export default function HRPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge className={statusColors[cert.status]}>
-                          {cert.status === 'EXPIRING' ? '即將到期' : cert.status}
+                          {cert.status === "EXPIRING"
+                            ? "即將到期"
+                            : cert.status}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
-                          {new Date(cert.expiresAt).toLocaleDateString('zh-TW')}
+                          {new Date(cert.expiresAt).toLocaleDateString("zh-TW")}
                         </span>
                       </div>
                     </div>

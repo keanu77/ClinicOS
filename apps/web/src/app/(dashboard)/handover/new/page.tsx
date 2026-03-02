@@ -1,16 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiPost, apiGet } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import { HandoverPriority, HandoverPriorityLabels } from '@/shared';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { apiPost, apiGet } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { HandoverPriority, HandoverPriorityLabels } from "@/shared";
 
 interface User {
   id: string;
@@ -24,19 +32,21 @@ export default function NewHandoverPage() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
 
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [priority, setPriority] = useState<HandoverPriority>(HandoverPriority.MEDIUM);
-  const [assigneeId, setAssigneeId] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [priority, setPriority] = useState<HandoverPriority>(
+    HandoverPriority.MEDIUM,
+  );
+  const [assigneeId, setAssigneeId] = useState("__none__");
+  const [dueDate, setDueDate] = useState("");
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const result = await apiGet<User[]>('/users');
+        const result = await apiGet<User[]>("/users");
         setUsers(result);
       } catch (error) {
-        console.error('Failed to load users:', error);
+        console.error("Failed to load users:", error);
       }
     };
 
@@ -48,25 +58,25 @@ export default function NewHandoverPage() {
     setLoading(true);
 
     try {
-      await apiPost('/handovers', {
+      await apiPost("/handovers", {
         title,
         content,
         priority,
-        assigneeId: assigneeId || undefined,
+        assigneeId: assigneeId !== "__none__" ? assigneeId : undefined,
         dueDate: dueDate || undefined,
       });
 
       toast({
-        title: '建立成功',
-        description: '交班事項已成功建立',
+        title: "建立成功",
+        description: "交班事項已成功建立",
       });
 
-      router.push('/handover');
+      router.push("/handover");
     } catch (error) {
       toast({
-        title: '建立失敗',
-        description: '無法建立交班事項，請稍後再試',
-        variant: 'destructive',
+        title: "建立失敗",
+        description: "無法建立交班事項，請稍後再試",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -103,12 +113,12 @@ export default function NewHandoverPage() {
 
             <div className="space-y-2">
               <Label htmlFor="content">內容 *</Label>
-              <textarea
+              <Textarea
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="詳細描述交班事項..."
-                className="w-full min-h-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="min-h-[150px]"
                 required
               />
             </div>
@@ -116,35 +126,38 @@ export default function NewHandoverPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="priority">優先度</Label>
-                <select
-                  id="priority"
+                <Select
                   value={priority}
-                  onChange={(e) => setPriority(e.target.value as HandoverPriority)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  onValueChange={(v) => setPriority(v as HandoverPriority)}
                 >
-                  {Object.values(HandoverPriority).map((p) => (
-                    <option key={p} value={p}>
-                      {HandoverPriorityLabels[p]}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(HandoverPriority).map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {HandoverPriorityLabels[p]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="assignee">指派給</Label>
-                <select
-                  id="assignee"
-                  value={assigneeId}
-                  onChange={(e) => setAssigneeId(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">不指派</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))}
-                </select>
+                <Select value={assigneeId} onValueChange={setAssigneeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="不指派" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">不指派</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -165,7 +178,7 @@ export default function NewHandoverPage() {
                 </Button>
               </Link>
               <Button type="submit" disabled={loading}>
-                {loading ? '建立中...' : '建立交班'}
+                {loading ? "建立中..." : "建立交班"}
               </Button>
             </div>
           </form>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { Bell, LogOut, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { RoleLabels, Role } from '@/shared';
 import { MobileSidebar } from './mobile-sidebar';
+import { apiGet } from '@/lib/api';
 
 interface HeaderProps {
   user: {
@@ -19,7 +20,23 @@ interface HeaderProps {
 
 export function Header({ user }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const roleLabel = RoleLabels[user.role as Role] || user.role;
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const result = await apiGet<{ count: number }>('/notifications/unread-count');
+        setUnreadCount(result.count);
+      } catch {
+        // silently ignore
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -49,6 +66,11 @@ export function Header({ user }: HeaderProps) {
                 aria-label="通知中心"
               >
                 <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Button>
             </Link>
 

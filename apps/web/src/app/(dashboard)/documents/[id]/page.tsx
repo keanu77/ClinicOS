@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost, apiPatch } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { formatDateTime } from '@/lib/utils';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost, apiPatch } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { formatDateTime } from "@/lib/utils";
 import {
   ArrowLeft,
   FileText,
@@ -19,9 +19,11 @@ import {
   User,
   Clock,
   Send,
-} from 'lucide-react';
-import Link from 'next/link';
-import { Role } from '@/shared';
+} from "lucide-react";
+import Link from "next/link";
+import { Role } from "@/shared";
+import { Textarea } from "@/components/ui/textarea";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface Document {
   id: string;
@@ -48,17 +50,17 @@ interface Document {
 }
 
 const statusColors: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PENDING_REVIEW: 'bg-yellow-100 text-yellow-800',
-  PUBLISHED: 'bg-green-100 text-green-800',
-  ARCHIVED: 'bg-gray-100 text-gray-800',
+  DRAFT: "bg-gray-100 text-gray-800",
+  PENDING_REVIEW: "bg-yellow-100 text-yellow-800",
+  PUBLISHED: "bg-green-100 text-green-800",
+  ARCHIVED: "bg-gray-100 text-gray-800",
 };
 
 const statusLabels: Record<string, string> = {
-  DRAFT: '草稿',
-  PENDING_REVIEW: '待審核',
-  PUBLISHED: '已發布',
-  ARCHIVED: '已封存',
+  DRAFT: "草稿",
+  PENDING_REVIEW: "待審核",
+  PUBLISHED: "已發布",
+  ARCHIVED: "已封存",
 };
 
 export default function DocumentDetailPage() {
@@ -71,8 +73,8 @@ export default function DocumentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    title: '',
-    content: '',
+    title: "",
+    content: "",
   });
 
   const fetchDocument = async () => {
@@ -81,14 +83,14 @@ export default function DocumentDetailPage() {
       setDocument(result);
       setEditForm({
         title: result.title,
-        content: result.content || '',
+        content: result.content || "",
       });
     } catch (error) {
-      console.error('Failed to load document:', error);
+      console.error("Failed to load document:", error);
       toast({
-        title: '載入失敗',
-        description: '無法載入文件詳情',
-        variant: 'destructive',
+        title: "載入失敗",
+        description: "無法載入文件詳情",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -102,44 +104,41 @@ export default function DocumentDetailPage() {
   const handleSave = async () => {
     try {
       await apiPatch(`/documents/${params.id}`, editForm);
-      toast({ title: '更新成功' });
+      toast({ title: "更新成功" });
       setIsEditing(false);
       fetchDocument();
     } catch (error) {
-      toast({ title: '更新失敗', variant: 'destructive' });
+      toast({ title: "更新失敗", variant: "destructive" });
     }
   };
 
   const handleConfirmRead = async () => {
     try {
       await apiPost(`/documents/${params.id}/confirm-read`, {});
-      toast({ title: '已確認閱讀' });
+      toast({ title: "已確認閱讀" });
     } catch (error) {
-      toast({ title: '確認失敗', variant: 'destructive' });
+      toast({ title: "確認失敗", variant: "destructive" });
     }
   };
 
   const handlePublish = async () => {
     try {
-      await apiPatch(`/documents/${params.id}`, { status: 'PUBLISHED' });
-      toast({ title: '文件已發布' });
+      await apiPatch(`/documents/${params.id}`, { status: "PUBLISHED" });
+      toast({ title: "文件已發布" });
       fetchDocument();
     } catch (error) {
-      toast({ title: '發布失敗', variant: 'destructive' });
+      toast({ title: "發布失敗", variant: "destructive" });
     }
   };
 
   const userRole = session?.user?.role;
   const canEdit = userRole === Role.SUPERVISOR || userRole === Role.ADMIN;
-  const canPublish = (userRole === Role.SUPERVISOR || userRole === Role.ADMIN) &&
-    document?.status === 'PENDING_REVIEW';
+  const canPublish =
+    (userRole === Role.SUPERVISOR || userRole === Role.ADMIN) &&
+    document?.status === "PENDING_REVIEW";
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">載入中...</div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!document) {
@@ -163,7 +162,9 @@ export default function DocumentDetailPage() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm text-muted-foreground">{document.docNo}</span>
+            <span className="text-sm text-muted-foreground">
+              {document.docNo}
+            </span>
             <Badge className={statusColors[document.status]}>
               {statusLabels[document.status]}
             </Badge>
@@ -178,7 +179,7 @@ export default function DocumentDetailPage() {
               發布
             </Button>
           )}
-          {canEdit && !isEditing && document.status !== 'PUBLISHED' && (
+          {canEdit && !isEditing && document.status !== "PUBLISHED" && (
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit className="h-4 w-4 mr-2" />
               編輯
@@ -202,15 +203,19 @@ export default function DocumentDetailPage() {
                 <Label>標題</Label>
                 <Input
                   value={editForm.title}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, title: e.target.value })
+                  }
                 />
               </div>
               <div>
                 <Label>內容</Label>
-                <textarea
-                  className="w-full mt-1 p-3 border rounded-md min-h-[200px]"
+                <Textarea
+                  className="mt-1 min-h-[200px]"
                   value={editForm.content}
-                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, content: e.target.value })
+                  }
                 />
               </div>
               <div className="flex gap-2">
@@ -222,7 +227,9 @@ export default function DocumentDetailPage() {
             </div>
           ) : (
             <div className="prose max-w-none">
-              <p className="whitespace-pre-wrap">{document.content || '（無內容）'}</p>
+              <p className="whitespace-pre-wrap">
+                {document.content || "（無內容）"}
+              </p>
             </div>
           )}
         </CardContent>
@@ -266,7 +273,7 @@ export default function DocumentDetailPage() {
       </Card>
 
       {/* Confirm Read Button */}
-      {document.status === 'PUBLISHED' && (
+      {document.status === "PUBLISHED" && (
         <Card>
           <CardContent className="py-4">
             <Button className="w-full" onClick={handleConfirmRead}>

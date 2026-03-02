@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { apiGet } from '@/lib/api';
-import { formatRelativeTime } from '@/lib/utils';
-import { getPriorityBadgeVariant } from '@/lib/badge-variants';
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { apiGet } from "@/lib/api";
+import { formatRelativeTime } from "@/lib/utils";
+import { getPriorityBadgeVariant } from "@/lib/badge-variants";
 import {
   ClipboardList,
   Package,
@@ -14,16 +14,16 @@ import {
   AlertTriangle,
   Clock,
   User,
-} from 'lucide-react';
-import Link from 'next/link';
+} from "lucide-react";
+import Link from "next/link";
 import {
   HandoverPriorityLabels,
   HandoverPriorityColors,
   HandoverPriority,
   ShiftTypeLabels,
   ShiftType,
-} from '@/shared';
-import { DashboardSkeleton } from '@/components/ui/skeleton';
+} from "@/shared";
+import { DashboardSkeleton } from "@/components/ui/skeleton";
 
 interface DashboardData {
   todayShifts: Array<{
@@ -61,10 +61,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await apiGet<DashboardData>('/dashboard/summary');
+        const result = await apiGet<DashboardData>("/dashboard/summary");
         setData(result);
       } catch (error) {
-        console.error('Failed to load dashboard:', error);
+        console.error("Failed to load dashboard:", error);
       } finally {
         setLoading(false);
       }
@@ -88,10 +88,10 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">待處理交班</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            <ClipboardList className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -103,10 +103,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">低庫存警示</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data?.lowStockCount || 0}</div>
@@ -114,10 +114,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">我的待辦</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -127,10 +127,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">今日值班</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -166,10 +166,12 @@ export default function DashboardPage() {
                         {formatRelativeTime(handover.createdAt)}
                       </p>
                     </div>
-                    <Badge
-                      variant={getPriorityBadgeVariant(handover.priority)}
-                    >
-                      {HandoverPriorityLabels[handover.priority as HandoverPriority]}
+                    <Badge variant={getPriorityBadgeVariant(handover.priority)}>
+                      {
+                        HandoverPriorityLabels[
+                          handover.priority as HandoverPriority
+                        ]
+                      }
                     </Badge>
                   </Link>
                 ))}
@@ -245,7 +247,11 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <Badge variant="danger">
-                      {HandoverPriorityLabels[handover.priority as HandoverPriority]}
+                      {
+                        HandoverPriorityLabels[
+                          handover.priority as HandoverPriority
+                        ]
+                      }
                     </Badge>
                   </Link>
                 ))}

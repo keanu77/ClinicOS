@@ -3,14 +3,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { useToast } from '@/components/ui/use-toast';
-import { Users, Mail, Shield, Plus, Edit, Trash2, X, KeyRound, Settings, Loader2 } from 'lucide-react';
+import { Users, Mail, Shield, Plus, Edit, Trash2, KeyRound, Settings, Loader2 } from 'lucide-react';
 import { Role, RoleLabels } from '@/shared';
 import {
   Permission,
@@ -156,7 +159,6 @@ export default function UsersPage() {
       setPermissionData(data);
     } catch (error) {
       console.error('Failed to load permissions:', error);
-      // 如果 API 失敗，使用預設權限
       const userPosition = (user.position || 'RECEPTIONIST') as Position;
       const defaultPerms = DefaultPermissionsByPosition[userPosition] || [];
       setPermissionData({
@@ -178,20 +180,17 @@ export default function UsersPage() {
 
     try {
       if (checked) {
-        // 授予權限
         await apiPost(`/permissions/users/${selectedUser.id}/grant`, {
           permission,
           reason: '管理員手動授予',
         });
       } else {
-        // 撤銷權限
         await apiPost(`/permissions/users/${selectedUser.id}/revoke`, {
           permission,
           reason: '管理員手動撤銷',
         });
       }
 
-      // 更新本地狀態
       const newEffectivePermissions = checked
         ? [...permissionData.effectivePermissions, permission]
         : permissionData.effectivePermissions.filter(p => p !== permission);
@@ -266,272 +265,232 @@ export default function UsersPage() {
       </div>
 
       {/* Create User Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增使用者</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowCreateModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Email *</Label>
-                <Input
-                  type="email"
-                  value={createForm.email}
-                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                  placeholder="user@example.com"
-                />
-              </div>
-              <div>
-                <Label>姓名 *</Label>
-                <Input
-                  value={createForm.name}
-                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                  placeholder="姓名"
-                />
-              </div>
-              <div>
-                <Label>密碼 *</Label>
-                <Input
-                  type="password"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                  placeholder="密碼"
-                />
-              </div>
-              <div>
-                <Label>職位</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={createForm.position}
-                  onChange={(e) => setCreateForm({ ...createForm, position: e.target.value })}
-                >
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增使用者</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <Label>姓名 *</Label>
+              <Input
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                placeholder="姓名"
+              />
+            </div>
+            <div>
+              <Label>密碼 *</Label>
+              <Input
+                type="password"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                placeholder="密碼"
+              />
+            </div>
+            <div>
+              <Label>職位</Label>
+              <Select value={createForm.position} onValueChange={(v) => setCreateForm({ ...createForm, position: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                   {Object.values(Position).map((pos) => (
-                    <option key={pos} value={pos}>{PositionLabels[pos]}</option>
+                    <SelectItem key={pos} value={pos}>{PositionLabels[pos]}</SelectItem>
                   ))}
-                </select>
-              </div>
-              <div>
-                <Label>角色</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={createForm.role}
-                  onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                >
-                  <option value="STAFF">員工</option>
-                  <option value="SUPERVISOR">主管</option>
-                  <option value="ADMIN">管理員</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowCreateModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleCreate}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>角色</Label>
+              <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="STAFF">員工</SelectItem>
+                  <SelectItem value="SUPERVISOR">主管</SelectItem>
+                  <SelectItem value="ADMIN">管理員</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>取消</Button>
+            <Button onClick={handleCreate}>新增</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit User Modal */}
-      {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>編輯使用者</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowEditModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Email</Label>
-                <Input value={selectedUser.email} disabled className="bg-gray-50" />
-              </div>
-              <div>
-                <Label>姓名</Label>
-                <Input
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>職位</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={editForm.position}
-                  onChange={(e) => setEditForm({ ...editForm, position: e.target.value })}
-                >
+      <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) setSelectedUser(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>編輯使用者</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Email</Label>
+              <Input value={selectedUser?.email || ''} disabled className="bg-gray-50" />
+            </div>
+            <div>
+              <Label>姓名</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>職位</Label>
+              <Select value={editForm.position} onValueChange={(v) => setEditForm({ ...editForm, position: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                   {Object.values(Position).map((pos) => (
-                    <option key={pos} value={pos}>{PositionLabels[pos]}</option>
+                    <SelectItem key={pos} value={pos}>{PositionLabels[pos]}</SelectItem>
                   ))}
-                </select>
-              </div>
-              <div>
-                <Label>角色</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                >
-                  <option value="STAFF">員工</option>
-                  <option value="SUPERVISOR">主管</option>
-                  <option value="ADMIN">管理員</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={editForm.isActive}
-                  onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                />
-                <Label htmlFor="isActive">啟用帳號</Label>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowEditModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleEdit}>
-                  儲存
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>角色</Label>
+              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="STAFF">員工</SelectItem>
+                  <SelectItem value="SUPERVISOR">主管</SelectItem>
+                  <SelectItem value="ADMIN">管理員</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="isActive"
+                checked={editForm.isActive}
+                onCheckedChange={(checked) => setEditForm({ ...editForm, isActive: !!checked })}
+              />
+              <Label htmlFor="isActive">啟用帳號</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>取消</Button>
+            <Button onClick={handleEdit}>儲存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Permission Modal */}
-      {showPermissionModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between border-b shrink-0">
-              <div>
-                <CardTitle>權限設定</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedUser.name} - {PositionLabels[(selectedUser.position || 'RECEPTIONIST') as Position]}
-                </p>
+      <Dialog open={showPermissionModal} onOpenChange={(open) => { setShowPermissionModal(open); if (!open) setPermissionData(null); }}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>權限設定</DialogTitle>
+            {selectedUser && (
+              <p className="text-sm text-muted-foreground">
+                {selectedUser.name} - {PositionLabels[(selectedUser.position || 'RECEPTIONIST') as Position]}
+              </p>
+            )}
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 py-4">
+            {permissionLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">載入權限中...</span>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => {
-                setShowPermissionModal(false);
-                setPermissionData(null);
-              }}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="overflow-y-auto flex-1 py-4">
-              {permissionLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-muted-foreground">載入權限中...</span>
+            ) : (
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                  <strong>提示：</strong>藍色標籤表示該權限為職位預設權限，取消勾選會撤銷此預設權限。
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                    <strong>提示：</strong>藍色標籤表示該權限為職位預設權限，取消勾選會撤銷此預設權限。
-                  </div>
+                {Object.entries(PermissionCategories).map(([key, category]) => (
+                  <div key={key} className="border rounded-lg p-4">
+                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      {category.label}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {category.permissions.map((permission) => {
+                        const isChecked = isPermissionChecked(permission);
+                        const isDefault = isDefaultPermission(permission);
+                        const isSaving = savingPermission === permission;
 
-                  {Object.entries(PermissionCategories).map(([key, category]) => (
-                    <div key={key} className="border rounded-lg p-4">
-                      <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-primary" />
-                        {category.label}
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {category.permissions.map((permission) => {
-                          const isChecked = isPermissionChecked(permission);
-                          const isDefault = isDefaultPermission(permission);
-                          const isSaving = savingPermission === permission;
-
-                          return (
-                            <div
-                              key={permission}
-                              className={`flex items-center gap-3 p-2 rounded-md ${
-                                isDefault ? 'bg-blue-50' : 'bg-gray-50'
-                              } ${isSaving ? 'opacity-50' : ''}`}
-                            >
-                              <Checkbox
-                                id={permission}
-                                checked={isChecked}
-                                onChange={(e) =>
-                                  handlePermissionChange(permission, e.target.checked)
-                                }
-                                disabled={isSaving}
-                              />
-                              <div className="flex-1">
-                                <label
-                                  htmlFor={permission}
-                                  className="text-sm font-medium cursor-pointer"
-                                >
-                                  {PermissionLabels[permission]}
-                                </label>
-                                {isDefault && (
-                                  <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-700">
-                                    預設
-                                  </Badge>
-                                )}
-                              </div>
-                              {isSaving && (
-                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        return (
+                          <div
+                            key={permission}
+                            className={`flex items-center gap-3 p-2 rounded-md ${
+                              isDefault ? 'bg-blue-50' : 'bg-gray-50'
+                            } ${isSaving ? 'opacity-50' : ''}`}
+                          >
+                            <Checkbox
+                              id={permission}
+                              checked={isChecked}
+                              onCheckedChange={(checked) =>
+                                handlePermissionChange(permission, !!checked)
+                              }
+                              disabled={isSaving}
+                            />
+                            <div className="flex-1">
+                              <label
+                                htmlFor={permission}
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                {PermissionLabels[permission]}
+                              </label>
+                              {isDefault && (
+                                <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-700">
+                                  預設
+                                </Badge>
                               )}
                             </div>
-                          );
-                        })}
-                      </div>
+                            {isSaving && (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-            <div className="border-t p-4 shrink-0">
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setShowPermissionModal(false);
-                  setPermissionData(null);
-                }}
-              >
-                完成
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter className="border-t pt-4">
+            <Button className="w-full" onClick={() => { setShowPermissionModal(false); setPermissionData(null); }}>
+              完成
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-sm">
-            <CardHeader>
-              <CardTitle>確認停用</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                確定要停用此使用者嗎？停用後使用者將無法登入系統。
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setShowDeleteConfirm(null)}>
-                  取消
-                </Button>
-                <Button variant="destructive" className="flex-1" onClick={() => handleDelete(showDeleteConfirm)}>
-                  確認停用
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={!!showDeleteConfirm} onOpenChange={(open) => { if (!open) setShowDeleteConfirm(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>確認停用</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground">
+            確定要停用此使用者嗎？停用後使用者將無法登入系統。
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>取消</Button>
+            <Button variant="destructive" onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}>確認停用</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
-        </div>
+        <LoadingSpinner />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {users.map((user) => (

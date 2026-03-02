@@ -1,15 +1,30 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 import {
   TrendingUp,
   TrendingDown,
@@ -18,9 +33,8 @@ import {
   BarChart3,
   Calendar,
   Plus,
-  X,
-} from 'lucide-react';
-import { Role } from '@/shared';
+} from "lucide-react";
+import { Role } from "@/shared";
 
 interface FinanceSummary {
   totalRevenue: number;
@@ -76,34 +90,35 @@ export default function FinancePage() {
   const [showCostModal, setShowCostModal] = useState(false);
   const [showRevenueModal, setShowRevenueModal] = useState(false);
   const [costForm, setCostForm] = useState({
-    categoryId: '',
-    amount: '',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
+    categoryId: "__none__",
+    amount: "",
+    description: "",
+    date: new Date().toISOString().split("T")[0],
   });
   const [revenueForm, setRevenueForm] = useState({
-    amount: '',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-    doctorId: '',
+    amount: "",
+    description: "",
+    date: new Date().toISOString().split("T")[0],
+    doctorId: "__none__",
   });
 
   const fetchData = async () => {
     try {
-      const [summaryRes, breakdownRes, doctorRes, marginRes, catsRes] = await Promise.all([
-        apiGet<FinanceSummary>('/finance/reports/summary'),
-        apiGet<CostBreakdown[]>('/finance/reports/breakdown'),
-        apiGet<DoctorRevenue[]>('/finance/reports/by-doctor'),
-        apiGet<MonthlyMargin[]>('/finance/reports/margin'),
-        apiGet<CostCategory[]>('/finance/categories'),
-      ]);
+      const [summaryRes, breakdownRes, doctorRes, marginRes, catsRes] =
+        await Promise.all([
+          apiGet<FinanceSummary>("/finance/reports/summary"),
+          apiGet<CostBreakdown[]>("/finance/reports/breakdown"),
+          apiGet<DoctorRevenue[]>("/finance/reports/by-doctor"),
+          apiGet<MonthlyMargin[]>("/finance/reports/margin"),
+          apiGet<CostCategory[]>("/finance/categories"),
+        ]);
       setSummary(summaryRes);
       setBreakdown(breakdownRes || []);
       setDoctorRevenue(doctorRes || []);
       setMonthlyMargin(marginRes || []);
       setCategories(catsRes || []);
     } catch (error) {
-      console.error('Failed to load finance data:', error);
+      console.error("Failed to load finance data:", error);
     } finally {
       setLoading(false);
     }
@@ -114,50 +129,58 @@ export default function FinancePage() {
   }, []);
 
   const handleAddCost = async () => {
-    if (!costForm.categoryId || !costForm.amount) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+    if (
+      !costForm.categoryId ||
+      costForm.categoryId === "__none__" ||
+      !costForm.amount
+    ) {
+      toast({ title: "請填寫必填欄位", variant: "destructive" });
       return;
     }
     try {
-      await apiPost('/finance/costs', {
+      await apiPost("/finance/costs", {
         ...costForm,
         amount: parseFloat(costForm.amount),
       });
-      toast({ title: '成本新增成功' });
+      toast({ title: "成本新增成功" });
       setShowCostModal(false);
       setCostForm({
-        categoryId: '',
-        amount: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0],
+        categoryId: "__none__",
+        amount: "",
+        description: "",
+        date: new Date().toISOString().split("T")[0],
       });
       fetchData();
     } catch (error) {
-      toast({ title: '新增失敗', variant: 'destructive' });
+      toast({ title: "新增失敗", variant: "destructive" });
     }
   };
 
   const handleAddRevenue = async () => {
     if (!revenueForm.amount) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+      toast({ title: "請填寫必填欄位", variant: "destructive" });
       return;
     }
     try {
-      await apiPost('/finance/revenues', {
+      await apiPost("/finance/revenues", {
         ...revenueForm,
         amount: parseFloat(revenueForm.amount),
+        doctorId:
+          revenueForm.doctorId !== "__none__"
+            ? revenueForm.doctorId
+            : undefined,
       });
-      toast({ title: '收入新增成功' });
+      toast({ title: "收入新增成功" });
       setShowRevenueModal(false);
       setRevenueForm({
-        amount: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0],
-        doctorId: '',
+        amount: "",
+        description: "",
+        date: new Date().toISOString().split("T")[0],
+        doctorId: "__none__",
       });
       fetchData();
     } catch (error) {
-      toast({ title: '新增失敗', variant: 'destructive' });
+      toast({ title: "新增失敗", variant: "destructive" });
     }
   };
 
@@ -171,26 +194,26 @@ export default function FinancePage() {
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('zh-TW', {
-      style: 'currency',
-      currency: 'TWD',
+    return new Intl.NumberFormat("zh-TW", {
+      style: "currency",
+      currency: "TWD",
       minimumFractionDigits: 0,
     }).format(value);
   };
 
   const monthNames = [
-    '一月',
-    '二月',
-    '三月',
-    '四月',
-    '五月',
-    '六月',
-    '七月',
-    '八月',
-    '九月',
-    '十月',
-    '十一月',
-    '十二月',
+    "一月",
+    "二月",
+    "三月",
+    "四月",
+    "五月",
+    "六月",
+    "七月",
+    "八月",
+    "九月",
+    "十月",
+    "十一月",
+    "十二月",
   ];
 
   const canManage = userRole === Role.ADMIN;
@@ -216,138 +239,150 @@ export default function FinancePage() {
         )}
       </div>
 
-      {/* Add Cost Modal */}
-      {showCostModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增成本</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowCostModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>成本類別 *</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={costForm.categoryId}
-                  onChange={(e) => setCostForm({ ...costForm, categoryId: e.target.value })}
-                >
-                  <option value="">請選擇類別</option>
+      <Dialog open={showCostModal} onOpenChange={setShowCostModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增成本</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>成本類別 *</Label>
+              <Select
+                value={costForm.categoryId}
+                onValueChange={(v) =>
+                  setCostForm({ ...costForm, categoryId: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="請選擇類別" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">請選擇類別</SelectItem>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name} ({cat.type === 'FIXED' ? '固定' : '變動'})
-                    </option>
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name} ({cat.type === "FIXED" ? "固定" : "變動"})
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
-              <div>
-                <Label>金額 *</Label>
-                <Input
-                  type="number"
-                  value={costForm.amount}
-                  onChange={(e) => setCostForm({ ...costForm, amount: e.target.value })}
-                  placeholder="例：10000"
-                />
-              </div>
-              <div>
-                <Label>日期</Label>
-                <Input
-                  type="date"
-                  value={costForm.date}
-                  onChange={(e) => setCostForm({ ...costForm, date: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>說明</Label>
-                <Input
-                  value={costForm.description}
-                  onChange={(e) => setCostForm({ ...costForm, description: e.target.value })}
-                  placeholder="成本說明（選填）"
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowCostModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleAddCost}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>金額 *</Label>
+              <Input
+                type="number"
+                value={costForm.amount}
+                onChange={(e) =>
+                  setCostForm({ ...costForm, amount: e.target.value })
+                }
+                placeholder="例：10000"
+              />
+            </div>
+            <div>
+              <Label>日期</Label>
+              <Input
+                type="date"
+                value={costForm.date}
+                onChange={(e) =>
+                  setCostForm({ ...costForm, date: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>說明</Label>
+              <Input
+                value={costForm.description}
+                onChange={(e) =>
+                  setCostForm({ ...costForm, description: e.target.value })
+                }
+                placeholder="成本說明（選填）"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCostModal(false)}>
+              取消
+            </Button>
+            <Button onClick={handleAddCost}>新增</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Add Revenue Modal */}
-      {showRevenueModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增收入</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowRevenueModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>金額 *</Label>
-                <Input
-                  type="number"
-                  value={revenueForm.amount}
-                  onChange={(e) => setRevenueForm({ ...revenueForm, amount: e.target.value })}
-                  placeholder="例：50000"
-                />
-              </div>
-              <div>
-                <Label>日期</Label>
-                <Input
-                  type="date"
-                  value={revenueForm.date}
-                  onChange={(e) => setRevenueForm({ ...revenueForm, date: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>關聯醫師</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={revenueForm.doctorId}
-                  onChange={(e) => setRevenueForm({ ...revenueForm, doctorId: e.target.value })}
-                >
-                  <option value="">無（選填）</option>
+      <Dialog open={showRevenueModal} onOpenChange={setShowRevenueModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增收入</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>金額 *</Label>
+              <Input
+                type="number"
+                value={revenueForm.amount}
+                onChange={(e) =>
+                  setRevenueForm({ ...revenueForm, amount: e.target.value })
+                }
+                placeholder="例：50000"
+              />
+            </div>
+            <div>
+              <Label>日期</Label>
+              <Input
+                type="date"
+                value={revenueForm.date}
+                onChange={(e) =>
+                  setRevenueForm({ ...revenueForm, date: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>關聯醫師</Label>
+              <Select
+                value={revenueForm.doctorId}
+                onValueChange={(v) =>
+                  setRevenueForm({ ...revenueForm, doctorId: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="無（選填）" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">無（選填）</SelectItem>
                   {doctorRevenue.map((dr) => (
-                    <option key={dr.doctor.id} value={dr.doctor.id}>
+                    <SelectItem key={dr.doctor.id} value={dr.doctor.id}>
                       {dr.doctor.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
-              <div>
-                <Label>說明</Label>
-                <Input
-                  value={revenueForm.description}
-                  onChange={(e) => setRevenueForm({ ...revenueForm, description: e.target.value })}
-                  placeholder="收入說明（選填）"
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowRevenueModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleAddRevenue}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>說明</Label>
+              <Input
+                value={revenueForm.description}
+                onChange={(e) =>
+                  setRevenueForm({
+                    ...revenueForm,
+                    description: e.target.value,
+                  })
+                }
+                placeholder="收入說明（選填）"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowRevenueModal(false)}
+            >
+              取消
+            </Button>
+            <Button onClick={handleAddRevenue}>新增</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
-        </div>
+        <LoadingSpinner />
       ) : (
         <>
           {/* Summary Cards */}
@@ -357,7 +392,9 @@ export default function FinancePage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-muted-foreground">總收入</span>
+                    <span className="text-sm text-muted-foreground">
+                      總收入
+                    </span>
                   </div>
                   <div className="text-2xl font-bold mt-2">
                     {formatCurrency(summary.totalRevenue)}
@@ -368,7 +405,9 @@ export default function FinancePage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
                     <TrendingDown className="h-5 w-5 text-red-500" />
-                    <span className="text-sm text-muted-foreground">總成本</span>
+                    <span className="text-sm text-muted-foreground">
+                      總成本
+                    </span>
                   </div>
                   <div className="text-2xl font-bold mt-2">
                     {formatCurrency(summary.totalCost)}
@@ -383,7 +422,9 @@ export default function FinancePage() {
                   </div>
                   <div
                     className={`text-2xl font-bold mt-2 ${
-                      summary.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                      summary.grossProfit >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
                     }`}
                   >
                     {formatCurrency(summary.grossProfit)}
@@ -394,11 +435,15 @@ export default function FinancePage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
                     <PieChart className="h-5 w-5 text-purple-500" />
-                    <span className="text-sm text-muted-foreground">毛利率</span>
+                    <span className="text-sm text-muted-foreground">
+                      毛利率
+                    </span>
                   </div>
                   <div
                     className={`text-2xl font-bold mt-2 ${
-                      summary.grossMargin >= 0 ? 'text-green-600' : 'text-red-600'
+                      summary.grossMargin >= 0
+                        ? "text-green-600"
+                        : "text-red-600"
                     }`}
                   >
                     {summary.grossMargin}%
@@ -436,7 +481,9 @@ export default function FinancePage() {
                                   {item.category.name}
                                 </span>
                                 <Badge variant="outline">
-                                  {item.category.type === 'FIXED' ? '固定' : '變動'}
+                                  {item.category.type === "FIXED"
+                                    ? "固定"
+                                    : "變動"}
                                 </Badge>
                               </div>
                               <span className="font-semibold">
@@ -485,18 +532,20 @@ export default function FinancePage() {
                             <div
                               className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
                                 index === 0
-                                  ? 'bg-yellow-500'
+                                  ? "bg-yellow-500"
                                   : index === 1
-                                  ? 'bg-gray-400'
-                                  : index === 2
-                                  ? 'bg-amber-600'
-                                  : 'bg-gray-300'
+                                    ? "bg-gray-400"
+                                    : index === 2
+                                      ? "bg-amber-600"
+                                      : "bg-gray-300"
                               }`}
                             >
                               {index + 1}
                             </div>
                             <div>
-                              <div className="font-medium">{item.doctor.name}</div>
+                              <div className="font-medium">
+                                {item.doctor.name}
+                              </div>
                               <div className="text-sm text-muted-foreground">
                                 {item.transactionCount} 筆交易
                               </div>
@@ -514,7 +563,9 @@ export default function FinancePage() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">目前沒有醫師業績資料</p>
+                    <p className="text-muted-foreground">
+                      目前沒有醫師業績資料
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -543,8 +594,8 @@ export default function FinancePage() {
                             <Badge
                               className={
                                 item.profit >= 0
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
                               }
                             >
                               毛利率: {item.margin}%
@@ -567,7 +618,9 @@ export default function FinancePage() {
                               <div className="text-muted-foreground">毛利</div>
                               <div
                                 className={`font-semibold ${
-                                  item.profit >= 0 ? 'text-green-600' : 'text-red-600'
+                                  item.profit >= 0
+                                    ? "text-green-600"
+                                    : "text-red-600"
                                 }`}
                               >
                                 {formatCurrency(item.profit)}

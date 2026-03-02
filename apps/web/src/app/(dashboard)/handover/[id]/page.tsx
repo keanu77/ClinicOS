@@ -1,26 +1,54 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
-import { formatDateTime, formatRelativeTime } from '@/lib/utils';
-import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
-import { ArrowLeft, Send, User, Clock, CheckCircle, Edit, X, Trash2 } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { useConfirmDialog } from "@/components/confirm-dialog";
+import { formatDateTime, formatRelativeTime } from "@/lib/utils";
+import {
+  getPriorityBadgeVariant,
+  getStatusBadgeVariant,
+} from "@/lib/badge-variants";
+import {
+  ArrowLeft,
+  Send,
+  User,
+  Clock,
+  CheckCircle,
+  Edit,
+  X,
+  Trash2,
+} from "lucide-react";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
 import {
   HandoverStatus,
   HandoverStatusLabels,
   HandoverPriority,
   HandoverPriorityLabels,
   Role,
-} from '@/shared';
+} from "@/shared";
 
 interface Handover {
   id: string;
@@ -47,18 +75,19 @@ export default function HandoverDetailPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const { toast } = useToast();
+  const { confirm, ConfirmDialog: ConfirmDialogComponent } = useConfirmDialog();
 
   const [handover, setHandover] = useState<Handover | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    title: '',
-    content: '',
-    priority: '',
-    dueDate: '',
-    status: '',
+    title: "",
+    content: "",
+    priority: "",
+    dueDate: "",
+    status: "",
   });
 
   const fetchHandover = async () => {
@@ -69,15 +98,15 @@ export default function HandoverDetailPage() {
         title: result.title,
         content: result.content,
         priority: result.priority,
-        dueDate: result.dueDate ? result.dueDate.slice(0, 16) : '',
+        dueDate: result.dueDate ? result.dueDate.slice(0, 16) : "",
         status: result.status,
       });
     } catch (error) {
-      console.error('Failed to load handover:', error);
+      console.error("Failed to load handover:", error);
       toast({
-        title: '載入失敗',
-        description: '無法載入交班詳情',
-        variant: 'destructive',
+        title: "載入失敗",
+        description: "無法載入交班詳情",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -93,7 +122,7 @@ export default function HandoverDetailPage() {
     if (!newComment.trim() || !handover || !session?.user) return;
 
     const commentContent = newComment.trim();
-    setNewComment('');
+    setNewComment("");
     setSubmitting(true);
 
     // 樂觀更新：立即在 UI 顯示新註記
@@ -103,8 +132,8 @@ export default function HandoverDetailPage() {
       createdAt: new Date().toISOString(),
       author: {
         id: session.user.id,
-        name: session.user.name || '',
-        role: session.user.role || '',
+        name: session.user.name || "",
+        role: session.user.role || "",
       },
     };
 
@@ -132,12 +161,12 @@ export default function HandoverDetailPage() {
         return {
           ...prev,
           comments: prev.comments.map((c) =>
-            c.id === optimisticComment.id ? newCommentData : c
+            c.id === optimisticComment.id ? newCommentData : c,
           ),
         };
       });
 
-      toast({ title: '註記已新增' });
+      toast({ title: "註記已新增" });
     } catch (error) {
       // 失敗時回滾樂觀更新
       setHandover((prev) => {
@@ -149,8 +178,8 @@ export default function HandoverDetailPage() {
       });
       setNewComment(commentContent); // 恢復輸入內容
       toast({
-        title: '新增失敗',
-        variant: 'destructive',
+        title: "新增失敗",
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -161,11 +190,11 @@ export default function HandoverDetailPage() {
     try {
       await apiPatch(`/handovers/${params.id}`, { status });
       await fetchHandover();
-      toast({ title: '狀態已更新' });
+      toast({ title: "狀態已更新" });
     } catch (error) {
       toast({
-        title: '更新失敗',
-        variant: 'destructive',
+        title: "更新失敗",
+        variant: "destructive",
       });
     }
   };
@@ -187,27 +216,31 @@ export default function HandoverDetailPage() {
       await apiPatch(`/handovers/${params.id}`, updateData);
       await fetchHandover();
       setIsEditing(false);
-      toast({ title: '已更新' });
+      toast({ title: "已更新" });
     } catch (error) {
       toast({
-        title: '更新失敗',
-        variant: 'destructive',
+        title: "更新失敗",
+        variant: "destructive",
       });
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('確定要刪除此交班事項嗎？此操作無法復原。')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "確定要刪除此交班事項嗎？",
+      description: "此操作無法復原。",
+      confirmText: "刪除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await apiDelete(`/handovers/${params.id}`);
-      toast({ title: '已刪除' });
-      router.push('/handover');
+      toast({ title: "已刪除" });
+      router.push("/handover");
     } catch (error) {
       toast({
-        title: '刪除失敗',
-        variant: 'destructive',
+        title: "刪除失敗",
+        variant: "destructive",
       });
     }
   };
@@ -276,92 +309,99 @@ export default function HandoverDetailPage() {
       </div>
 
       {/* Edit Modal */}
-      {isEditing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-lg">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>編輯交班事項</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)}>
-                <X className="h-4 w-4" />
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>編輯交班事項</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>標題</Label>
+              <Input
+                value={editForm.title}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, title: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>內容</Label>
+              <Textarea
+                className="min-h-[150px]"
+                value={editForm.content}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, content: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>優先級</Label>
+                <Select
+                  value={editForm.priority}
+                  onValueChange={(v) =>
+                    setEditForm({ ...editForm, priority: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">低</SelectItem>
+                    <SelectItem value="MEDIUM">中</SelectItem>
+                    <SelectItem value="HIGH">高</SelectItem>
+                    <SelectItem value="URGENT">緊急</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>狀態</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) => setEditForm({ ...editForm, status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">待處理</SelectItem>
+                    <SelectItem value="IN_PROGRESS">處理中</SelectItem>
+                    <SelectItem value="BLOCKED">卡關</SelectItem>
+                    <SelectItem value="COMPLETED">已完成</SelectItem>
+                    <SelectItem value="CANCELLED">已取消</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>截止日期</Label>
+              <Input
+                type="datetime-local"
+                value={editForm.dueDate}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, dueDate: e.target.value })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            {canDelete && (
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="mr-auto"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                刪除
               </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>標題</Label>
-                <Input
-                  value={editForm.title}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>內容</Label>
-                <textarea
-                  className="w-full mt-1 p-3 border rounded-md min-h-[150px]"
-                  value={editForm.content}
-                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>優先級</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-md"
-                    value={editForm.priority}
-                    onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
-                  >
-                    <option value="LOW">低</option>
-                    <option value="MEDIUM">中</option>
-                    <option value="HIGH">高</option>
-                    <option value="URGENT">緊急</option>
-                  </select>
-                </div>
-                <div>
-                  <Label>狀態</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-md"
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                  >
-                    <option value="PENDING">待處理</option>
-                    <option value="IN_PROGRESS">處理中</option>
-                    <option value="BLOCKED">卡關</option>
-                    <option value="COMPLETED">已完成</option>
-                    <option value="CANCELLED">已取消</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <Label>截止日期</Label>
-                <Input
-                  type="datetime-local"
-                  value={editForm.dueDate}
-                  onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })}
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setIsEditing(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleSaveEdit}>
-                  儲存
-                </Button>
-              </div>
-              {canDelete && (
-                <div className="pt-4 border-t">
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    刪除此任務
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            )}
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSaveEdit}>儲存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Main Content */}
       <Card>
@@ -452,18 +492,21 @@ export default function HandoverDetailPage() {
                       {formatRelativeTime(comment.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {comment.content}
+                  </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-4">
-              尚無註記
-            </p>
+            <p className="text-muted-foreground text-center py-4">尚無註記</p>
           )}
 
           {/* Add Comment */}
-          <form onSubmit={handleAddComment} className="flex gap-2 pt-4 border-t">
+          <form
+            onSubmit={handleAddComment}
+            className="flex gap-2 pt-4 border-t"
+          >
             <Input
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
@@ -476,6 +519,7 @@ export default function HandoverDetailPage() {
           </form>
         </CardContent>
       </Card>
+      {ConfirmDialogComponent}
     </div>
   );
 }

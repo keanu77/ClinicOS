@@ -1,12 +1,19 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { apiGet } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, AlertTriangle, MessageSquare, Plus, BarChart3 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { apiGet } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Shield,
+  AlertTriangle,
+  MessageSquare,
+  Plus,
+  BarChart3,
+} from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface Incident {
   id: string;
@@ -40,45 +47,45 @@ interface QualityStats {
 }
 
 const severityColors: Record<string, string> = {
-  MINOR: 'bg-gray-100 text-gray-800',
-  MODERATE: 'bg-yellow-100 text-yellow-800',
-  MAJOR: 'bg-orange-100 text-orange-800',
-  CRITICAL: 'bg-red-100 text-red-800',
+  MINOR: "bg-gray-100 text-gray-800",
+  MODERATE: "bg-yellow-100 text-yellow-800",
+  MAJOR: "bg-orange-100 text-orange-800",
+  CRITICAL: "bg-red-100 text-red-800",
 };
 
 const severityLabels: Record<string, string> = {
-  MINOR: '輕微',
-  MODERATE: '中度',
-  MAJOR: '重大',
-  CRITICAL: '嚴重',
+  MINOR: "輕微",
+  MODERATE: "中度",
+  MAJOR: "重大",
+  CRITICAL: "嚴重",
 };
 
 const statusColors: Record<string, string> = {
-  REPORTED: 'bg-yellow-100 text-yellow-800',
-  INVESTIGATING: 'bg-blue-100 text-blue-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
+  REPORTED: "bg-yellow-100 text-yellow-800",
+  INVESTIGATING: "bg-blue-100 text-blue-800",
+  RESOLVED: "bg-green-100 text-green-800",
+  CLOSED: "bg-gray-100 text-gray-800",
 };
 
 const statusLabels: Record<string, string> = {
-  REPORTED: '已回報',
-  INVESTIGATING: '調查中',
-  RESOLVED: '已解決',
-  CLOSED: '已結案',
+  REPORTED: "已回報",
+  INVESTIGATING: "調查中",
+  RESOLVED: "已解決",
+  CLOSED: "已結案",
 };
 
 const complaintStatusColors: Record<string, string> = {
-  NEW: 'bg-yellow-100 text-yellow-800',
-  PROCESSING: 'bg-blue-100 text-blue-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
+  NEW: "bg-yellow-100 text-yellow-800",
+  PROCESSING: "bg-blue-100 text-blue-800",
+  RESOLVED: "bg-green-100 text-green-800",
+  CLOSED: "bg-gray-100 text-gray-800",
 };
 
 const complaintStatusLabels: Record<string, string> = {
-  NEW: '新案件',
-  PROCESSING: '處理中',
-  RESOLVED: '已解決',
-  CLOSED: '已結案',
+  NEW: "新案件",
+  PROCESSING: "處理中",
+  RESOLVED: "已解決",
+  CLOSED: "已結案",
 };
 
 export default function QualityPage() {
@@ -91,15 +98,15 @@ export default function QualityPage() {
     const fetchData = async () => {
       try {
         const [incidentsRes, complaintsRes, statsRes] = await Promise.all([
-          apiGet<{ data: Incident[] }>('/quality/incidents'),
-          apiGet<{ data: Complaint[] }>('/quality/complaints'),
-          apiGet<QualityStats>('/quality/stats'),
+          apiGet<{ data: Incident[] }>("/quality/incidents"),
+          apiGet<{ data: Complaint[] }>("/quality/complaints"),
+          apiGet<QualityStats>("/quality/stats"),
         ]);
         setIncidents(incidentsRes.data || []);
         setComplaints(complaintsRes.data || []);
         setStats(statsRes);
       } catch (error) {
-        console.error('Failed to load quality data:', error);
+        console.error("Failed to load quality data:", error);
       } finally {
         setLoading(false);
       }
@@ -109,7 +116,7 @@ export default function QualityPage() {
   }, []);
 
   const openIncidents = incidents.filter(
-    (i) => i.status === 'REPORTED' || i.status === 'INVESTIGATING'
+    (i) => i.status === "REPORTED" || i.status === "INVESTIGATING",
   );
 
   return (
@@ -134,25 +141,35 @@ export default function QualityPage() {
                 <Shield className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">本月事件</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{stats.monthlyIncidents}</div>
+              <div className="text-2xl font-bold mt-2">
+                {stats.monthlyIncidents}
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                <span className="text-sm text-muted-foreground">未結案事件</span>
+                <span className="text-sm text-muted-foreground">
+                  未結案事件
+                </span>
               </div>
-              <div className="text-2xl font-bold mt-2">{stats.openIncidents}</div>
+              <div className="text-2xl font-bold mt-2">
+                {stats.openIncidents}
+              </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">待處理投訴</span>
+                <span className="text-sm text-muted-foreground">
+                  待處理投訴
+                </span>
               </div>
-              <div className="text-2xl font-bold mt-2">{stats.pendingComplaints}</div>
+              <div className="text-2xl font-bold mt-2">
+                {stats.pendingComplaints}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -161,7 +178,9 @@ export default function QualityPage() {
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">累計事件</span>
               </div>
-              <div className="text-2xl font-bold mt-2">{stats.totalIncidents}</div>
+              <div className="text-2xl font-bold mt-2">
+                {stats.totalIncidents}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -175,9 +194,7 @@ export default function QualityPage() {
 
         <TabsContent value="incidents">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-muted-foreground">載入中...</div>
-            </div>
+            <LoadingSpinner />
           ) : incidents.length > 0 ? (
             <div className="space-y-4">
               {incidents.map((incident) => (
@@ -186,7 +203,9 @@ export default function QualityPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{incident.incidentNo}</span>
+                          <span className="font-semibold">
+                            {incident.incidentNo}
+                          </span>
                           <Badge className={severityColors[incident.severity]}>
                             {severityLabels[incident.severity]}
                           </Badge>
@@ -199,8 +218,10 @@ export default function QualityPage() {
                           {incident.type.category} · {incident.type.name}
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          回報人: {incident.reportedBy.name} ·{' '}
-                          {new Date(incident.occurredAt).toLocaleDateString('zh-TW')}
+                          回報人: {incident.reportedBy.name} ·{" "}
+                          {new Date(incident.occurredAt).toLocaleDateString(
+                            "zh-TW",
+                          )}
                         </div>
                       </div>
                       <Button variant="outline" size="sm">
@@ -231,14 +252,20 @@ export default function QualityPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                          <span className="font-medium">{complaint.subject}</span>
-                          <Badge className={complaintStatusColors[complaint.status]}>
+                          <span className="font-medium">
+                            {complaint.subject}
+                          </span>
+                          <Badge
+                            className={complaintStatusColors[complaint.status]}
+                          >
                             {complaintStatusLabels[complaint.status]}
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          來源: {complaint.source} ·{' '}
-                          {new Date(complaint.receivedAt).toLocaleDateString('zh-TW')}
+                          來源: {complaint.source} ·{" "}
+                          {new Date(complaint.receivedAt).toLocaleDateString(
+                            "zh-TW",
+                          )}
                         </div>
                       </div>
                       <Button variant="outline" size="sm">

@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { apiGet } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wrench, AlertTriangle, Calendar, Plus } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { apiGet } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Wrench, AlertTriangle, Calendar, Plus } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface Asset {
   id: string;
@@ -42,29 +43,31 @@ interface Fault {
 }
 
 const statusColors: Record<string, string> = {
-  IN_USE: 'bg-green-100 text-green-800',
-  AVAILABLE: 'bg-blue-100 text-blue-800',
-  UNDER_REPAIR: 'bg-yellow-100 text-yellow-800',
-  RETIRED: 'bg-gray-100 text-gray-800',
+  IN_USE: "bg-green-100 text-green-800",
+  AVAILABLE: "bg-blue-100 text-blue-800",
+  UNDER_REPAIR: "bg-yellow-100 text-yellow-800",
+  RETIRED: "bg-gray-100 text-gray-800",
 };
 
 const statusLabels: Record<string, string> = {
-  IN_USE: '使用中',
-  AVAILABLE: '可用',
-  UNDER_REPAIR: '維修中',
-  RETIRED: '已報廢',
+  IN_USE: "使用中",
+  AVAILABLE: "可用",
+  UNDER_REPAIR: "維修中",
+  RETIRED: "已報廢",
 };
 
 const severityColors: Record<string, string> = {
-  LOW: 'bg-gray-100 text-gray-800',
-  MEDIUM: 'bg-yellow-100 text-yellow-800',
-  HIGH: 'bg-orange-100 text-orange-800',
-  CRITICAL: 'bg-red-100 text-red-800',
+  LOW: "bg-gray-100 text-gray-800",
+  MEDIUM: "bg-yellow-100 text-yellow-800",
+  HIGH: "bg-orange-100 text-orange-800",
+  CRITICAL: "bg-red-100 text-red-800",
 };
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [upcomingMaintenance, setUpcomingMaintenance] = useState<Maintenance[]>([]);
+  const [upcomingMaintenance, setUpcomingMaintenance] = useState<Maintenance[]>(
+    [],
+  );
   const [openFaults, setOpenFaults] = useState<Fault[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,15 +75,15 @@ export default function AssetsPage() {
     const fetchData = async () => {
       try {
         const [assetsRes, maintenanceRes, faultsRes] = await Promise.all([
-          apiGet<{ data: Asset[] }>('/assets'),
-          apiGet<Maintenance[]>('/maintenance/upcoming'),
-          apiGet<{ data: Fault[] }>('/faults', { status: 'OPEN' }),
+          apiGet<{ data: Asset[] }>("/assets"),
+          apiGet<Maintenance[]>("/maintenance/upcoming"),
+          apiGet<{ data: Fault[] }>("/faults", { status: "OPEN" }),
         ]);
         setAssets(assetsRes.data || []);
         setUpcomingMaintenance(maintenanceRes || []);
         setOpenFaults(faultsRes.data || []);
       } catch (error) {
-        console.error('Failed to load assets data:', error);
+        console.error("Failed to load assets data:", error);
       } finally {
         setLoading(false);
       }
@@ -94,7 +97,9 @@ export default function AssetsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">設備管理</h1>
-          <p className="text-muted-foreground">管理設備資產、保養排程與故障回報</p>
+          <p className="text-muted-foreground">
+            管理設備資產、保養排程與故障回報
+          </p>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -141,9 +146,7 @@ export default function AssetsPage() {
 
         <TabsContent value="assets">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-muted-foreground">載入中...</div>
-            </div>
+            <LoadingSpinner />
           ) : assets.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {assets.map((asset) => (
@@ -164,8 +167,10 @@ export default function AssetsPage() {
                       {asset.location && <div>位置: {asset.location}</div>}
                       {asset.warrantyExpiry && (
                         <div>
-                          保固到期:{' '}
-                          {new Date(asset.warrantyExpiry).toLocaleDateString('zh-TW')}
+                          保固到期:{" "}
+                          {new Date(asset.warrantyExpiry).toLocaleDateString(
+                            "zh-TW",
+                          )}
                         </div>
                       )}
                     </div>
@@ -199,7 +204,7 @@ export default function AssetsPage() {
                       <div className="text-right">
                         <div className="text-sm font-medium">下次保養</div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(m.nextDue).toLocaleDateString('zh-TW')}
+                          {new Date(m.nextDue).toLocaleDateString("zh-TW")}
                         </div>
                       </div>
                     </div>
@@ -226,7 +231,9 @@ export default function AssetsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{fault.asset.name}</span>
+                          <span className="font-medium">
+                            {fault.asset.name}
+                          </span>
                           <Badge className={severityColors[fault.severity]}>
                             {fault.severity}
                           </Badge>
@@ -236,7 +243,7 @@ export default function AssetsPage() {
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(fault.createdAt).toLocaleDateString('zh-TW')}
+                        {new Date(fault.createdAt).toLocaleDateString("zh-TW")}
                       </div>
                     </div>
                   </CardContent>

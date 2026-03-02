@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Stethoscope, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,20 +53,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-2">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Stethoscope className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">
             Clinic OS
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription>
             診所營運管理系統
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
+              <div className="flex items-center gap-2 bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 {error}
               </div>
             )}
@@ -82,18 +91,34 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password">密碼</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="輸入密碼"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="輸入密碼"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '登入中...' : '登入'}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner size="sm" className="text-white" />
+                  登入中...
+                </span>
+              ) : '登入'}
             </Button>
           </form>
 

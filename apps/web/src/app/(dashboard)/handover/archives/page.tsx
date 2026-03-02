@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { apiGet, apiPost } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Archive, Calendar, ChevronRight, Play } from 'lucide-react';
-import { ListSkeleton } from '@/components/ui/skeleton';
-import { ErrorState } from '@/components/error-boundary';
-import { usePermissions } from '@/lib/hooks/usePermissions';
-import { Permission } from '@/shared';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { apiGet, apiPost } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Archive, Calendar, ChevronRight, Play } from "lucide-react";
+import { ListSkeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/error-boundary";
+import { useConfirmDialog } from "@/components/confirm-dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { usePermissions } from "@/lib/hooks/usePermissions";
+import { Permission } from "@/shared";
 
 interface ArchiveRecord {
   id: string;
@@ -21,8 +23,19 @@ interface ArchiveRecord {
 }
 
 const MONTH_NAMES = [
-  '', '一月', '二月', '三月', '四月', '五月', '六月',
-  '七月', '八月', '九月', '十月', '十一月', '十二月',
+  "",
+  "一月",
+  "二月",
+  "三月",
+  "四月",
+  "五月",
+  "六月",
+  "七月",
+  "八月",
+  "九月",
+  "十月",
+  "十一月",
+  "十二月",
 ];
 
 export default function ArchivesPage() {
@@ -30,6 +43,8 @@ export default function ArchivesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const { confirm, ConfirmDialog: ConfirmDialogComponent } = useConfirmDialog();
+  const { toast } = useToast();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission(Permission.HANDOVER_DELETE);
 
@@ -37,10 +52,10 @@ export default function ArchivesPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiGet<ArchiveRecord[]>('/handovers/archives');
+      const data = await apiGet<ArchiveRecord[]>("/handovers/archives");
       setArchives(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '載入封存記錄失敗';
+      const message = err instanceof Error ? err.message : "載入封存記錄失敗";
       setError(message);
     } finally {
       setLoading(false);
@@ -52,32 +67,40 @@ export default function ArchivesPage() {
   }, []);
 
   const handleAutoArchive = async () => {
-    if (!confirm('確定要封存上個月的已完成任務嗎？此操作無法復原。')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "封存上月任務",
+      description: "確定要封存上個月的已完成任務嗎？此操作無法復原。",
+      confirmText: "確認封存",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
 
     setArchiving(true);
     try {
       const result = await apiPost<{ archivedCount: number; message: string }>(
-        '/handovers/archives/auto',
+        "/handovers/archives/auto",
       );
-      alert(result.message);
+      toast({ title: "封存完成", description: result.message });
       fetchArchives();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '封存失敗';
-      alert(message);
+      const message = err instanceof Error ? err.message : "封存失敗";
+      toast({
+        title: "封存失敗",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setArchiving(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleString("zh-TW", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -91,7 +114,7 @@ export default function ArchivesPage() {
         {canManage && (
           <Button onClick={handleAutoArchive} disabled={archiving}>
             <Play className="h-4 w-4 mr-2" />
-            {archiving ? '封存中...' : '封存上月任務'}
+            {archiving ? "封存中..." : "封存上月任務"}
           </Button>
         )}
       </div>
@@ -144,6 +167,7 @@ export default function ArchivesPage() {
           </CardContent>
         </Card>
       )}
+      {ConfirmDialogComponent}
     </div>
   );
 }

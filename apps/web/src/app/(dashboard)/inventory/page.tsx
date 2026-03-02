@@ -1,20 +1,24 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { apiGet } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Plus, Search, Download, AlertTriangle, Package } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { apiGet } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
-  Role,
-  InventoryCategory,
-  InventoryCategoryLabels,
-} from '@/shared';
-import { CardSkeleton } from '@/components/ui/skeleton';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { EmptyState } from "@/components/empty-state";
+import { Plus, Search, Download, AlertTriangle, Package } from "lucide-react";
+import { Role, InventoryCategory, InventoryCategoryLabels } from "@/shared";
+import { CardSkeleton } from "@/components/ui/skeleton";
 
 interface InventoryItem {
   id: string;
@@ -37,8 +41,8 @@ export default function InventoryListPage() {
   const { data: session } = useSession();
   const [data, setData] = useState<InventoryListResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
   const [showLowStock, setShowLowStock] = useState(false);
 
   useEffect(() => {
@@ -47,13 +51,17 @@ export default function InventoryListPage() {
       try {
         const params: Record<string, string | boolean> = {};
         if (search) params.search = search;
-        if (categoryFilter) params.category = categoryFilter;
+        if (categoryFilter && categoryFilter !== "__all__")
+          params.category = categoryFilter;
         if (showLowStock) params.lowStock = true;
 
-        const result = await apiGet<InventoryListResponse>('/inventory/items', params);
+        const result = await apiGet<InventoryListResponse>(
+          "/inventory/items",
+          params,
+        );
         setData(result);
       } catch (error) {
-        console.error('Failed to load inventory:', error);
+        console.error("Failed to load inventory:", error);
       } finally {
         setLoading(false);
       }
@@ -66,7 +74,7 @@ export default function InventoryListPage() {
   const handleExport = () => {
     window.open(
       `${process.env.NEXT_PUBLIC_API_URL}/api/inventory/export.csv`,
-      '_blank'
+      "_blank",
     );
   };
 
@@ -108,20 +116,21 @@ export default function InventoryListPage() {
                 className="pl-9"
               />
             </div>
-            <select
-              className="px-3 py-2 border rounded-md bg-white min-w-[120px]"
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="">全部分類</option>
-              {Object.values(InventoryCategory).map((cat) => (
-                <option key={cat} value={cat}>
-                  {InventoryCategoryLabels[cat]}
-                </option>
-              ))}
-            </select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="全部分類" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">全部分類</SelectItem>
+                {Object.values(InventoryCategory).map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {InventoryCategoryLabels[cat]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
-              variant={showLowStock ? 'default' : 'outline'}
+              variant={showLowStock ? "default" : "outline"}
               onClick={() => setShowLowStock(!showLowStock)}
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
@@ -146,7 +155,7 @@ export default function InventoryListPage() {
               <Link key={item.id} href={`/inventory/${item.id}`}>
                 <Card
                   className={`hover:bg-gray-50 transition-colors cursor-pointer ${
-                    isLowStock ? 'border-orange-300' : ''
+                    isLowStock ? "border-orange-300" : ""
                   }`}
                 >
                   <CardContent className="pt-6">
@@ -154,7 +163,9 @@ export default function InventoryListPage() {
                       <div className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-muted-foreground" />
                         <Badge variant="outline" className="text-xs">
-                          {InventoryCategoryLabels[item.category as InventoryCategory] || '其他'}
+                          {InventoryCategoryLabels[
+                            item.category as InventoryCategory
+                          ] || "其他"}
                         </Badge>
                       </div>
                       {isLowStock && (
@@ -168,7 +179,7 @@ export default function InventoryListPage() {
                     <div className="mt-3 flex items-baseline gap-2">
                       <span
                         className={`text-2xl font-bold ${
-                          isLowStock ? 'text-orange-600' : ''
+                          isLowStock ? "text-orange-600" : ""
                         }`}
                       >
                         {item.quantity}
@@ -190,21 +201,27 @@ export default function InventoryListPage() {
           })}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              {search || categoryFilter || showLowStock ? '沒有符合條件的品項' : '目前沒有庫存品項'}
-            </p>
-            {isAdmin && !search && !categoryFilter && !showLowStock && (
+        <EmptyState
+          icon={Package}
+          title={
+            search || categoryFilter !== "__all__" || showLowStock
+              ? "沒有符合條件的品項"
+              : "目前沒有庫存品項"
+          }
+          action={
+            isAdmin &&
+            !search &&
+            categoryFilter === "__all__" &&
+            !showLowStock ? (
               <Link href="/inventory/new">
-                <Button className="mt-4">
+                <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   新增第一個品項
                 </Button>
               </Link>
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        />
       )}
 
       {data && data.total > 0 && (

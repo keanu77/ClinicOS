@@ -1,26 +1,45 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { apiGet } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatRelativeTime } from '@/lib/utils';
-import { getPriorityBadgeVariant, getStatusBadgeVariant } from '@/lib/badge-variants';
-import { Plus, Filter, MessageSquare, Archive, List, Calendar, CalendarDays, Clock } from 'lucide-react';
-import { ErrorState } from '@/components/error-boundary';
-import { Pagination } from '@/components/pagination';
+import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { apiGet } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatRelativeTime } from "@/lib/utils";
+import {
+  getPriorityBadgeVariant,
+  getStatusBadgeVariant,
+} from "@/lib/badge-variants";
+import {
+  Plus,
+  Filter,
+  MessageSquare,
+  Archive,
+  List,
+  Calendar,
+  CalendarDays,
+  Clock,
+} from "lucide-react";
+import { ErrorState } from "@/components/error-boundary";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Pagination } from "@/components/pagination";
 import {
   HandoverStatus,
   HandoverStatusLabels,
   HandoverPriority,
   HandoverPriorityLabels,
   Permission,
-} from '@/shared';
-import { ListSkeleton } from '@/components/ui/skeleton';
-import { usePermissions } from '@/lib/hooks/usePermissions';
+} from "@/shared";
+import { ListSkeleton } from "@/components/ui/skeleton";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 
 interface Handover {
   id: string;
@@ -42,7 +61,7 @@ interface HandoverListResponse {
   totalPages: number;
 }
 
-type ViewMode = 'list' | 'week' | 'month';
+type ViewMode = "list" | "week" | "month";
 
 // 輔助函數：獲取週的開始和結束日期
 function getWeekDates(date: Date) {
@@ -79,17 +98,30 @@ function getMonthDates(year: number, month: number) {
   return dates;
 }
 
-const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
-const MONTH_NAMES = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+const MONTH_NAMES = [
+  "一月",
+  "二月",
+  "三月",
+  "四月",
+  "五月",
+  "六月",
+  "七月",
+  "八月",
+  "九月",
+  "十月",
+  "十一月",
+  "十二月",
+];
 
 export default function HandoverListPage() {
   const searchParams = useSearchParams();
   const [allData, setAllData] = useState<Handover[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [priorityFilter, setPriorityFilter] = useState<string>('');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [statusFilter, setStatusFilter] = useState<string>("__all__");
+  const [priorityFilter, setPriorityFilter] = useState<string>("__all__");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [currentDate, setCurrentDate] = useState(new Date());
   const { hasPermission } = usePermissions();
   const canViewArchives = hasPermission(Permission.HANDOVER_DELETE);
@@ -99,13 +131,15 @@ export default function HandoverListPage() {
     setError(null);
     try {
       const params: Record<string, string | number> = { limit: 500 };
-      if (statusFilter) params.status = statusFilter;
-      if (priorityFilter) params.priority = priorityFilter;
+      if (statusFilter && statusFilter !== "__all__")
+        params.status = statusFilter;
+      if (priorityFilter && priorityFilter !== "__all__")
+        params.priority = priorityFilter;
 
-      const result = await apiGet<HandoverListResponse>('/handovers', params);
+      const result = await apiGet<HandoverListResponse>("/handovers", params);
       setAllData(result.data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '載入交班資料失敗';
+      const message = err instanceof Error ? err.message : "載入交班資料失敗";
       setError(message);
     } finally {
       setLoading(false);
@@ -119,16 +153,22 @@ export default function HandoverListPage() {
   // 排序：已完成的放最下方
   const sortedData = useMemo(() => {
     return [...allData].sort((a, b) => {
-      const aCompleted = a.status === HandoverStatus.COMPLETED || a.status === HandoverStatus.CANCELLED;
-      const bCompleted = b.status === HandoverStatus.COMPLETED || b.status === HandoverStatus.CANCELLED;
+      const aCompleted =
+        a.status === HandoverStatus.COMPLETED ||
+        a.status === HandoverStatus.CANCELLED;
+      const bCompleted =
+        b.status === HandoverStatus.COMPLETED ||
+        b.status === HandoverStatus.CANCELLED;
 
       if (aCompleted && !bCompleted) return 1;
       if (!aCompleted && bCompleted) return -1;
 
       // 未完成的按優先度和日期排序
       const priorityOrder = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-      const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 2;
-      const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 2;
+      const aPriority =
+        priorityOrder[a.priority as keyof typeof priorityOrder] ?? 2;
+      const bPriority =
+        priorityOrder[b.priority as keyof typeof priorityOrder] ?? 2;
       if (aPriority !== bPriority) return aPriority - bPriority;
 
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -140,7 +180,7 @@ export default function HandoverListPage() {
     const map = new Map<string, Handover[]>();
     allData.forEach((h) => {
       if (h.dueDate) {
-        const dateKey = new Date(h.dueDate).toISOString().split('T')[0];
+        const dateKey = new Date(h.dueDate).toISOString().split("T")[0];
         if (!map.has(dateKey)) map.set(dateKey, []);
         map.get(dateKey)!.push(h);
       }
@@ -148,13 +188,17 @@ export default function HandoverListPage() {
     return map;
   }, [allData]);
 
-  const weekDates = useMemo(() => getWeekDates(new Date(currentDate)), [currentDate]);
+  const weekDates = useMemo(
+    () => getWeekDates(new Date(currentDate)),
+    [currentDate],
+  );
   const monthDates = useMemo(() => {
     return getMonthDates(currentDate.getFullYear(), currentDate.getMonth());
   }, [currentDate]);
 
-  const formatDateKey = (date: Date) => date.toISOString().split('T')[0];
-  const isToday = (date: Date) => formatDateKey(date) === formatDateKey(new Date());
+  const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
+  const isToday = (date: Date) =>
+    formatDateKey(date) === formatDateKey(new Date());
 
   const navigateWeek = (direction: number) => {
     const newDate = new Date(currentDate);
@@ -176,42 +220,57 @@ export default function HandoverListPage() {
 
     return (
       <Link key={handover.id} href={`/handover/${handover.id}`}>
-        <Card className={`transition-colors cursor-pointer mb-2 ${
-          isDimmed
-            ? 'bg-gray-100 opacity-60 hover:opacity-80'
-            : isBlocked
-            ? 'border-red-200 bg-red-50 hover:bg-red-100'
-            : 'hover:bg-gray-50'
-        }`}>
-          <CardContent className={compact ? 'py-2 px-3' : 'py-4'}>
+        <Card
+          className={`transition-colors cursor-pointer mb-2 ${
+            isDimmed
+              ? "bg-gray-100 opacity-60 hover:opacity-80"
+              : isBlocked
+                ? "border-red-200 bg-red-50 hover:bg-red-100"
+                : "hover:bg-gray-50"
+          }`}
+        >
+          <CardContent className={compact ? "py-2 px-3" : "py-4"}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1 mb-1 flex-wrap">
                   <Badge
                     variant={getPriorityBadgeVariant(handover.priority)}
-                    className={`text-xs ${isDimmed ? 'opacity-50' : ''}`}
+                    className={`text-xs ${isDimmed ? "opacity-50" : ""}`}
                   >
-                    {HandoverPriorityLabels[handover.priority as HandoverPriority]}
+                    {
+                      HandoverPriorityLabels[
+                        handover.priority as HandoverPriority
+                      ]
+                    }
                   </Badge>
-                  <Badge variant={getStatusBadgeVariant(handover.status)} className="text-xs">
+                  <Badge
+                    variant={getStatusBadgeVariant(handover.status)}
+                    className="text-xs"
+                  >
                     {HandoverStatusLabels[handover.status as HandoverStatus]}
                   </Badge>
                 </div>
-                <h3 className={`font-semibold ${compact ? 'text-sm' : 'text-lg'} truncate ${
-                  isDimmed ? 'text-gray-500 line-through' : ''
-                }`}>
+                <h3
+                  className={`font-semibold ${compact ? "text-sm" : "text-lg"} truncate ${
+                    isDimmed ? "text-gray-500 line-through" : ""
+                  }`}
+                >
                   {handover.title}
                 </h3>
                 {!compact && (
                   <>
-                    <p className={`text-sm line-clamp-2 mt-1 ${
-                      isDimmed ? 'text-gray-400' : 'text-muted-foreground'
-                    }`}>
+                    <p
+                      className={`text-sm line-clamp-2 mt-1 ${
+                        isDimmed ? "text-gray-400" : "text-muted-foreground"
+                      }`}
+                    >
                       {handover.content}
                     </p>
-                    <div className={`flex items-center gap-4 mt-3 text-sm ${
-                      isDimmed ? 'text-gray-400' : 'text-muted-foreground'
-                    }`}>
+                    <div
+                      className={`flex items-center gap-4 mt-3 text-sm ${
+                        isDimmed ? "text-gray-400" : "text-muted-foreground"
+                      }`}
+                    >
                       <span>建立者：{handover.createdBy.name}</span>
                       {handover.assignee && (
                         <span>指派給：{handover.assignee.name}</span>
@@ -219,7 +278,10 @@ export default function HandoverListPage() {
                       {handover.dueDate && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          截止：{new Date(handover.dueDate).toLocaleDateString('zh-TW')}
+                          截止：
+                          {new Date(handover.dueDate).toLocaleDateString(
+                            "zh-TW",
+                          )}
                         </span>
                       )}
                       <span>{formatRelativeTime(handover.createdAt)}</span>
@@ -253,7 +315,8 @@ export default function HandoverListPage() {
           上一週
         </Button>
         <span className="font-medium">
-          {weekDates[0].toLocaleDateString('zh-TW')} - {weekDates[6].toLocaleDateString('zh-TW')}
+          {weekDates[0].toLocaleDateString("zh-TW")} -{" "}
+          {weekDates[6].toLocaleDateString("zh-TW")}
         </span>
         <Button variant="outline" size="sm" onClick={() => navigateWeek(1)}>
           下一週
@@ -263,27 +326,39 @@ export default function HandoverListPage() {
       <div className="grid grid-cols-7 gap-2">
         {WEEKDAYS.map((day, i) => (
           <div key={day} className="text-center">
-            <div className="text-sm font-medium text-muted-foreground mb-1">{day}</div>
-            <div className={`p-2 rounded-lg min-h-[150px] ${
-              isToday(weekDates[i]) ? 'bg-primary/10 border-2 border-primary' : 'bg-gray-50'
-            }`}>
-              <div className={`text-sm mb-2 ${isToday(weekDates[i]) ? 'font-bold text-primary' : ''}`}>
+            <div className="text-sm font-medium text-muted-foreground mb-1">
+              {day}
+            </div>
+            <div
+              className={`p-2 rounded-lg min-h-[150px] ${
+                isToday(weekDates[i])
+                  ? "bg-primary/10 border-2 border-primary"
+                  : "bg-gray-50"
+              }`}
+            >
+              <div
+                className={`text-sm mb-2 ${isToday(weekDates[i]) ? "font-bold text-primary" : ""}`}
+              >
                 {weekDates[i].getDate()}
               </div>
               <div className="space-y-1">
-                {(handoversByDueDate.get(formatDateKey(weekDates[i])) || []).map((h) => (
+                {(
+                  handoversByDueDate.get(formatDateKey(weekDates[i])) || []
+                ).map((h) => (
                   <Link key={h.id} href={`/handover/${h.id}`}>
-                    <div className={`text-xs p-1 rounded truncate cursor-pointer ${
-                      h.status === HandoverStatus.COMPLETED
-                        ? 'bg-gray-200 text-gray-500 line-through'
-                        : h.status === HandoverStatus.BLOCKED
-                        ? 'bg-red-200 text-red-800'
-                        : h.priority === 'URGENT'
-                        ? 'bg-red-100 text-red-800'
-                        : h.priority === 'HIGH'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
+                    <div
+                      className={`text-xs p-1 rounded truncate cursor-pointer ${
+                        h.status === HandoverStatus.COMPLETED
+                          ? "bg-gray-200 text-gray-500 line-through"
+                          : h.status === HandoverStatus.BLOCKED
+                            ? "bg-red-200 text-red-800"
+                            : h.priority === "URGENT"
+                              ? "bg-red-100 text-red-800"
+                              : h.priority === "HIGH"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
                       {h.title}
                     </div>
                   </Link>
@@ -312,7 +387,10 @@ export default function HandoverListPage() {
 
       <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS.map((day) => (
-          <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+          <div
+            key={day}
+            className="text-center text-sm font-medium text-muted-foreground py-2"
+          >
             {day}
           </div>
         ))}
@@ -321,36 +399,46 @@ export default function HandoverListPage() {
             key={i}
             className={`min-h-[100px] p-1 rounded border ${
               date && isToday(date)
-                ? 'bg-primary/10 border-primary'
+                ? "bg-primary/10 border-primary"
                 : date
-                ? 'bg-white border-gray-200'
-                : 'bg-gray-50 border-transparent'
+                  ? "bg-white border-gray-200"
+                  : "bg-gray-50 border-transparent"
             }`}
           >
             {date && (
               <>
-                <div className={`text-xs mb-1 ${isToday(date) ? 'font-bold text-primary' : 'text-muted-foreground'}`}>
+                <div
+                  className={`text-xs mb-1 ${isToday(date) ? "font-bold text-primary" : "text-muted-foreground"}`}
+                >
                   {date.getDate()}
                 </div>
                 <div className="space-y-0.5">
-                  {(handoversByDueDate.get(formatDateKey(date)) || []).slice(0, 3).map((h) => (
-                    <Link key={h.id} href={`/handover/${h.id}`}>
-                      <div className={`text-xs p-0.5 rounded truncate cursor-pointer ${
-                        h.status === HandoverStatus.COMPLETED
-                          ? 'bg-gray-200 text-gray-500'
-                          : h.status === HandoverStatus.BLOCKED
-                          ? 'bg-red-200 text-red-800'
-                          : h.priority === 'URGENT'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {h.title}
-                      </div>
-                    </Link>
-                  ))}
-                  {(handoversByDueDate.get(formatDateKey(date)) || []).length > 3 && (
+                  {(handoversByDueDate.get(formatDateKey(date)) || [])
+                    .slice(0, 3)
+                    .map((h) => (
+                      <Link key={h.id} href={`/handover/${h.id}`}>
+                        <div
+                          className={`text-xs p-0.5 rounded truncate cursor-pointer ${
+                            h.status === HandoverStatus.COMPLETED
+                              ? "bg-gray-200 text-gray-500"
+                              : h.status === HandoverStatus.BLOCKED
+                                ? "bg-red-200 text-red-800"
+                                : h.priority === "URGENT"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {h.title}
+                        </div>
+                      </Link>
+                    ))}
+                  {(handoversByDueDate.get(formatDateKey(date)) || []).length >
+                    3 && (
                     <div className="text-xs text-muted-foreground">
-                      +{(handoversByDueDate.get(formatDateKey(date)) || []).length - 3} 更多
+                      +
+                      {(handoversByDueDate.get(formatDateKey(date)) || [])
+                        .length - 3}{" "}
+                      更多
                     </div>
                   )}
                 </div>
@@ -396,60 +484,60 @@ export default function HandoverListPage() {
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">篩選：</span>
               </div>
-              <select
-                className="border rounded-md px-3 py-1.5 text-sm"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">全部狀態</option>
-                {Object.values(HandoverStatus).map((status) => (
-                  <option key={status} value={status}>
-                    {HandoverStatusLabels[status]}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="border rounded-md px-3 py-1.5 text-sm"
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-              >
-                <option value="">全部優先度</option>
-                {Object.values(HandoverPriority).map((priority) => (
-                  <option key={priority} value={priority}>
-                    {HandoverPriorityLabels[priority]}
-                  </option>
-                ))}
-              </select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="全部狀態" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部狀態</SelectItem>
+                  {Object.values(HandoverStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {HandoverStatusLabels[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="全部優先度" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部優先度</SelectItem>
+                  {Object.values(HandoverPriority).map((priority) => (
+                    <SelectItem key={priority} value={priority}>
+                      {HandoverPriorityLabels[priority]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* View Toggle */}
             <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
               <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className="gap-1"
               >
                 <List className="h-4 w-4" />
                 列表
               </Button>
               <Button
-                variant={viewMode === 'week' ? 'default' : 'ghost'}
+                variant={viewMode === "week" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('week')}
+                onClick={() => setViewMode("week")}
                 className="gap-1"
               >
-                <CalendarDays className="h-4 w-4" />
-                週
+                <CalendarDays className="h-4 w-4" />週
               </Button>
               <Button
-                variant={viewMode === 'month' ? 'default' : 'ghost'}
+                variant={viewMode === "month" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('month')}
+                onClick={() => setViewMode("month")}
                 className="gap-1"
               >
-                <Calendar className="h-4 w-4" />
-                月
+                <Calendar className="h-4 w-4" />月
               </Button>
             </div>
           </div>
@@ -463,9 +551,9 @@ export default function HandoverListPage() {
         <ErrorState error={error} onRetry={fetchData} title="載入失敗" />
       ) : allData.length > 0 ? (
         <>
-          {viewMode === 'list' && renderListView()}
-          {viewMode === 'week' && renderWeekView()}
-          {viewMode === 'month' && renderMonthView()}
+          {viewMode === "list" && renderListView()}
+          {viewMode === "week" && renderWeekView()}
+          {viewMode === "month" && renderMonthView()}
         </>
       ) : (
         <Card>

@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { apiGet } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { formatRelativeTime } from '@/lib/utils';
-import { getActionBadgeVariant } from '@/lib/badge-variants';
-import { History, User, FileText } from 'lucide-react';
-import { Role } from '@/shared';
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { apiGet } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatRelativeTime } from "@/lib/utils";
+import { getActionBadgeVariant } from "@/lib/badge-variants";
+import { History, User, FileText } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { Role } from "@/shared";
 
 interface AuditLog {
   id: string;
@@ -32,20 +33,20 @@ interface AuditListResponse {
 }
 
 const actionLabels: Record<string, string> = {
-  CREATE: '建立',
-  UPDATE: '更新',
-  DELETE: '刪除',
-  STATUS_CHANGE: '狀態變更',
-  LOGIN: '登入',
-  LOGOUT: '登出',
+  CREATE: "建立",
+  UPDATE: "更新",
+  DELETE: "刪除",
+  STATUS_CHANGE: "狀態變更",
+  LOGIN: "登入",
+  LOGOUT: "登出",
 };
 
 const entityLabels: Record<string, string> = {
-  HANDOVER: '交班',
-  INVENTORY: '庫存',
-  SHIFT: '排班',
-  USER: '使用者',
-  NOTIFICATION: '通知',
+  HANDOVER: "交班",
+  INVENTORY: "庫存",
+  SHIFT: "排班",
+  USER: "使用者",
+  NOTIFICATION: "通知",
 };
 
 export default function AuditPage() {
@@ -56,12 +57,12 @@ export default function AuditPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const result = await apiGet<AuditListResponse>('/audit/logs', {
+        const result = await apiGet<AuditListResponse>("/audit/logs", {
           limit: 50,
         });
         setData(result);
       } catch (error) {
-        console.error('Failed to load audit logs:', error);
+        console.error("Failed to load audit logs:", error);
       } finally {
         setLoading(false);
       }
@@ -86,9 +87,7 @@ export default function AuditPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">載入中...</div>
-        </div>
+        <LoadingSpinner />
       ) : data?.data && data.data.length > 0 ? (
         <Card>
           <CardContent className="p-0">

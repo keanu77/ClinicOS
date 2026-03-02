@@ -1,16 +1,32 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 import {
   BookOpen,
   FileText,
@@ -18,9 +34,8 @@ import {
   CheckCircle,
   AlertCircle,
   Plus,
-  X,
-} from 'lucide-react';
-import { Role } from '@/shared';
+} from "lucide-react";
+import { Role } from "@/shared";
 
 interface Category {
   id: string;
@@ -56,31 +71,31 @@ interface UnreadDoc {
 }
 
 const statusColors: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PENDING_REVIEW: 'bg-yellow-100 text-yellow-800',
-  PUBLISHED: 'bg-green-100 text-green-800',
-  ARCHIVED: 'bg-gray-100 text-gray-800',
+  DRAFT: "bg-gray-100 text-gray-800",
+  PENDING_REVIEW: "bg-yellow-100 text-yellow-800",
+  PUBLISHED: "bg-green-100 text-green-800",
+  ARCHIVED: "bg-gray-100 text-gray-800",
 };
 
 const statusLabels: Record<string, string> = {
-  DRAFT: '草稿',
-  PENDING_REVIEW: '待審核',
-  PUBLISHED: '已發布',
-  ARCHIVED: '已封存',
+  DRAFT: "草稿",
+  PENDING_REVIEW: "待審核",
+  PUBLISHED: "已發布",
+  ARCHIVED: "已封存",
 };
 
 const priorityColors: Record<string, string> = {
-  LOW: 'bg-gray-100 text-gray-800',
-  NORMAL: 'bg-blue-100 text-blue-800',
-  HIGH: 'bg-orange-100 text-orange-800',
-  URGENT: 'bg-red-100 text-red-800',
+  LOW: "bg-gray-100 text-gray-800",
+  NORMAL: "bg-blue-100 text-blue-800",
+  HIGH: "bg-orange-100 text-orange-800",
+  URGENT: "bg-red-100 text-red-800",
 };
 
 const priorityLabels: Record<string, string> = {
-  LOW: '一般',
-  NORMAL: '普通',
-  HIGH: '重要',
-  URGENT: '緊急',
+  LOW: "一般",
+  NORMAL: "普通",
+  HIGH: "重要",
+  URGENT: "緊急",
 };
 
 export default function DocumentsPage() {
@@ -95,31 +110,33 @@ export default function DocumentsPage() {
   const [showDocModal, setShowDocModal] = useState(false);
   const [showAnnModal, setShowAnnModal] = useState(false);
   const [docForm, setDocForm] = useState({
-    docNo: '',
-    title: '',
-    categoryId: '',
-    content: '',
+    docNo: "",
+    title: "",
+    categoryId: "",
+    content: "",
   });
   const [annForm, setAnnForm] = useState({
-    title: '',
-    content: '',
-    priority: 'NORMAL',
+    title: "",
+    content: "",
+    priority: "NORMAL",
   });
 
   const fetchData = async () => {
     try {
-      const [docsRes, announcementsRes, unreadRes, catsRes] = await Promise.all([
-        apiGet<{ data: Document[] }>('/documents'),
-        apiGet<{ data: Announcement[] }>('/documents/announcements/list'),
-        apiGet<UnreadDoc[]>('/documents/my-unread'),
-        apiGet<Category[]>('/documents/categories'),
-      ]);
+      const [docsRes, announcementsRes, unreadRes, catsRes] = await Promise.all(
+        [
+          apiGet<{ data: Document[] }>("/documents"),
+          apiGet<{ data: Announcement[] }>("/documents/announcements/list"),
+          apiGet<UnreadDoc[]>("/documents/my-unread"),
+          apiGet<Category[]>("/documents/categories"),
+        ],
+      );
       setDocuments(docsRes.data || []);
       setAnnouncements(announcementsRes.data || []);
       setUnreadDocs(unreadRes || []);
       setCategories(catsRes || []);
     } catch (error) {
-      console.error('Failed to load documents data:', error);
+      console.error("Failed to load documents data:", error);
     } finally {
       setLoading(false);
     }
@@ -131,33 +148,33 @@ export default function DocumentsPage() {
 
   const handleAddDoc = async () => {
     if (!docForm.docNo || !docForm.title) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+      toast({ title: "請填寫必填欄位", variant: "destructive" });
       return;
     }
     try {
-      await apiPost('/documents', docForm);
-      toast({ title: '文件新增成功' });
+      await apiPost("/documents", docForm);
+      toast({ title: "文件新增成功" });
       setShowDocModal(false);
-      setDocForm({ docNo: '', title: '', categoryId: '', content: '' });
+      setDocForm({ docNo: "", title: "", categoryId: "", content: "" });
       fetchData();
     } catch (error) {
-      toast({ title: '新增失敗', variant: 'destructive' });
+      toast({ title: "新增失敗", variant: "destructive" });
     }
   };
 
   const handleAddAnn = async () => {
     if (!annForm.title || !annForm.content) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+      toast({ title: "請填寫必填欄位", variant: "destructive" });
       return;
     }
     try {
-      await apiPost('/documents/announcements', annForm);
-      toast({ title: '公告新增成功' });
+      await apiPost("/documents/announcements", annForm);
+      toast({ title: "公告新增成功" });
       setShowAnnModal(false);
-      setAnnForm({ title: '', content: '', priority: 'NORMAL' });
+      setAnnForm({ title: "", content: "", priority: "NORMAL" });
       fetchData();
     } catch (error) {
-      toast({ title: '新增失敗', variant: 'destructive' });
+      toast({ title: "新增失敗", variant: "destructive" });
     }
   };
 
@@ -185,121 +202,130 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      {/* Add Document Modal */}
-      {showDocModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增文件</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowDocModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>文件編號 *</Label>
-                <Input
-                  value={docForm.docNo}
-                  onChange={(e) => setDocForm({ ...docForm, docNo: e.target.value })}
-                  placeholder="例：SOP-001"
-                />
-              </div>
-              <div>
-                <Label>文件標題 *</Label>
-                <Input
-                  value={docForm.title}
-                  onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
-                  placeholder="文件標題"
-                />
-              </div>
-              <div>
-                <Label>分類</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={docForm.categoryId}
-                  onChange={(e) => setDocForm({ ...docForm, categoryId: e.target.value })}
-                >
-                  <option value="">請選擇分類</option>
+      <Dialog open={showDocModal} onOpenChange={setShowDocModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增文件</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>文件編號 *</Label>
+              <Input
+                value={docForm.docNo}
+                onChange={(e) =>
+                  setDocForm({ ...docForm, docNo: e.target.value })
+                }
+                placeholder="例：SOP-001"
+              />
+            </div>
+            <div>
+              <Label>文件標題 *</Label>
+              <Input
+                value={docForm.title}
+                onChange={(e) =>
+                  setDocForm({ ...docForm, title: e.target.value })
+                }
+                placeholder="文件標題"
+              />
+            </div>
+            <div>
+              <Label>分類</Label>
+              <Select
+                value={docForm.categoryId || "__none__"}
+                onValueChange={(v) =>
+                  setDocForm({
+                    ...docForm,
+                    categoryId: v === "__none__" ? "" : v,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="請選擇分類" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">請選擇分類</SelectItem>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
-              <div>
-                <Label>內容</Label>
-                <textarea
-                  className="w-full mt-1 p-2 border rounded-md min-h-[100px]"
-                  value={docForm.content}
-                  onChange={(e) => setDocForm({ ...docForm, content: e.target.value })}
-                  placeholder="文件內容..."
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowDocModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleAddDoc}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>內容</Label>
+              <Textarea
+                value={docForm.content}
+                onChange={(e) =>
+                  setDocForm({ ...docForm, content: e.target.value })
+                }
+                placeholder="文件內容..."
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDocModal(false)}>
+              取消
+            </Button>
+            <Button onClick={handleAddDoc}>新增</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Add Announcement Modal */}
-      {showAnnModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>新增公告</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowAnnModal(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>公告標題 *</Label>
-                <Input
-                  value={annForm.title}
-                  onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })}
-                  placeholder="公告標題"
-                />
-              </div>
-              <div>
-                <Label>優先級</Label>
-                <select
-                  className="w-full mt-1 p-2 border rounded-md"
-                  value={annForm.priority}
-                  onChange={(e) => setAnnForm({ ...annForm, priority: e.target.value })}
-                >
-                  <option value="LOW">一般</option>
-                  <option value="NORMAL">普通</option>
-                  <option value="HIGH">重要</option>
-                  <option value="URGENT">緊急</option>
-                </select>
-              </div>
-              <div>
-                <Label>內容 *</Label>
-                <textarea
-                  className="w-full mt-1 p-2 border rounded-md min-h-[100px]"
-                  value={annForm.content}
-                  onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })}
-                  placeholder="公告內容..."
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setShowAnnModal(false)}>
-                  取消
-                </Button>
-                <Button className="flex-1" onClick={handleAddAnn}>
-                  新增
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showAnnModal} onOpenChange={setShowAnnModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增公告</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>公告標題 *</Label>
+              <Input
+                value={annForm.title}
+                onChange={(e) =>
+                  setAnnForm({ ...annForm, title: e.target.value })
+                }
+                placeholder="公告標題"
+              />
+            </div>
+            <div>
+              <Label>優先級</Label>
+              <Select
+                value={annForm.priority}
+                onValueChange={(v) => setAnnForm({ ...annForm, priority: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">一般</SelectItem>
+                  <SelectItem value="NORMAL">普通</SelectItem>
+                  <SelectItem value="HIGH">重要</SelectItem>
+                  <SelectItem value="URGENT">緊急</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>內容 *</Label>
+              <Textarea
+                value={annForm.content}
+                onChange={(e) =>
+                  setAnnForm({ ...annForm, content: e.target.value })
+                }
+                placeholder="公告內容..."
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAnnModal(false)}>
+              取消
+            </Button>
+            <Button onClick={handleAddAnn}>新增</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Unread Documents Alert */}
       {unreadDocs.length > 0 && (
@@ -324,9 +350,7 @@ export default function DocumentsPage() {
 
         <TabsContent value="documents">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-muted-foreground">載入中...</div>
-            </div>
+            <LoadingSpinner />
           ) : documents.length > 0 ? (
             <div className="space-y-4">
               {documents.map((doc) => (
@@ -379,7 +403,7 @@ export default function DocumentsPage() {
               {announcements.map((announcement) => (
                 <Card
                   key={announcement.id}
-                  className={announcement.isPinned ? 'border-primary' : ''}
+                  className={announcement.isPinned ? "border-primary" : ""}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -387,14 +411,18 @@ export default function DocumentsPage() {
                         <Bell
                           className={`h-5 w-5 mt-0.5 ${
                             announcement.isPinned
-                              ? 'text-primary'
-                              : 'text-muted-foreground'
+                              ? "text-primary"
+                              : "text-muted-foreground"
                           }`}
                         />
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{announcement.title}</span>
-                            <Badge className={priorityColors[announcement.priority]}>
+                            <span className="font-medium">
+                              {announcement.title}
+                            </span>
+                            <Badge
+                              className={priorityColors[announcement.priority]}
+                            >
                               {priorityLabels[announcement.priority]}
                             </Badge>
                             {announcement.isPinned && (
@@ -402,9 +430,9 @@ export default function DocumentsPage() {
                             )}
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
-                            {new Date(announcement.publishAt).toLocaleDateString(
-                              'zh-TW'
-                            )}
+                            {new Date(
+                              announcement.publishAt,
+                            ).toLocaleDateString("zh-TW")}
                           </div>
                         </div>
                       </div>
@@ -415,7 +443,11 @@ export default function DocumentsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/documents/announcements/${announcement.id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/documents/announcements/${announcement.id}`,
+                            )
+                          }
                         >
                           檢視
                         </Button>

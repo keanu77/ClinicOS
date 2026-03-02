@@ -1,18 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost } from '@/lib/api';
-import { usePermissions } from '@/lib/hooks';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost } from "@/lib/api";
+import { usePermissions } from "@/lib/hooks";
 import {
   Permission,
   PermissionLabels,
   PermissionCategories,
   Position,
   PositionLabels,
-} from '@/shared';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+} from "@/shared";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -20,7 +26,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -28,19 +34,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Check, X, Shield, Search, Users, KeyRound } from 'lucide-react';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Check, X, Shield, Search, Users, KeyRound } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface UserPermissionMatrix {
   userId: string;
@@ -66,10 +73,12 @@ export default function PermissionsPage() {
   const { hasPermission } = usePermissions();
   const [matrix, setMatrix] = useState<UserPermissionMatrix[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<UserPermissionMatrix | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserPermissionMatrix | null>(
+    null,
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [saving, setSaving] = useState(false);
   const [userPermissionDetails, setUserPermissionDetails] = useState<{
     effectivePermissions: Permission[];
@@ -84,12 +93,12 @@ export default function PermissionsPage() {
     try {
       setLoading(true);
       const data = await apiGet<PaginatedResponse<UserPermissionMatrix>>(
-        '/permissions/matrix',
-        { limit: 100 }
+        "/permissions/matrix",
+        { limit: 100 },
       );
       setMatrix(data.items);
     } catch (error) {
-      console.error('Failed to fetch permission matrix:', error);
+      console.error("Failed to fetch permission matrix:", error);
     } finally {
       setLoading(false);
     }
@@ -105,7 +114,7 @@ export default function PermissionsPage() {
       setUserPermissionDetails(details);
       setEditDialogOpen(true);
     } catch (error) {
-      console.error('Failed to fetch user permissions:', error);
+      console.error("Failed to fetch user permissions:", error);
     }
   };
 
@@ -115,7 +124,7 @@ export default function PermissionsPage() {
     try {
       await apiPost(`/permissions/users/${selectedUser.userId}/grant`, {
         permission,
-        reason: '管理者手動授予',
+        reason: "管理者手動授予",
       });
       // 重新載入使用者權限
       const details = await apiGet<{
@@ -125,7 +134,7 @@ export default function PermissionsPage() {
       setUserPermissionDetails(details);
       fetchMatrix();
     } catch (error) {
-      console.error('Failed to grant permission:', error);
+      console.error("Failed to grant permission:", error);
     } finally {
       setSaving(false);
     }
@@ -137,7 +146,7 @@ export default function PermissionsPage() {
     try {
       await apiPost(`/permissions/users/${selectedUser.userId}/revoke`, {
         permission,
-        reason: '管理者手動撤銷',
+        reason: "管理者手動撤銷",
       });
       const details = await apiGet<{
         effectivePermissions: Permission[];
@@ -146,7 +155,7 @@ export default function PermissionsPage() {
       setUserPermissionDetails(details);
       fetchMatrix();
     } catch (error) {
-      console.error('Failed to revoke permission:', error);
+      console.error("Failed to revoke permission:", error);
     } finally {
       setSaving(false);
     }
@@ -155,12 +164,12 @@ export default function PermissionsPage() {
   const filteredMatrix = matrix.filter(
     (user) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const allPermissions = Object.values(Permission);
   const filteredPermissions =
-    selectedCategory === 'all'
+    selectedCategory === "all"
       ? allPermissions
       : PermissionCategories[selectedCategory]?.permissions || [];
 
@@ -168,7 +177,9 @@ export default function PermissionsPage() {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
         <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold text-muted-foreground">無權限存取</h2>
+        <h2 className="text-xl font-semibold text-muted-foreground">
+          無權限存取
+        </h2>
         <p className="text-sm text-muted-foreground mt-2">
           您沒有權限管理權限。
         </p>
@@ -181,9 +192,7 @@ export default function PermissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">權限管理</h1>
-          <p className="text-muted-foreground">
-            管理使用者權限與存取控制
-          </p>
+          <p className="text-muted-foreground">管理使用者權限與存取控制</p>
         </div>
       </div>
 
@@ -222,9 +231,7 @@ export default function PermissionsPage() {
       <Card>
         <CardHeader>
           <CardTitle>使用者權限一覽</CardTitle>
-          <CardDescription>
-            點擊使用者以編輯其權限
-          </CardDescription>
+          <CardDescription>點擊使用者以編輯其權限</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
@@ -241,7 +248,7 @@ export default function PermissionsPage() {
 
           {loading ? (
             <div className="flex justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <Spinner size="lg" />
             </div>
           ) : (
             <Table>
@@ -300,12 +307,10 @@ export default function PermissionsPage() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              編輯權限 - {selectedUser?.name}
-            </DialogTitle>
+            <DialogTitle>編輯權限 - {selectedUser?.name}</DialogTitle>
             <DialogDescription>
               職位：{selectedUser && PositionLabels[selectedUser.position]}
-              {' | '}
+              {" | "}
               {selectedUser?.email}
             </DialogDescription>
           </DialogHeader>
@@ -333,10 +338,14 @@ export default function PermissionsPage() {
 
             <div className="grid gap-2">
               {filteredPermissions.map((permission) => {
-                const hasIt = userPermissionDetails?.effectivePermissions.includes(permission);
-                const customPerm = userPermissionDetails?.customPermissions.find(
-                  (cp) => cp.permission === permission
-                );
+                const hasIt =
+                  userPermissionDetails?.effectivePermissions.includes(
+                    permission,
+                  );
+                const customPerm =
+                  userPermissionDetails?.customPermissions.find(
+                    (cp) => cp.permission === permission,
+                  );
 
                 return (
                   <div
@@ -357,7 +366,7 @@ export default function PermissionsPage() {
                           {permission}
                           {customPerm && (
                             <Badge variant="outline" className="ml-2">
-                              {customPerm.granted ? '已授予' : '已撤銷'}
+                              {customPerm.granted ? "已授予" : "已撤銷"}
                             </Badge>
                           )}
                         </div>

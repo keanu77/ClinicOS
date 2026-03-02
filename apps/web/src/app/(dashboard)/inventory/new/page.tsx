@@ -1,16 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { apiPost } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft } from 'lucide-react';
-import { InventoryCategory, InventoryCategoryLabels } from '@/shared';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { apiPost } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft } from "lucide-react";
+import { InventoryCategory, InventoryCategoryLabels } from "@/shared";
 
 interface CreateItemForm {
   name: string;
@@ -29,15 +37,15 @@ export default function NewInventoryItemPage() {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<CreateItemForm>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     category: InventoryCategory.OTHER,
-    unit: '個',
+    unit: "個",
     quantity: 0,
     minStock: 10,
     maxStock: 100,
-    location: '',
-    expiryDate: '',
+    location: "",
+    expiryDate: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,9 +53,9 @@ export default function NewInventoryItemPage() {
 
     if (!form.name.trim()) {
       toast({
-        title: '請填寫必填欄位',
-        description: '品項名稱為必填',
-        variant: 'destructive',
+        title: "請填寫必填欄位",
+        description: "品項名稱為必填",
+        variant: "destructive",
       });
       return;
     }
@@ -57,7 +65,7 @@ export default function NewInventoryItemPage() {
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
         category: form.category,
-        unit: form.unit || '個',
+        unit: form.unit || "個",
         quantity: form.quantity,
         minStock: form.minStock,
         maxStock: form.maxStock,
@@ -73,14 +81,14 @@ export default function NewInventoryItemPage() {
         payload.expiryDate = new Date(form.expiryDate).toISOString();
       }
 
-      await apiPost('/inventory/items', payload);
-      toast({ title: '品項已新增' });
-      router.push('/inventory');
+      await apiPost("/inventory/items", payload);
+      toast({ title: "品項已新增" });
+      router.push("/inventory");
     } catch (error) {
       toast({
-        title: '新增失敗',
-        description: error instanceof Error ? error.message : '請稍後再試',
-        variant: 'destructive',
+        title: "新增失敗",
+        description: error instanceof Error ? error.message : "請稍後再試",
+        variant: "destructive",
       });
     } finally {
       setSubmitting(false);
@@ -120,19 +128,22 @@ export default function NewInventoryItemPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="category">分類 *</Label>
-                <select
-                  id="category"
-                  className="w-full mt-1 p-2 border rounded-md"
+                <Label>分類 *</Label>
+                <Select
                   value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  onValueChange={(v) => setForm({ ...form, category: v })}
                 >
-                  {Object.values(InventoryCategory).map((cat) => (
-                    <option key={cat} value={cat}>
-                      {InventoryCategoryLabels[cat]}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(InventoryCategory).map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {InventoryCategoryLabels[cat]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="unit">單位</Label>
@@ -147,12 +158,14 @@ export default function NewInventoryItemPage() {
 
             <div>
               <Label htmlFor="description">描述</Label>
-              <textarea
+              <Textarea
                 id="description"
-                className="w-full mt-1 p-3 border rounded-md min-h-[80px]"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 placeholder="品項描述..."
+                className="min-h-[80px]"
               />
             </div>
 
@@ -164,7 +177,12 @@ export default function NewInventoryItemPage() {
                   type="number"
                   min="0"
                   value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      quantity: parseInt(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -177,7 +195,12 @@ export default function NewInventoryItemPage() {
                   type="number"
                   min="0"
                   value={form.minStock}
-                  onChange={(e) => setForm({ ...form, minStock: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      minStock: parseInt(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
               <div>
@@ -187,7 +210,12 @@ export default function NewInventoryItemPage() {
                   type="number"
                   min="0"
                   value={form.maxStock}
-                  onChange={(e) => setForm({ ...form, maxStock: parseInt(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      maxStock: parseInt(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -198,7 +226,9 @@ export default function NewInventoryItemPage() {
                 <Input
                   id="location"
                   value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, location: e.target.value })
+                  }
                   placeholder="例：藥櫃 A-1"
                 />
               </div>
@@ -208,7 +238,9 @@ export default function NewInventoryItemPage() {
                   id="expiryDate"
                   type="date"
                   value={form.expiryDate}
-                  onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, expiryDate: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -220,7 +252,7 @@ export default function NewInventoryItemPage() {
                 </Button>
               </Link>
               <Button type="submit" className="flex-1" disabled={submitting}>
-                {submitting ? '新增中...' : '新增品項'}
+                {submitting ? "新增中..." : "新增品項"}
               </Button>
             </div>
           </CardContent>
