@@ -1,27 +1,48 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { useToast } from '@/components/ui/use-toast';
-import { Users, Mail, Shield, Plus, Edit, Trash2, KeyRound, Settings, Loader2 } from 'lucide-react';
-import { Role, RoleLabels } from '@/shared';
+import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Users,
+  Mail,
+  Shield,
+  Plus,
+  Edit,
+  Trash2,
+  Settings,
+  Loader2,
+} from "lucide-react";
+import { Role, RoleLabels } from "@/shared";
 import {
   Permission,
   PermissionLabels,
-  PermissionCategories
-} from '@/shared/enums/permission.enum';
-import { Position, PositionLabels } from '@/shared/enums/position.enum';
-import { DefaultPermissionsByPosition } from '@/shared/types/permission.types';
+  PermissionCategories,
+} from "@/shared/enums/permission.enum";
+import { Position, PositionLabels } from "@/shared/enums/position.enum";
+import { DefaultPermissionsByPosition } from "@/shared/types/permission.types";
 
 interface User {
   id: string;
@@ -51,35 +72,38 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [permissionData, setPermissionData] = useState<UserPermissionData | null>(null);
+  const [permissionData, setPermissionData] =
+    useState<UserPermissionData | null>(null);
   const [permissionLoading, setPermissionLoading] = useState(false);
   const [savingPermission, setSavingPermission] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
-    email: '',
-    name: '',
-    password: '',
-    role: 'STAFF',
-    position: 'RECEPTIONIST',
+    email: "",
+    name: "",
+    password: "",
+    role: "STAFF",
+    position: "RECEPTIONIST",
   });
 
   const [editForm, setEditForm] = useState({
-    name: '',
-    role: '',
-    position: '',
+    name: "",
+    role: "",
+    position: "",
     isActive: true,
   });
 
   const fetchUsers = async () => {
     try {
-      const result = await apiGet<User[]>('/users');
+      const result = await apiGet<User[]>("/users");
       setUsers(result);
     } catch (error) {
-      console.error('Failed to load users:', error);
-      toast({ title: '載入失敗', variant: 'destructive' });
+      console.error("Failed to load users:", error);
+      toast({ title: "載入失敗", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -91,17 +115,23 @@ export default function UsersPage() {
 
   const handleCreate = async () => {
     if (!createForm.email || !createForm.name || !createForm.password) {
-      toast({ title: '請填寫必填欄位', variant: 'destructive' });
+      toast({ title: "請填寫必填欄位", variant: "destructive" });
       return;
     }
     try {
-      await apiPost('/users', createForm);
-      toast({ title: '使用者建立成功' });
+      await apiPost("/users", createForm);
+      toast({ title: "使用者建立成功" });
       setShowCreateModal(false);
-      setCreateForm({ email: '', name: '', password: '', role: 'STAFF', position: 'RECEPTIONIST' });
+      setCreateForm({
+        email: "",
+        name: "",
+        password: "",
+        role: "STAFF",
+        position: "RECEPTIONIST",
+      });
       fetchUsers();
     } catch (error: any) {
-      toast({ title: error.message || '建立失敗', variant: 'destructive' });
+      toast({ title: error.message || "建立失敗", variant: "destructive" });
     }
   };
 
@@ -109,32 +139,23 @@ export default function UsersPage() {
     if (!selectedUser) return;
     try {
       await apiPatch(`/users/${selectedUser.id}`, editForm);
-      toast({ title: '使用者更新成功' });
+      toast({ title: "使用者更新成功" });
       setShowEditModal(false);
       setSelectedUser(null);
       fetchUsers();
     } catch (error: any) {
-      toast({ title: error.message || '更新失敗', variant: 'destructive' });
+      toast({ title: error.message || "更新失敗", variant: "destructive" });
     }
   };
 
   const handleDelete = async (userId: string) => {
     try {
       await apiDelete(`/users/${userId}`);
-      toast({ title: '使用者已停用' });
+      toast({ title: "使用者已停用" });
       setShowDeleteConfirm(null);
       fetchUsers();
     } catch (error: any) {
-      toast({ title: error.message || '停用失敗', variant: 'destructive' });
-    }
-  };
-
-  const handleResetPassword = async (userId: string) => {
-    try {
-      await apiPost(`/users/${userId}/reset-password`, {});
-      toast({ title: '密碼重設成功，新密碼已發送至用戶信箱' });
-    } catch (error: any) {
-      toast({ title: error.message || '密碼重設失敗', variant: 'destructive' });
+      toast({ title: error.message || "停用失敗", variant: "destructive" });
     }
   };
 
@@ -143,7 +164,7 @@ export default function UsersPage() {
     setEditForm({
       name: user.name,
       role: user.role,
-      position: user.position || 'RECEPTIONIST',
+      position: user.position || "RECEPTIONIST",
       isActive: user.isActive,
     });
     setShowEditModal(true);
@@ -155,11 +176,13 @@ export default function UsersPage() {
     setPermissionLoading(true);
 
     try {
-      const data = await apiGet<UserPermissionData>(`/permissions/users/${user.id}`);
+      const data = await apiGet<UserPermissionData>(
+        `/permissions/users/${user.id}`,
+      );
       setPermissionData(data);
     } catch (error) {
-      console.error('Failed to load permissions:', error);
-      const userPosition = (user.position || 'RECEPTIONIST') as Position;
+      console.error("Failed to load permissions:", error);
+      const userPosition = (user.position || "RECEPTIONIST") as Position;
       const defaultPerms = DefaultPermissionsByPosition[userPosition] || [];
       setPermissionData({
         userId: user.id,
@@ -173,7 +196,10 @@ export default function UsersPage() {
     }
   };
 
-  const handlePermissionChange = async (permission: Permission, checked: boolean) => {
+  const handlePermissionChange = async (
+    permission: Permission,
+    checked: boolean,
+  ) => {
     if (!selectedUser || !permissionData) return;
 
     setSavingPermission(permission);
@@ -182,64 +208,70 @@ export default function UsersPage() {
       if (checked) {
         await apiPost(`/permissions/users/${selectedUser.id}/grant`, {
           permission,
-          reason: '管理員手動授予',
+          reason: "管理員手動授予",
         });
       } else {
         await apiPost(`/permissions/users/${selectedUser.id}/revoke`, {
           permission,
-          reason: '管理員手動撤銷',
+          reason: "管理員手動撤銷",
         });
       }
 
       const newEffectivePermissions = checked
         ? [...permissionData.effectivePermissions, permission]
-        : permissionData.effectivePermissions.filter(p => p !== permission);
+        : permissionData.effectivePermissions.filter((p) => p !== permission);
 
       setPermissionData({
         ...permissionData,
         effectivePermissions: newEffectivePermissions,
       });
 
-      toast({ title: checked ? '權限已授予' : '權限已撤銷' });
+      toast({ title: checked ? "權限已授予" : "權限已撤銷" });
     } catch (error: any) {
-      console.error('Failed to update permission:', error);
-      toast({ title: error.message || '權限更新失敗', variant: 'destructive' });
+      console.error("Failed to update permission:", error);
+      toast({ title: error.message || "權限更新失敗", variant: "destructive" });
     } finally {
       setSavingPermission(null);
     }
   };
 
-  const isPermissionChecked = useCallback((permission: Permission): boolean => {
-    if (!permissionData) return false;
-    return permissionData.effectivePermissions.includes(permission);
-  }, [permissionData]);
+  const isPermissionChecked = useCallback(
+    (permission: Permission): boolean => {
+      if (!permissionData) return false;
+      return permissionData.effectivePermissions.includes(permission);
+    },
+    [permissionData],
+  );
 
-  const isDefaultPermission = useCallback((permission: Permission): boolean => {
-    if (!permissionData) return false;
-    return permissionData.defaultPermissions.includes(permission);
-  }, [permissionData]);
+  const isDefaultPermission = useCallback(
+    (permission: Permission): boolean => {
+      if (!permissionData) return false;
+      return permissionData.defaultPermissions.includes(permission);
+    },
+    [permissionData],
+  );
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'ADMIN':
-        return 'danger';
-      case 'SUPERVISOR':
-        return 'warning';
+      case "ADMIN":
+        return "danger";
+      case "SUPERVISOR":
+        return "warning";
       default:
-        return 'secondary';
+        return "secondary";
     }
   };
 
   const getPositionBadgeVariant = (position: string) => {
     switch (position) {
-      case 'ADMIN':
-        return 'danger';
-      case 'MANAGER':
-        return 'warning';
-      case 'DOCTOR':
-        return 'default';
+      case "ADMIN":
+        return "danger";
+      case "MANAGER":
+        return "warning";
+      case "DOCTOR":
+        return "default";
       default:
-        return 'secondary';
+        return "secondary";
     }
   };
 
@@ -276,7 +308,9 @@ export default function UsersPage() {
               <Input
                 type="email"
                 value={createForm.email}
-                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, email: e.target.value })
+                }
                 placeholder="user@example.com"
               />
             </div>
@@ -284,7 +318,9 @@ export default function UsersPage() {
               <Label>姓名 *</Label>
               <Input
                 value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, name: e.target.value })
+                }
                 placeholder="姓名"
               />
             </div>
@@ -293,26 +329,38 @@ export default function UsersPage() {
               <Input
                 type="password"
                 value={createForm.password}
-                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, password: e.target.value })
+                }
                 placeholder="密碼"
               />
             </div>
             <div>
               <Label>職位</Label>
-              <Select value={createForm.position} onValueChange={(v) => setCreateForm({ ...createForm, position: v })}>
+              <Select
+                value={createForm.position}
+                onValueChange={(v) =>
+                  setCreateForm({ ...createForm, position: v })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(Position).map((pos) => (
-                    <SelectItem key={pos} value={pos}>{PositionLabels[pos]}</SelectItem>
+                    <SelectItem key={pos} value={pos}>
+                      {PositionLabels[pos]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>角色</Label>
-              <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
+              <Select
+                value={createForm.role}
+                onValueChange={(v) => setCreateForm({ ...createForm, role: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -325,14 +373,22 @@ export default function UsersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+              取消
+            </Button>
             <Button onClick={handleCreate}>新增</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit User Modal */}
-      <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) setSelectedUser(null); }}>
+      <Dialog
+        open={showEditModal}
+        onOpenChange={(open) => {
+          setShowEditModal(open);
+          if (!open) setSelectedUser(null);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>編輯使用者</DialogTitle>
@@ -340,31 +396,45 @@ export default function UsersPage() {
           <div className="space-y-4">
             <div>
               <Label>Email</Label>
-              <Input value={selectedUser?.email || ''} disabled className="bg-gray-50" />
+              <Input
+                value={selectedUser?.email || ""}
+                disabled
+                className="bg-gray-50"
+              />
             </div>
             <div>
               <Label>姓名</Label>
               <Input
                 value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
               />
             </div>
             <div>
               <Label>職位</Label>
-              <Select value={editForm.position} onValueChange={(v) => setEditForm({ ...editForm, position: v })}>
+              <Select
+                value={editForm.position}
+                onValueChange={(v) => setEditForm({ ...editForm, position: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(Position).map((pos) => (
-                    <SelectItem key={pos} value={pos}>{PositionLabels[pos]}</SelectItem>
+                    <SelectItem key={pos} value={pos}>
+                      {PositionLabels[pos]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>角色</Label>
-              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+              <Select
+                value={editForm.role}
+                onValueChange={(v) => setEditForm({ ...editForm, role: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -379,26 +449,41 @@ export default function UsersPage() {
               <Checkbox
                 id="isActive"
                 checked={editForm.isActive}
-                onCheckedChange={(checked) => setEditForm({ ...editForm, isActive: !!checked })}
+                onCheckedChange={(checked) =>
+                  setEditForm({ ...editForm, isActive: !!checked })
+                }
               />
               <Label htmlFor="isActive">啟用帳號</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditModal(false)}>取消</Button>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+              取消
+            </Button>
             <Button onClick={handleEdit}>儲存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Permission Modal */}
-      <Dialog open={showPermissionModal} onOpenChange={(open) => { setShowPermissionModal(open); if (!open) setPermissionData(null); }}>
+      <Dialog
+        open={showPermissionModal}
+        onOpenChange={(open) => {
+          setShowPermissionModal(open);
+          if (!open) setPermissionData(null);
+        }}
+      >
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>權限設定</DialogTitle>
             {selectedUser && (
               <p className="text-sm text-muted-foreground">
-                {selectedUser.name} - {PositionLabels[(selectedUser.position || 'RECEPTIONIST') as Position]}
+                {selectedUser.name} -{" "}
+                {
+                  PositionLabels[
+                    (selectedUser.position || "RECEPTIONIST") as Position
+                  ]
+                }
               </p>
             )}
           </DialogHeader>
@@ -406,12 +491,15 @@ export default function UsersPage() {
             {permissionLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-muted-foreground">載入權限中...</span>
+                <span className="ml-2 text-muted-foreground">
+                  載入權限中...
+                </span>
               </div>
             ) : (
               <div className="space-y-6">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                  <strong>提示：</strong>藍色標籤表示該權限為職位預設權限，取消勾選會撤銷此預設權限。
+                  <strong>提示：</strong>
+                  藍色標籤表示該權限為職位預設權限，取消勾選會撤銷此預設權限。
                 </div>
                 {Object.entries(PermissionCategories).map(([key, category]) => (
                   <div key={key} className="border rounded-lg p-4">
@@ -429,8 +517,8 @@ export default function UsersPage() {
                           <div
                             key={permission}
                             className={`flex items-center gap-3 p-2 rounded-md ${
-                              isDefault ? 'bg-blue-50' : 'bg-gray-50'
-                            } ${isSaving ? 'opacity-50' : ''}`}
+                              isDefault ? "bg-blue-50" : "bg-gray-50"
+                            } ${isSaving ? "opacity-50" : ""}`}
                           >
                             <Checkbox
                               id={permission}
@@ -448,7 +536,10 @@ export default function UsersPage() {
                                 {PermissionLabels[permission]}
                               </label>
                               {isDefault && (
-                                <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-700">
+                                <Badge
+                                  variant="secondary"
+                                  className="ml-2 text-xs bg-blue-100 text-blue-700"
+                                >
                                   預設
                                 </Badge>
                               )}
@@ -466,7 +557,13 @@ export default function UsersPage() {
             )}
           </div>
           <DialogFooter className="border-t pt-4">
-            <Button className="w-full" onClick={() => { setShowPermissionModal(false); setPermissionData(null); }}>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setShowPermissionModal(false);
+                setPermissionData(null);
+              }}
+            >
               完成
             </Button>
           </DialogFooter>
@@ -474,7 +571,12 @@ export default function UsersPage() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <Dialog open={!!showDeleteConfirm} onOpenChange={(open) => { if (!open) setShowDeleteConfirm(null); }}>
+      <Dialog
+        open={!!showDeleteConfirm}
+        onOpenChange={(open) => {
+          if (!open) setShowDeleteConfirm(null);
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>確認停用</DialogTitle>
@@ -483,8 +585,20 @@ export default function UsersPage() {
             確定要停用此使用者嗎？停用後使用者將無法登入系統。
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>取消</Button>
-            <Button variant="destructive" onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}>確認停用</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(null)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                showDeleteConfirm && handleDelete(showDeleteConfirm)
+              }
+            >
+              確認停用
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -494,7 +608,7 @@ export default function UsersPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {users.map((user) => (
-            <Card key={user.id} className={!user.isActive ? 'opacity-60' : ''}>
+            <Card key={user.id} className={!user.isActive ? "opacity-60" : ""}>
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -514,14 +628,17 @@ export default function UsersPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     {user.position && (
                       <Badge variant={getPositionBadgeVariant(user.position)}>
-                        {PositionLabels[user.position as Position] || user.position}
+                        {PositionLabels[user.position as Position] ||
+                          user.position}
                       </Badge>
                     )}
                     <Badge variant={getRoleBadgeVariant(user.role)}>
                       {RoleLabels[user.role as Role]}
                     </Badge>
                     {!user.isActive && (
-                      <Badge variant="outline" className="text-gray-500">已停用</Badge>
+                      <Badge variant="outline" className="text-gray-500">
+                        已停用
+                      </Badge>
                     )}
                   </div>
                   <div className="flex gap-1">
@@ -532,14 +649,6 @@ export default function UsersPage() {
                       title="設定權限"
                     >
                       <Settings className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleResetPassword(user.id)}
-                      title="重設密碼"
-                    >
-                      <KeyRound className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
