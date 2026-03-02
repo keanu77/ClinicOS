@@ -15,6 +15,10 @@ export enum Permission {
   SCHEDULING_VIEW = "SCHEDULING_VIEW",
   SCHEDULING_MANAGE = "SCHEDULING_MANAGE",
 
+  // 門診系統
+  CLINIC_SCHEDULE_VIEW = "CLINIC_SCHEDULE_VIEW",
+  CLINIC_SCHEDULE_MANAGE = "CLINIC_SCHEDULE_MANAGE",
+
   // 人員管理
   HR_VIEW = "HR_VIEW",
   HR_MANAGE = "HR_MANAGE",
@@ -65,6 +69,10 @@ export const PermissionLabels: Record<Permission, string> = {
   // 排班系統
   [Permission.SCHEDULING_VIEW]: "查看排班",
   [Permission.SCHEDULING_MANAGE]: "管理排班",
+
+  // 門診系統
+  [Permission.CLINIC_SCHEDULE_VIEW]: "查看門診時刻",
+  [Permission.CLINIC_SCHEDULE_MANAGE]: "管理門診時刻",
 
   // 人員管理
   [Permission.HR_VIEW]: "查看人員資料",
@@ -126,6 +134,13 @@ export const PermissionCategories: Record<
   scheduling: {
     label: "排班系統",
     permissions: [Permission.SCHEDULING_VIEW, Permission.SCHEDULING_MANAGE],
+  },
+  clinicSchedule: {
+    label: "門診系統",
+    permissions: [
+      Permission.CLINIC_SCHEDULE_VIEW,
+      Permission.CLINIC_SCHEDULE_MANAGE,
+    ],
   },
   hr: {
     label: "人員管理",

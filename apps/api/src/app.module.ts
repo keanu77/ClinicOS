@@ -20,6 +20,7 @@ import { QualityModule } from "./quality/quality.module";
 import { DocumentModule } from "./document/document.module";
 import { FinanceModule } from "./finance/finance.module";
 import { PermissionsModule } from "./permissions/permissions.module";
+import { ClinicScheduleModule } from "./clinic-schedule/clinic-schedule.module";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { HealthController } from "./health.controller";
 
@@ -96,6 +97,7 @@ import { HealthController } from "./health.controller";
     DocumentModule,
     FinanceModule,
     PermissionsModule,
+    ClinicScheduleModule,
   ],
   controllers: [HealthController],
   providers: [

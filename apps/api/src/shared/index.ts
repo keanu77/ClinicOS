@@ -13,6 +13,7 @@ export * from "./enums/quality.enum";
 export * from "./enums/document.enum";
 export * from "./enums/finance.enum";
 export * from "./enums/scheduling.enum";
+export * from "./enums/clinic-schedule.enum";
 
 // Types
 export * from "./types/user.types";

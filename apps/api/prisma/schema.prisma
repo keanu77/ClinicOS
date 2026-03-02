@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -47,6 +47,9 @@ model User {
 
   // Schedule Entry Relations
   scheduleEntries   ScheduleEntry[]
+
+  // Clinic Schedule Relations
+  clinicSlots       ClinicSlot[] @relation("ClinicSlots")
 
   // Task Relations
   taskCollaborations TaskCollaborator[]
@@ -1196,4 +1199,40 @@ model PermissionRequest {
   @@index([requesterId, status])
   @@index([status])
   @@index([reviewerId])
+}
+
+// ============================================
+// CLINIC SCHEDULE (門診時刻)
+// ============================================
+
+model ClinicSlot {
+  id                  String   @id @default(cuid())
+  clinicType          String   // "SPORTS_MEDICINE" | "SPECIAL"
+  dayOfWeek           Int      // 1=Mon ~ 6=Sat
+  period              String   // "MORNING" | "AFTERNOON" | "EVENING"
+
+  doctorName          String
+  doctorId            String?
+  doctor              User?    @relation("ClinicSlots", fields: [doctorId], references: [id], onDelete: SetNull)
+
+  specialtyName       String?  // 特別門診名稱
+  startTime           String?  // 時間覆寫
+  endTime             String?
+
+  registrationCutoff  String?  // 報到截止時間
+  maxPatients         Int?     // 限掛人數
+  clinicStartTime     String?  // 開診時間
+  isAppointmentOnly   Boolean  @default(false)
+
+  specificDates       String?  // JSON array, e.g. '["3/10","3/24","3/31"]'
+  sortOrder           Int      @default(0)
+  notes               String?
+  isActive            Boolean  @default(true)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([clinicType, isActive])
+  @@index([clinicType, dayOfWeek, period])
+  @@index([doctorId])
 }
