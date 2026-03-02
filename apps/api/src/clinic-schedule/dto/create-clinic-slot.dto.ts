@@ -14,6 +14,14 @@ export class CreateClinicSlotDto {
   clinicType: ClinicType;
 
   @IsInt()
+  year: number;
+
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month: number;
+
+  @IsInt()
   @Min(1)
   @Max(6)
   dayOfWeek: number;

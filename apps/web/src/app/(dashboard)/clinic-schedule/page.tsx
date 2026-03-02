@@ -7,10 +7,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Stethoscope } from 'lucide-react';
+import { Plus, Stethoscope, Copy } from 'lucide-react';
 import { ClinicType, ClinicTypeLabels, Role } from '@/shared';
+import { MonthNavigator } from '../scheduling/components/month-navigator';
 import { ClinicGrid } from './components/clinic-grid';
 import { SlotEditorDialog } from './components/slot-editor-dialog';
+import { CopyMonthDialog } from './components/copy-month-dialog';
 import type { ClinicSlot } from './components/clinic-cell';
 
 export default function ClinicSchedulePage() {
@@ -20,9 +22,17 @@ export default function ClinicSchedulePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ClinicType>(ClinicType.SPORTS_MEDICINE);
 
+  // Year/Month state
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+
   // Editor state
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingSlot, setEditingSlot] = useState<ClinicSlot | null>(null);
+
+  // Copy month state
+  const [copyOpen, setCopyOpen] = useState(false);
 
   const canManage =
     session?.user?.role === Role.SUPERVISOR || session?.user?.role === Role.ADMIN;
@@ -30,14 +40,16 @@ export default function ClinicSchedulePage() {
   const fetchSlots = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiGet<ClinicSlot[]>('/clinic-schedule/slots');
+      const data = await apiGet<ClinicSlot[]>(
+        `/clinic-schedule/slots?year=${year}&month=${month}`,
+      );
       setSlots(data);
     } catch {
       toast({ title: '載入失敗', description: '無法載入門診資料', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, year, month]);
 
   useEffect(() => {
     fetchSlots();
@@ -74,6 +86,35 @@ export default function ClinicSchedulePage() {
     fetchSlots();
   };
 
+  const handleCopyMonth = async (
+    sourceYear: number,
+    sourceMonth: number,
+    targetYear: number,
+    targetMonth: number,
+  ) => {
+    try {
+      const result = await apiPost<{ copied: number }>('/clinic-schedule/slots/copy-month', {
+        sourceYear,
+        sourceMonth,
+        targetYear,
+        targetMonth,
+      });
+      toast({
+        title: '複製成功',
+        description: `已從 ${sourceYear}/${sourceMonth} 複製 ${result.copied} 筆門診到 ${targetYear}/${targetMonth}`,
+      });
+      fetchSlots();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '複製失敗';
+      toast({ title: '複製失敗', description: message, variant: 'destructive' });
+    }
+  };
+
+  const handleNavigate = (newYear: number, newMonth: number) => {
+    setYear(newYear);
+    setMonth(newMonth);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -87,12 +128,20 @@ export default function ClinicSchedulePage() {
           </div>
         </div>
         {canManage && (
-          <Button onClick={handleAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            新增門診時段
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setCopyOpen(true)}>
+              <Copy className="mr-2 h-4 w-4" />
+              複製月份
+            </Button>
+            <Button onClick={handleAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              新增門診時段
+            </Button>
+          </div>
         )}
       </div>
+
+      <MonthNavigator year={year} month={month} onNavigate={handleNavigate} />
 
       <Card>
         <CardContent className="pt-6">
@@ -135,17 +184,28 @@ export default function ClinicSchedulePage() {
       </Card>
 
       {canManage && (
-        <SlotEditorDialog
-          open={editorOpen}
-          onClose={() => {
-            setEditorOpen(false);
-            setEditingSlot(null);
-          }}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          slot={editingSlot}
-          defaultClinicType={activeTab}
-        />
+        <>
+          <SlotEditorDialog
+            open={editorOpen}
+            onClose={() => {
+              setEditorOpen(false);
+              setEditingSlot(null);
+            }}
+            onSave={handleSave}
+            onDelete={handleDelete}
+            slot={editingSlot}
+            defaultClinicType={activeTab}
+            year={year}
+            month={month}
+          />
+          <CopyMonthDialog
+            open={copyOpen}
+            onClose={() => setCopyOpen(false)}
+            onCopy={handleCopyMonth}
+            targetYear={year}
+            targetMonth={month}
+          />
+        </>
       )}
     </div>
   );

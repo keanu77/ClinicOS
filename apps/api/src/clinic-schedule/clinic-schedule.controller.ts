@@ -13,6 +13,7 @@ import { ClinicScheduleService } from "./clinic-schedule.service";
 import { CreateClinicSlotDto } from "./dto/create-clinic-slot.dto";
 import { UpdateClinicSlotDto } from "./dto/update-clinic-slot.dto";
 import { QueryClinicSlotDto } from "./dto/query-clinic-slot.dto";
+import { CopyMonthDto } from "./dto/copy-month.dto";
 import { RolesGuard } from "../common/guards/roles.guard";
 import { Roles } from "../common/decorators/roles.decorator";
 import { Role } from "../shared";
@@ -48,5 +49,11 @@ export class ClinicScheduleController {
   @Roles(Role.SUPERVISOR)
   remove(@Param("id") id: string) {
     return this.clinicScheduleService.remove(id);
+  }
+
+  @Post("slots/copy-month")
+  @Roles(Role.SUPERVISOR)
+  copyMonth(@Body() dto: CopyMonthDto) {
+    return this.clinicScheduleService.copyMonth(dto);
   }
 }

@@ -940,6 +940,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 1,
         period: "MORNING",
         doctorName: "吳易澄",
@@ -950,6 +952,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 1,
         period: "AFTERNOON",
         doctorName: "吳易澄",
@@ -960,6 +964,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 1,
         period: "EVENING",
         doctorName: "楊琢琪",
@@ -971,6 +977,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 2,
         period: "MORNING",
         doctorName: "程皓",
@@ -980,6 +988,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 2,
         period: "AFTERNOON",
         doctorName: "吳易澄",
@@ -990,6 +1000,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 2,
         period: "EVENING",
         doctorName: "吳易澄",
@@ -1000,6 +1012,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 3,
         period: "MORNING",
         doctorName: "吳易澄",
@@ -1010,6 +1024,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 3,
         period: "AFTERNOON",
         doctorName: "吳易澄",
@@ -1019,6 +1035,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 3,
         period: "EVENING",
         doctorName: "吳易澄",
@@ -1029,6 +1047,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 3,
         period: "EVENING",
         doctorName: "郭亮增",
@@ -1040,6 +1060,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 4,
         period: "MORNING",
         doctorName: "陳俐君",
@@ -1050,6 +1072,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 4,
         period: "AFTERNOON",
         doctorName: "陳俐君",
@@ -1060,6 +1084,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 4,
         period: "EVENING",
         doctorName: "楊琢琪",
@@ -1071,6 +1097,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 5,
         period: "MORNING",
         doctorName: "趙子豪",
@@ -1080,6 +1108,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 5,
         period: "AFTERNOON",
         doctorName: "林頌凱",
@@ -1089,6 +1119,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 5,
         period: "EVENING",
         doctorName: "林頌凱",
@@ -1099,6 +1131,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 6,
         period: "MORNING",
         doctorName: "吳易澄",
@@ -1109,6 +1143,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPORTS_MEDICINE",
+        year: 2026,
+        month: 3,
         dayOfWeek: 6,
         period: "AFTERNOON",
         doctorName: "吳易澄",
@@ -1123,6 +1159,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPECIAL",
+        year: 2026,
+        month: 3,
         dayOfWeek: 2,
         period: "MORNING",
         doctorName: "林佑璉",
@@ -1136,6 +1174,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPECIAL",
+        year: 2026,
+        month: 3,
         dayOfWeek: 1,
         period: "AFTERNOON",
         doctorName: "張煥禎",
@@ -1149,6 +1189,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPECIAL",
+        year: 2026,
+        month: 3,
         dayOfWeek: 3,
         period: "EVENING",
         doctorName: "康曉妍",
@@ -1162,6 +1204,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPECIAL",
+        year: 2026,
+        month: 3,
         dayOfWeek: 4,
         period: "MORNING",
         doctorName: "鄒居霖",
@@ -1174,6 +1218,8 @@ async function main() {
     prisma.clinicSlot.create({
       data: {
         clinicType: "SPECIAL",
+        year: 2026,
+        month: 3,
         dayOfWeek: 5,
         period: "EVENING",
         doctorName: "吳清平",

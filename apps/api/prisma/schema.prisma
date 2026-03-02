@@ -1208,6 +1208,8 @@ model PermissionRequest {
 model ClinicSlot {
   id                  String   @id @default(cuid())
   clinicType          String   // "SPORTS_MEDICINE" | "SPECIAL"
+  year                Int      // e.g. 2026
+  month               Int      // 1-12
   dayOfWeek           Int      // 1=Mon ~ 6=Sat
   period              String   // "MORNING" | "AFTERNOON" | "EVENING"
 
@@ -1233,6 +1235,7 @@ model ClinicSlot {
   updatedAt           DateTime @updatedAt
 
   @@index([clinicType, isActive])
-  @@index([clinicType, dayOfWeek, period])
+  @@index([clinicType, year, month, dayOfWeek, period])
+  @@index([year, month, isActive])
   @@index([doctorId])
 }

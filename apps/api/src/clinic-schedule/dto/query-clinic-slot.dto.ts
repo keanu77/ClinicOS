@@ -8,6 +8,14 @@ export class QueryClinicSlotDto {
 
   @IsOptional()
   @IsString()
+  year?: string;
+
+  @IsOptional()
+  @IsString()
+  month?: string;
+
+  @IsOptional()
+  @IsString()
   period?: string;
 
   @IsOptional()

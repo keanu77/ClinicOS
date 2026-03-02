@@ -1,10 +1,12 @@
-'use client';
+"use client";
 
-import { ClinicPeriodTimeRanges, type ClinicPeriod } from '@/shared';
+import { ClinicPeriodTimeRanges, type ClinicPeriod } from "@/shared";
 
 export interface ClinicSlot {
   id: string;
   clinicType: string;
+  year: number;
+  month: number;
   dayOfWeek: number;
   period: string;
   doctorName: string;
@@ -36,7 +38,15 @@ function parseSpecificDates(raw: string | null | undefined): string[] {
   }
 }
 
-function SlotContent({ slot, period, onEdit }: { slot: ClinicSlot; period: ClinicPeriod; onEdit?: (slot: ClinicSlot) => void }) {
+function SlotContent({
+  slot,
+  period,
+  onEdit,
+}: {
+  slot: ClinicSlot;
+  period: ClinicPeriod;
+  onEdit?: (slot: ClinicSlot) => void;
+}) {
   const defaultRange = ClinicPeriodTimeRanges[period];
   const startTime = slot.startTime || defaultRange.start;
   const endTime = slot.endTime || defaultRange.end;
@@ -44,7 +54,7 @@ function SlotContent({ slot, period, onEdit }: { slot: ClinicSlot; period: Clini
 
   return (
     <div
-      className={`py-1.5 ${onEdit ? 'cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1' : ''}`}
+      className={`py-1.5 ${onEdit ? "cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1" : ""}`}
       onClick={onEdit ? () => onEdit(slot) : undefined}
     >
       {slot.specialtyName && (
@@ -54,7 +64,9 @@ function SlotContent({ slot, period, onEdit }: { slot: ClinicSlot; period: Clini
       )}
       <div className="font-bold text-slate-800 text-sm">{slot.doctorName}</div>
       {(slot.startTime || slot.endTime) && (
-        <div className="text-xs text-slate-500">{startTime}-{endTime}</div>
+        <div className="text-xs text-slate-500">
+          {startTime}-{endTime}
+        </div>
       )}
       {slot.registrationCutoff && (
         <div className="text-xs text-red-600 font-medium">
@@ -74,12 +86,12 @@ function SlotContent({ slot, period, onEdit }: { slot: ClinicSlot; period: Clini
       {slot.isAppointmentOnly && (
         <div className="text-xs text-red-600 font-medium">預約制</div>
       )}
-      {slot.notes === '醫師約診' && (
+      {slot.notes === "醫師約診" && (
         <div className="text-xs text-red-600 font-medium">醫師約診</div>
       )}
       {specificDates.length > 0 && (
         <div className="text-xs text-slate-500">
-          ({specificDates.join('、')})
+          ({specificDates.join("、")})
         </div>
       )}
     </div>
@@ -88,9 +100,7 @@ function SlotContent({ slot, period, onEdit }: { slot: ClinicSlot; period: Clini
 
 export function ClinicCell({ slots, period, onEdit }: ClinicCellProps) {
   if (slots.length === 0) {
-    return (
-      <div className="text-center text-slate-400 py-3">--</div>
-    );
+    return <div className="text-center text-slate-400 py-3">--</div>;
   }
 
   if (slots.length === 1) {
@@ -100,7 +110,12 @@ export function ClinicCell({ slots, period, onEdit }: ClinicCellProps) {
   return (
     <div className="divide-y divide-slate-200">
       {slots.map((slot) => (
-        <SlotContent key={slot.id} slot={slot} period={period} onEdit={onEdit} />
+        <SlotContent
+          key={slot.id}
+          slot={slot}
+          period={period}
+          onEdit={onEdit}
+        />
       ))}
     </div>
   );

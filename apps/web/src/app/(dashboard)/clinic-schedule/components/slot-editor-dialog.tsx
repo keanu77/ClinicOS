@@ -1,31 +1,31 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   ClinicType,
   ClinicTypeLabels,
   ClinicPeriod,
   ClinicPeriodLabels,
   DayOfWeekLabels,
-} from '@/shared';
-import type { ClinicSlot } from './clinic-cell';
+} from "@/shared";
+import type { ClinicSlot } from "./clinic-cell";
 
 interface SlotEditorDialogProps {
   open: boolean;
@@ -34,6 +34,8 @@ interface SlotEditorDialogProps {
   onDelete?: (id: string) => Promise<void>;
   slot?: ClinicSlot | null;
   defaultClinicType?: ClinicType;
+  year: number;
+  month: number;
 }
 
 export function SlotEditorDialog({
@@ -43,61 +45,67 @@ export function SlotEditorDialog({
   onDelete,
   slot,
   defaultClinicType,
+  year,
+  month,
 }: SlotEditorDialogProps) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     clinicType: defaultClinicType || ClinicType.SPORTS_MEDICINE,
     dayOfWeek: 1,
     period: ClinicPeriod.MORNING as string,
-    doctorName: '',
-    specialtyName: '',
-    startTime: '',
-    endTime: '',
-    registrationCutoff: '',
-    maxPatients: '',
-    clinicStartTime: '',
+    doctorName: "",
+    specialtyName: "",
+    startTime: "",
+    endTime: "",
+    registrationCutoff: "",
+    maxPatients: "",
+    clinicStartTime: "",
     isAppointmentOnly: false,
-    specificDates: '',
-    notes: '',
+    specificDates: "",
+    notes: "",
   });
 
   useEffect(() => {
     if (slot) {
       const dates = slot.specificDates
         ? (() => {
-            try { return JSON.parse(slot.specificDates).join(', '); } catch { return ''; }
+            try {
+              return JSON.parse(slot.specificDates).join(", ");
+            } catch {
+              return "";
+            }
           })()
-        : '';
+        : "";
       setForm({
         clinicType: slot.clinicType as ClinicType,
         dayOfWeek: slot.dayOfWeek,
         period: slot.period,
         doctorName: slot.doctorName,
-        specialtyName: slot.specialtyName || '',
-        startTime: slot.startTime || '',
-        endTime: slot.endTime || '',
-        registrationCutoff: slot.registrationCutoff || '',
-        maxPatients: slot.maxPatients?.toString() || '',
-        clinicStartTime: slot.clinicStartTime || '',
+        specialtyName: slot.specialtyName || "",
+        startTime: slot.startTime || "",
+        endTime: slot.endTime || "",
+        registrationCutoff: slot.registrationCutoff || "",
+        maxPatients: slot.maxPatients?.toString() || "",
+        clinicStartTime: slot.clinicStartTime || "",
         isAppointmentOnly: slot.isAppointmentOnly,
         specificDates: dates,
-        notes: slot.notes || '',
+        notes: slot.notes || "",
       });
     } else {
       setForm({
         clinicType: defaultClinicType || ClinicType.SPORTS_MEDICINE,
         dayOfWeek: 1,
         period: ClinicPeriod.MORNING,
-        doctorName: '',
-        specialtyName: '',
-        startTime: '',
-        endTime: '',
-        registrationCutoff: '',
-        maxPatients: '',
-        clinicStartTime: '',
+        doctorName: "",
+        specialtyName: "",
+        startTime: "",
+        endTime: "",
+        registrationCutoff: "",
+        maxPatients: "",
+        clinicStartTime: "",
         isAppointmentOnly: false,
-        specificDates: '',
-        notes: '',
+        specificDates: "",
+        notes: "",
       });
     }
   }, [slot, defaultClinicType]);
@@ -106,11 +114,18 @@ export function SlotEditorDialog({
     setLoading(true);
     try {
       const dates = form.specificDates.trim()
-        ? JSON.stringify(form.specificDates.split(/[,、]/).map((d) => d.trim()).filter(Boolean))
+        ? JSON.stringify(
+            form.specificDates
+              .split(/[,、]/)
+              .map((d) => d.trim())
+              .filter(Boolean),
+          )
         : null;
 
       await onSave({
         clinicType: form.clinicType,
+        year,
+        month,
         dayOfWeek: form.dayOfWeek,
         period: form.period,
         doctorName: form.doctorName,
@@ -132,7 +147,7 @@ export function SlotEditorDialog({
 
   const handleDelete = async () => {
     if (!slot || !onDelete) return;
-    if (!confirm('確定要刪除此門診時段嗎？')) return;
+    if (!confirm("確定要刪除此門診時段嗎？")) return;
     setLoading(true);
     try {
       await onDelete(slot.id);
@@ -146,7 +161,7 @@ export function SlotEditorDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{slot ? '編輯門診時段' : '新增門診時段'}</DialogTitle>
+          <DialogTitle>{slot ? "編輯門診時段" : "新增門診時段"}</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -155,12 +170,18 @@ export function SlotEditorDialog({
               <Label>門診類型</Label>
               <Select
                 value={form.clinicType}
-                onValueChange={(v) => setForm({ ...form, clinicType: v as ClinicType })}
+                onValueChange={(v) =>
+                  setForm({ ...form, clinicType: v as ClinicType })
+                }
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ClinicTypeLabels).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -171,10 +192,14 @@ export function SlotEditorDialog({
                 value={form.period}
                 onValueChange={(v) => setForm({ ...form, period: v })}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ClinicPeriodLabels).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -186,12 +211,18 @@ export function SlotEditorDialog({
               <Label>星期</Label>
               <Select
                 value={form.dayOfWeek.toString()}
-                onValueChange={(v) => setForm({ ...form, dayOfWeek: parseInt(v, 10) })}
+                onValueChange={(v) =>
+                  setForm({ ...form, dayOfWeek: parseInt(v, 10) })
+                }
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(DayOfWeekLabels).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -200,7 +231,9 @@ export function SlotEditorDialog({
               <Label>醫師姓名 *</Label>
               <Input
                 value={form.doctorName}
-                onChange={(e) => setForm({ ...form, doctorName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, doctorName: e.target.value })
+                }
                 placeholder="醫師姓名"
               />
             </div>
@@ -211,7 +244,9 @@ export function SlotEditorDialog({
               <Label>特別門診名稱</Label>
               <Input
                 value={form.specialtyName}
-                onChange={(e) => setForm({ ...form, specialtyName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, specialtyName: e.target.value })
+                }
                 placeholder="例：脊椎特別門診"
               />
             </div>
@@ -222,7 +257,9 @@ export function SlotEditorDialog({
               <Label>起始時間</Label>
               <Input
                 value={form.startTime}
-                onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, startTime: e.target.value })
+                }
                 placeholder="08:30"
               />
             </div>
@@ -241,7 +278,9 @@ export function SlotEditorDialog({
               <Label>報到截止時間</Label>
               <Input
                 value={form.registrationCutoff}
-                onChange={(e) => setForm({ ...form, registrationCutoff: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, registrationCutoff: e.target.value })
+                }
                 placeholder="11:00"
               />
             </div>
@@ -250,7 +289,9 @@ export function SlotEditorDialog({
               <Input
                 type="number"
                 value={form.maxPatients}
-                onChange={(e) => setForm({ ...form, maxPatients: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, maxPatients: e.target.value })
+                }
                 placeholder="不限"
               />
             </div>
@@ -261,7 +302,9 @@ export function SlotEditorDialog({
               <Label>開診時間</Label>
               <Input
                 value={form.clinicStartTime}
-                onChange={(e) => setForm({ ...form, clinicStartTime: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, clinicStartTime: e.target.value })
+                }
                 placeholder="14:30"
               />
             </div>
@@ -270,7 +313,9 @@ export function SlotEditorDialog({
                 <input
                   type="checkbox"
                   checked={form.isAppointmentOnly}
-                  onChange={(e) => setForm({ ...form, isAppointmentOnly: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, isAppointmentOnly: e.target.checked })
+                  }
                   className="h-4 w-4 rounded border-slate-300"
                 />
                 預約制
@@ -282,7 +327,9 @@ export function SlotEditorDialog({
             <Label>特定日期（逗號分隔）</Label>
             <Input
               value={form.specificDates}
-              onChange={(e) => setForm({ ...form, specificDates: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, specificDates: e.target.value })
+              }
               placeholder="3/7, 3/21"
             />
           </div>
@@ -300,7 +347,11 @@ export function SlotEditorDialog({
         <DialogFooter className="flex justify-between">
           <div>
             {slot && onDelete && (
-              <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={loading}
+              >
                 刪除
               </Button>
             )}
@@ -310,7 +361,7 @@ export function SlotEditorDialog({
               取消
             </Button>
             <Button onClick={handleSave} disabled={loading || !form.doctorName}>
-              {loading ? '儲存中...' : '儲存'}
+              {loading ? "儲存中..." : "儲存"}
             </Button>
           </div>
         </DialogFooter>
