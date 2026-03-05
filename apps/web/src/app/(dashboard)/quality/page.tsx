@@ -13,6 +13,7 @@ import {
   Plus,
   BarChart3,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface Incident {
@@ -121,16 +122,19 @@ export default function QualityPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">醫療品質</h1>
-          <p className="text-muted-foreground">異常事件回報與投訴管理</p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          回報事件
-        </Button>
-      </div>
+      <PageHeader
+        icon={Shield}
+        title="醫療品質"
+        subtitle="異常事件回報與投訴管理"
+        iconColor="text-rose-700"
+        iconBg="bg-rose-100"
+        actions={
+          <Button className="btn-lift">
+            <Plus className="h-4 w-4 mr-2" />
+            回報事件
+          </Button>
+        }
+      />
 
       {/* Stats Overview */}
       {stats && (

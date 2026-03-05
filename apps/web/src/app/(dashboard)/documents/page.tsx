@@ -35,6 +35,7 @@ import {
   AlertCircle,
   Plus,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { Role } from "@/shared";
 
 interface Category {
@@ -183,24 +184,30 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">文件制度</h1>
-          <p className="text-muted-foreground">SOP 文件管理與公告發布</p>
-        </div>
-        {canManage && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowAnnModal(true)}>
-              <Bell className="h-4 w-4 mr-2" />
-              新增公告
-            </Button>
-            <Button onClick={() => setShowDocModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              新增文件
-            </Button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={BookOpen}
+        title="文件制度"
+        subtitle="SOP 文件管理與公告發布"
+        iconColor="text-sky-700"
+        iconBg="bg-sky-100"
+        actions={
+          canManage ? (
+            <>
+              <Button variant="outline" onClick={() => setShowAnnModal(true)}>
+                <Bell className="h-4 w-4 mr-2" />
+                新增公告
+              </Button>
+              <Button
+                className="btn-lift"
+                onClick={() => setShowDocModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                新增文件
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
       <Dialog open={showDocModal} onOpenChange={setShowDocModal}>
         <DialogContent className="sm:max-w-md">

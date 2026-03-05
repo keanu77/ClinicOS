@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/empty-state";
 import { Plus, Search, Download, AlertTriangle, Package } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { Role, InventoryCategory, InventoryCategoryLabels } from "@/shared";
 import { CardSkeleton } from "@/components/ui/skeleton";
 
@@ -82,26 +83,29 @@ export default function InventoryListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">庫存管理</h1>
-          <p className="text-muted-foreground">管理藥品與物資庫存</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            匯出 CSV
-          </Button>
-          {isAdmin && (
-            <Link href="/inventory/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                新增品項
-              </Button>
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        icon={Package}
+        title="庫存管理"
+        subtitle="管理藥品與物資庫存"
+        iconColor="text-orange-600"
+        iconBg="bg-orange-100"
+        actions={
+          <>
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              匯出 CSV
+            </Button>
+            {isAdmin && (
+              <Link href="/inventory/new">
+                <Button className="btn-lift">
+                  <Plus className="h-4 w-4 mr-2" />
+                  新增品項
+                </Button>
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {/* Filters */}
       <Card>

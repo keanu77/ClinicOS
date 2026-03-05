@@ -21,8 +21,10 @@ import {
   Calendar,
   CalendarDays,
   Clock,
+  ClipboardList,
 } from "lucide-react";
 import { ErrorState } from "@/components/error-boundary";
+import { PageHeader } from "@/components/page-header";
 import {
   Select,
   SelectContent,
@@ -452,28 +454,29 @@ export default function HandoverListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">交班系統</h1>
-          <p className="text-muted-foreground">管理交班事項與追蹤狀態</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canViewArchives && (
-            <Link href="/handover/archives">
-              <Button variant="outline">
-                <Archive className="h-4 w-4 mr-2" />
-                封存記錄
+      <PageHeader
+        icon={ClipboardList}
+        title="交班系統"
+        subtitle="管理交班事項與追蹤狀態"
+        actions={
+          <>
+            {canViewArchives && (
+              <Link href="/handover/archives">
+                <Button variant="outline">
+                  <Archive className="h-4 w-4 mr-2" />
+                  封存記錄
+                </Button>
+              </Link>
+            )}
+            <Link href="/handover/new">
+              <Button className="btn-lift">
+                <Plus className="h-4 w-4 mr-2" />
+                新增交班
               </Button>
             </Link>
-          )}
-          <Link href="/handover/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              新增交班
-            </Button>
-          </Link>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Filters and View Toggle */}
       <Card>

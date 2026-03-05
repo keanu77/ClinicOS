@@ -47,6 +47,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, Shield, Search, Users, KeyRound } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { Spinner } from "@/components/ui/spinner";
 
 interface UserPermissionMatrix {
@@ -189,12 +190,13 @@ export default function PermissionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">權限管理</h1>
-          <p className="text-muted-foreground">管理使用者權限與存取控制</p>
-        </div>
-      </div>
+      <PageHeader
+        icon={KeyRound}
+        title="權限管理"
+        subtitle="管理使用者權限與存取控制"
+        iconColor="text-purple-700"
+        iconBg="bg-purple-100"
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

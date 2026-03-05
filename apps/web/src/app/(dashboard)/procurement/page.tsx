@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiGet } from '@/lib/api';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Plus, Package, Building2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { apiGet } from "@/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ShoppingCart, Plus, Package, Building2 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
 interface PurchaseRequest {
   id: string;
@@ -42,37 +43,37 @@ interface Vendor {
 }
 
 const prStatusColors: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  ORDERED: 'bg-blue-100 text-blue-800',
+  DRAFT: "bg-gray-100 text-gray-800",
+  PENDING: "bg-yellow-100 text-yellow-800",
+  APPROVED: "bg-green-100 text-green-800",
+  REJECTED: "bg-red-100 text-red-800",
+  ORDERED: "bg-blue-100 text-blue-800",
 };
 
 const prStatusLabels: Record<string, string> = {
-  DRAFT: '草稿',
-  PENDING: '待審核',
-  APPROVED: '已核准',
-  REJECTED: '已駁回',
-  ORDERED: '已下單',
+  DRAFT: "草稿",
+  PENDING: "待審核",
+  APPROVED: "已核准",
+  REJECTED: "已駁回",
+  ORDERED: "已下單",
 };
 
 const poStatusColors: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  SENT: 'bg-blue-100 text-blue-800',
-  CONFIRMED: 'bg-green-100 text-green-800',
-  PARTIAL: 'bg-yellow-100 text-yellow-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+  DRAFT: "bg-gray-100 text-gray-800",
+  SENT: "bg-blue-100 text-blue-800",
+  CONFIRMED: "bg-green-100 text-green-800",
+  PARTIAL: "bg-yellow-100 text-yellow-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  CANCELLED: "bg-red-100 text-red-800",
 };
 
 const poStatusLabels: Record<string, string> = {
-  DRAFT: '草稿',
-  SENT: '已送出',
-  CONFIRMED: '已確認',
-  PARTIAL: '部分收貨',
-  COMPLETED: '已完成',
-  CANCELLED: '已取消',
+  DRAFT: "草稿",
+  SENT: "已送出",
+  CONFIRMED: "已確認",
+  PARTIAL: "部分收貨",
+  COMPLETED: "已完成",
+  CANCELLED: "已取消",
 };
 
 export default function ProcurementPage() {
@@ -86,15 +87,15 @@ export default function ProcurementPage() {
     const fetchData = async () => {
       try {
         const [requestsRes, ordersRes, vendorsRes] = await Promise.all([
-          apiGet<{ data: PurchaseRequest[] }>('/procurement/requests'),
-          apiGet<{ data: PurchaseOrder[] }>('/procurement/orders'),
-          apiGet<{ data: Vendor[] }>('/procurement/vendors'),
+          apiGet<{ data: PurchaseRequest[] }>("/procurement/requests"),
+          apiGet<{ data: PurchaseOrder[] }>("/procurement/orders"),
+          apiGet<{ data: Vendor[] }>("/procurement/vendors"),
         ]);
         setRequests(requestsRes.data || []);
         setOrders(ordersRes.data || []);
         setVendors(vendorsRes.data || []);
       } catch (error) {
-        console.error('Failed to load procurement data:', error);
+        console.error("Failed to load procurement data:", error);
       } finally {
         setLoading(false);
       }
@@ -103,20 +104,23 @@ export default function ProcurementPage() {
     fetchData();
   }, []);
 
-  const pendingRequests = requests.filter((r) => r.status === 'PENDING');
+  const pendingRequests = requests.filter((r) => r.status === "PENDING");
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">採購管理</h1>
-          <p className="text-muted-foreground">管理採購申請、訂單與供應商</p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          新增採購申請
-        </Button>
-      </div>
+      <PageHeader
+        icon={ShoppingCart}
+        title="採購管理"
+        subtitle="管理採購申請、訂單與供應商"
+        iconColor="text-emerald-700"
+        iconBg="bg-emerald-100"
+        actions={
+          <Button className="btn-lift">
+            <Plus className="h-4 w-4 mr-2" />
+            新增採購申請
+          </Button>
+        }
+      />
 
       {/* Pending Requests Alert */}
       {pendingRequests.length > 0 && (
@@ -159,8 +163,10 @@ export default function ProcurementPage() {
                         </div>
                         <div className="text-sm mt-1">{request.title}</div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          申請人: {request.requestedBy.name} ·{' '}
-                          {new Date(request.createdAt).toLocaleDateString('zh-TW')}
+                          申請人: {request.requestedBy.name} ·{" "}
+                          {new Date(request.createdAt).toLocaleDateString(
+                            "zh-TW",
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
@@ -171,7 +177,9 @@ export default function ProcurementPage() {
                           variant="outline"
                           size="sm"
                           className="mt-2"
-                          onClick={() => router.push(`/procurement/requests/${request.id}`)}
+                          onClick={() =>
+                            router.push(`/procurement/requests/${request.id}`)
+                          }
                         >
                           檢視
                         </Button>
@@ -216,10 +224,10 @@ export default function ProcurementPage() {
                         </div>
                         {order.expectedDelivery && (
                           <div className="text-sm text-muted-foreground">
-                            預計到貨:{' '}
-                            {new Date(order.expectedDelivery).toLocaleDateString(
-                              'zh-TW'
-                            )}
+                            預計到貨:{" "}
+                            {new Date(
+                              order.expectedDelivery,
+                            ).toLocaleDateString("zh-TW")}
                           </div>
                         )}
                       </div>

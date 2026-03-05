@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { apiGet } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/utils";
 import { getPriorityBadgeVariant } from "@/lib/badge-variants";
@@ -14,16 +15,20 @@ import {
   AlertTriangle,
   Clock,
   User,
+  Plus,
+  Stethoscope,
+  LayoutDashboard,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import {
   HandoverPriorityLabels,
-  HandoverPriorityColors,
   HandoverPriority,
   ShiftTypeLabels,
   ShiftType,
 } from "@/shared";
 import { DashboardSkeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/page-header";
 
 interface DashboardData {
   todayShifts: Array<{
@@ -79,67 +84,111 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          歡迎回來，{session?.user?.name}
-        </h1>
-        <p className="text-muted-foreground">這是您的工作概覽</p>
-      </div>
+      <PageHeader
+        icon={LayoutDashboard}
+        title={`歡迎回來，${session?.user?.name}`}
+        subtitle="這是您的工作概覽"
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">待處理交班</CardTitle>
-            <ClipboardList className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {data?.pendingHandoversCount || 0}
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-transparent" />
+          <CardContent className="relative p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">待處理交班</p>
+                <p className="text-3xl font-bold mt-1">{data?.pendingHandoversCount || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">包含緊急與高優先度事項</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100">
+                <ClipboardList className="h-6 w-6 text-cyan-700" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              包含緊急與高優先度事項
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">低庫存警示</CardTitle>
-            <Package className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.lowStockCount || 0}</div>
-            <p className="text-xs text-muted-foreground">需要補貨的品項</p>
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent" />
+          <CardContent className="relative p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">低庫存警示</p>
+                <p className="text-3xl font-bold mt-1">{data?.lowStockCount || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">需要補貨的品項</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100">
+                <Package className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">我的待辦</CardTitle>
-            <Clock className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {data?.myHandovers?.length || 0}
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-transparent" />
+          <CardContent className="relative p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">我的待辦</p>
+                <p className="text-3xl font-bold mt-1">{data?.myHandovers?.length || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">指派給我的交班事項</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100">
+                <Clock className="h-6 w-6 text-violet-600" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">指派給我的交班事項</p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">今日值班</CardTitle>
-            <Calendar className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {data?.todayShifts?.length || 0}
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent" />
+          <CardContent className="relative p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">今日值班</p>
+                <p className="text-3xl font-bold mt-1">{data?.todayShifts?.length || 0}</p>
+                <p className="text-xs text-muted-foreground mt-1">班次安排</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100">
+                <Calendar className="h-6 w-6 text-emerald-600" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">班次安排</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">快速操作</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Link href="/handover/new">
+              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:border-cyan-300 hover:bg-cyan-50 transition-colors">
+                <Plus className="h-5 w-5 text-cyan-600" />
+                <span className="text-xs">新增交班</span>
+              </Button>
+            </Link>
+            <Link href="/clinic-schedule">
+              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:border-teal-300 hover:bg-teal-50 transition-colors">
+                <Stethoscope className="h-5 w-5 text-teal-600" />
+                <span className="text-xs">今日門診</span>
+              </Button>
+            </Link>
+            <Link href="/inventory">
+              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:border-orange-300 hover:bg-orange-50 transition-colors">
+                <Package className="h-5 w-5 text-orange-600" />
+                <span className="text-xs">庫存盤點</span>
+              </Button>
+            </Link>
+            <Link href="/scheduling">
+              <Button variant="outline" className="w-full h-auto py-3 flex-col gap-1.5 hover:border-violet-300 hover:bg-violet-50 transition-colors">
+                <Calendar className="h-5 w-5 text-violet-600" />
+                <span className="text-xs">查看排班</span>
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Main Content */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -147,7 +196,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+              <User className="h-5 w-5 text-cyan-600" />
               我的待辦
             </CardTitle>
           </CardHeader>
@@ -158,7 +207,7 @@ export default function DashboardPage() {
                   <Link
                     key={handover.id}
                     href={`/handover/${handover.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{handover.title}</p>
@@ -177,9 +226,10 @@ export default function DashboardPage() {
                 ))}
                 <Link
                   href="/handover?assignee=me"
-                  className="block text-center text-sm text-primary hover:underline"
+                  className="flex items-center justify-center gap-1 text-sm text-primary hover:underline pt-1"
                 >
                   查看全部
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             ) : (
@@ -194,7 +244,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+              <Calendar className="h-5 w-5 text-emerald-600" />
               今日排班
             </CardTitle>
           </CardHeader>
@@ -227,7 +277,7 @@ export default function DashboardPage() {
         {data?.urgentHandovers && data.urgentHandovers.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-destructive">
                 <AlertTriangle className="h-5 w-5" />
                 緊急交班事項
               </CardTitle>
@@ -288,9 +338,10 @@ export default function DashboardPage() {
                 ))}
                 <Link
                   href="/inventory?lowStock=true"
-                  className="block text-center text-sm text-primary hover:underline"
+                  className="flex items-center justify-center gap-1 text-sm text-primary hover:underline pt-1"
                 >
                   查看全部
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </CardContent>

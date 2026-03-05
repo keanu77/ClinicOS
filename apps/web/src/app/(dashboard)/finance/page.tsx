@@ -34,6 +34,7 @@ import {
   Calendar,
   Plus,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { Role } from "@/shared";
 
 interface FinanceSummary {
@@ -220,24 +221,33 @@ export default function FinancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">成本分析</h1>
-          <p className="text-muted-foreground">營運成本與收入分析</p>
-        </div>
-        {canManage && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowRevenueModal(true)}>
-              <TrendingUp className="h-4 w-4 mr-2" />
-              新增收入
-            </Button>
-            <Button onClick={() => setShowCostModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              新增成本
-            </Button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        icon={TrendingUp}
+        title="成本分析"
+        subtitle="營運成本與收入分析"
+        iconColor="text-green-700"
+        iconBg="bg-green-100"
+        actions={
+          canManage ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setShowRevenueModal(true)}
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                新增收入
+              </Button>
+              <Button
+                className="btn-lift"
+                onClick={() => setShowCostModal(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                新增成本
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
       <Dialog open={showCostModal} onOpenChange={setShowCostModal}>
         <DialogContent className="sm:max-w-md">

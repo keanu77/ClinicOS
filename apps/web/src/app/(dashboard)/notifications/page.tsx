@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import { Bell, Check, CheckCheck, Trash2, Mail, MailOpen } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { NotificationTypeLabels, NotificationType } from "@/shared";
 
@@ -112,22 +113,25 @@ export default function NotificationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
-          <p className="text-muted-foreground">
-            {data?.unreadCount
-              ? `您有 ${data.unreadCount} 則未讀通知`
-              : "所有通知都已讀取"}
-          </p>
-        </div>
-        {data?.unreadCount ? (
-          <Button variant="outline" onClick={handleMarkAllAsRead}>
-            <CheckCheck className="h-4 w-4 mr-2" />
-            全部標為已讀
-          </Button>
-        ) : null}
-      </div>
+      <PageHeader
+        icon={Bell}
+        title="通知中心"
+        subtitle={
+          data?.unreadCount
+            ? `您有 ${data.unreadCount} 則未讀通知`
+            : "所有通知都已讀取"
+        }
+        iconColor="text-blue-700"
+        iconBg="bg-blue-100"
+        actions={
+          data?.unreadCount ? (
+            <Button variant="outline" onClick={handleMarkAllAsRead}>
+              <CheckCheck className="h-4 w-4 mr-2" />
+              全部標為已讀
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Filters */}
       <div className="flex gap-2">

@@ -35,6 +35,7 @@ import {
   Settings,
   Loader2,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { Role, RoleLabels } from "@/shared";
 import {
   Permission,
@@ -285,16 +286,19 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">使用者管理</h1>
-          <p className="text-muted-foreground">管理系統使用者帳號與權限</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          新增使用者
-        </Button>
-      </div>
+      <PageHeader
+        icon={Users}
+        title="使用者管理"
+        subtitle="管理系統使用者帳號與權限"
+        iconColor="text-indigo-700"
+        iconBg="bg-indigo-100"
+        actions={
+          <Button className="btn-lift" onClick={() => setShowCreateModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            新增使用者
+          </Button>
+        }
+      />
 
       {/* Create User Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>

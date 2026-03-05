@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Noto_Sans_TC } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { Toaster } from '@/components/ui/toaster';
 import { EnvScript } from '@/components/env-script';
 
-const inter = Inter({ subsets: ['latin'] });
+const notoSansTC = Noto_Sans_TC({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -16,7 +19,7 @@ export const metadata: Metadata = {
   keywords: ['診所管理', '交班系統', '庫存管理', '排班系統', 'Clinic OS'],
   authors: [{ name: 'Clinic OS Team' }],
   robots: {
-    index: false, // 內部系統不需要被搜尋引擎索引
+    index: false,
     follow: false,
   },
 };
@@ -28,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-TW">
-      <body className={inter.className}>
+      <body className={notoSansTC.className}>
         <EnvScript />
         <Providers>
           {children}

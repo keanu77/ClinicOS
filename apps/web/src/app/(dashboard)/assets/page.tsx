@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wrench, AlertTriangle, Calendar, Plus } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface Asset {
@@ -94,18 +95,19 @@ export default function AssetsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">設備管理</h1>
-          <p className="text-muted-foreground">
-            管理設備資產、保養排程與故障回報
-          </p>
-        </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          回報故障
-        </Button>
-      </div>
+      <PageHeader
+        icon={Wrench}
+        title="設備管理"
+        subtitle="管理設備資產、保養排程與故障回報"
+        iconColor="text-slate-700"
+        iconBg="bg-slate-100"
+        actions={
+          <Button className="btn-lift">
+            <Plus className="h-4 w-4 mr-2" />
+            回報故障
+          </Button>
+        }
+      />
 
       {/* Alerts */}
       {(openFaults.length > 0 || upcomingMaintenance.length > 0) && (

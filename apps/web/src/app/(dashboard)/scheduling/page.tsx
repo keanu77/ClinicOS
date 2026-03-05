@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { apiGet, apiPost } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { Save, Upload, Download } from 'lucide-react';
+import { useEffect, useState, useCallback } from "react";
+import { apiGet, apiPost } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { Save, Upload, Download, Calendar } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import {
   ScheduleDepartment,
   ScheduleDepartmentLabels,
@@ -15,12 +16,16 @@ import {
   ShiftCodeLabels,
   ActivityTypeLabels,
   ActivityType,
-} from '@/shared';
-import { MonthNavigator } from './components/month-navigator';
-import { ScheduleGrid, type GridState, type CellData } from './components/schedule-grid';
-import { ScheduleStats } from './components/schedule-stats';
-import { ImportDialog } from './components/import-dialog';
-import { ExportButton } from './components/export-button';
+} from "@/shared";
+import { MonthNavigator } from "./components/month-navigator";
+import {
+  ScheduleGrid,
+  type GridState,
+  type CellData,
+} from "./components/schedule-grid";
+import { ScheduleStats } from "./components/schedule-stats";
+import { ImportDialog } from "./components/import-dialog";
+import { ExportButton } from "./components/export-button";
 
 interface ScheduleEntry {
   id: string;
@@ -57,7 +62,9 @@ export default function SchedulingPage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [department, setDepartment] = useState<string>(ScheduleDepartment.SPORTS_MEDICINE);
+  const [department, setDepartment] = useState<string>(
+    ScheduleDepartment.SPORTS_MEDICINE,
+  );
   const [entries, setEntries] = useState<ScheduleEntry[]>([]);
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [stats, setStats] = useState<UserStat[] | null>(null);
@@ -78,7 +85,7 @@ export default function SchedulingPage() {
         year: number;
         month: number;
         entries: ScheduleEntry[];
-      }>('/scheduling/monthly', {
+      }>("/scheduling/monthly", {
         year,
         month,
         department,
@@ -102,7 +109,7 @@ export default function SchedulingPage() {
       setOriginalGridState(JSON.parse(JSON.stringify(state)));
       setHasChanges(false);
     } catch (error) {
-      console.error('Failed to load schedule:', error);
+      console.error("Failed to load schedule:", error);
     } finally {
       setLoading(false);
     }
@@ -111,7 +118,7 @@ export default function SchedulingPage() {
   const fetchUsers = useCallback(async () => {
     try {
       const result = await apiGet<StaffUser[] | Record<string, StaffUser[]>>(
-        '/scheduling/departments/staff',
+        "/scheduling/departments/staff",
         { department },
       );
 
@@ -122,7 +129,7 @@ export default function SchedulingPage() {
         setUsers((result as any)[department] || []);
       }
     } catch (error) {
-      console.error('Failed to load staff:', error);
+      console.error("Failed to load staff:", error);
     }
   }, [department]);
 
@@ -133,14 +140,14 @@ export default function SchedulingPage() {
         year: number;
         month: number;
         userStats: UserStat[];
-      }>('/scheduling/monthly/stats', {
+      }>("/scheduling/monthly/stats", {
         year,
         month,
         department,
       });
       setStats(result.userStats);
     } catch (error) {
-      console.error('Failed to load stats:', error);
+      console.error("Failed to load stats:", error);
     } finally {
       setStatsLoading(false);
     }
@@ -175,7 +182,11 @@ export default function SchedulingPage() {
       const updated = { ...current, [field]: value };
 
       // If shiftCode changed to a non-working code, clear activities
-      if (field === 'shiftCode' && value && NON_WORKING_SHIFT_CODES.includes(value as ShiftCode)) {
+      if (
+        field === "shiftCode" &&
+        value &&
+        NON_WORKING_SHIFT_CODES.includes(value as ShiftCode)
+      ) {
         updated.periodA = null;
         updated.periodB = null;
         updated.periodC = null;
@@ -203,9 +214,9 @@ export default function SchedulingPage() {
       for (const [key, cell] of Object.entries(gridState)) {
         if (!cell.shiftCode) continue; // Skip empty cells
 
-        const [userId, dayStr] = key.split('_');
+        const [userId, dayStr] = key.split("_");
         const day = parseInt(dayStr, 10);
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
         entriesToSave.push({
           date: dateStr,
@@ -219,12 +230,12 @@ export default function SchedulingPage() {
       }
 
       if (entriesToSave.length === 0) {
-        toast({ title: '沒有需要儲存的排班資料' });
+        toast({ title: "沒有需要儲存的排班資料" });
         setSaving(false);
         return;
       }
 
-      await apiPost('/scheduling/monthly/bulk', { entries: entriesToSave });
+      await apiPost("/scheduling/monthly/bulk", { entries: entriesToSave });
       toast({ title: `已儲存 ${entriesToSave.length} 筆排班資料` });
       setHasChanges(false);
       setOriginalGridState(JSON.parse(JSON.stringify(gridState)));
@@ -232,7 +243,7 @@ export default function SchedulingPage() {
       // Refresh stats
       fetchStats();
     } catch (error: any) {
-      toast({ title: error.message || '儲存失敗', variant: 'destructive' });
+      toast({ title: error.message || "儲存失敗", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -250,63 +261,78 @@ export default function SchedulingPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">排班系統</h1>
-          <p className="text-muted-foreground">月班表管理</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            匯入
-          </Button>
-          <ExportButton year={year} month={month} department={department} />
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? '儲存中...' : '儲存'}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        icon={Calendar}
+        title="排班系統"
+        subtitle="月班表管理"
+        iconColor="text-violet-700"
+        iconBg="bg-violet-100"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowImport(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              匯入
+            </Button>
+            <ExportButton year={year} month={month} department={department} />
+            <Button
+              size="sm"
+              className="btn-lift"
+              onClick={handleSave}
+              disabled={!hasChanges || saving}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? "儲存中..." : "儲存"}
+            </Button>
+          </>
+        }
+      />
 
       {/* Month Navigator */}
       <Card>
         <CardContent className="py-3">
-          <MonthNavigator year={year} month={month} onNavigate={handleNavigate} />
+          <MonthNavigator
+            year={year}
+            month={month}
+            onNavigate={handleNavigate}
+          />
         </CardContent>
       </Card>
 
       {/* Department Tabs */}
       <Tabs value={department} onValueChange={handleDepartmentChange}>
         <TabsList>
-          {(Object.values(ScheduleDepartment) as ScheduleDepartment[]).map((dept) => (
-            <TabsTrigger key={dept} value={dept}>
-              {ScheduleDepartmentLabels[dept]}
-            </TabsTrigger>
-          ))}
+          {(Object.values(ScheduleDepartment) as ScheduleDepartment[]).map(
+            (dept) => (
+              <TabsTrigger key={dept} value={dept}>
+                {ScheduleDepartmentLabels[dept]}
+              </TabsTrigger>
+            ),
+          )}
         </TabsList>
 
-        {(Object.values(ScheduleDepartment) as ScheduleDepartment[]).map((dept) => (
-          <TabsContent key={dept} value={dept} className="space-y-4">
-            {/* Schedule Grid */}
-            <ScheduleGrid
-              year={year}
-              month={month}
-              entries={entries.filter((e) => e.department === dept)}
-              users={users}
-              gridState={gridState}
-              onCellChange={handleCellChange}
-              loading={loading}
-            />
+        {(Object.values(ScheduleDepartment) as ScheduleDepartment[]).map(
+          (dept) => (
+            <TabsContent key={dept} value={dept} className="space-y-4">
+              {/* Schedule Grid */}
+              <ScheduleGrid
+                year={year}
+                month={month}
+                entries={entries.filter((e) => e.department === dept)}
+                users={users}
+                gridState={gridState}
+                onCellChange={handleCellChange}
+                loading={loading}
+              />
 
-            {/* Stats Panel */}
-            <ScheduleStats stats={stats} loading={statsLoading} />
-          </TabsContent>
-        ))}
+              {/* Stats Panel */}
+              <ScheduleStats stats={stats} loading={statsLoading} />
+            </TabsContent>
+          ),
+        )}
       </Tabs>
 
       {/* Legend */}

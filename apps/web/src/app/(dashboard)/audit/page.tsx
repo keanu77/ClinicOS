@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatRelativeTime } from "@/lib/utils";
 import { getActionBadgeVariant } from "@/lib/badge-variants";
 import { History, User, FileText } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Role } from "@/shared";
 
@@ -81,10 +82,13 @@ export default function AuditPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">稽核紀錄</h1>
-        <p className="text-muted-foreground">檢視系統操作紀錄</p>
-      </div>
+      <PageHeader
+        icon={FileText}
+        title="稽核紀錄"
+        subtitle="檢視系統操作紀錄"
+        iconColor="text-amber-700"
+        iconBg="bg-amber-100"
+      />
 
       {loading ? (
         <LoadingSpinner />

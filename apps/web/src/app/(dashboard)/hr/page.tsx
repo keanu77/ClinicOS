@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { formatRelativeTime } from "@/lib/utils";
 import { UserCog, Award, Calendar, AlertTriangle, Plus } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { Role } from "@/shared";
 
 interface Employee {
@@ -160,16 +161,19 @@ export default function HRPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">人員管理</h1>
-          <p className="text-muted-foreground">管理員工資料、證照與技能</p>
-        </div>
-        <Button onClick={() => setShowCertModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          新增證照
-        </Button>
-      </div>
+      <PageHeader
+        icon={UserCog}
+        title="人員管理"
+        subtitle="管理員工資料、證照與技能"
+        iconColor="text-teal-700"
+        iconBg="bg-teal-100"
+        actions={
+          <Button className="btn-lift" onClick={() => setShowCertModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            新增證照
+          </Button>
+        }
+      />
 
       <Dialog open={showCertModal} onOpenChange={setShowCertModal}>
         <DialogContent className="sm:max-w-md">
