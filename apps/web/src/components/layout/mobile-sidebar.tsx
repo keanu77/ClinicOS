@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { usePermissions } from '@/lib/hooks';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { usePermissions } from "@/lib/hooks";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { navigationGroups, type NavItem } from '@/lib/navigation';
-import { Activity } from 'lucide-react';
+} from "@/components/ui/sheet";
+import { navigationGroups, type NavItem } from "@/lib/navigation";
+import { Activity } from "lucide-react";
 
 interface MobileSidebarProps {
   user: {
@@ -23,16 +23,21 @@ interface MobileSidebarProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function MobileSidebar({ user, open, onOpenChange }: MobileSidebarProps) {
+export function MobileSidebar({
+  user,
+  open,
+  onOpenChange,
+}: MobileSidebarProps) {
   const pathname = usePathname();
-  const { hasPermission, hasAnyPermission, hasAllPermissions, loading } = usePermissions();
+  const { hasPermission, hasAnyPermission, hasAllPermissions, loading } =
+    usePermissions();
 
   const filterItems = (items: NavItem[]) =>
     items.filter((item) => {
       if (!item.permission && !item.permissions) return true;
       if (item.permission) return hasPermission(item.permission);
       if (item.permissions && item.permissions.length > 0) {
-        return item.permissionMode === 'any'
+        return item.permissionMode === "any"
           ? hasAnyPermission(...item.permissions)
           : hasAllPermissions(...item.permissions);
       }
@@ -41,15 +46,22 @@ export function MobileSidebar({ user, open, onOpenChange }: MobileSidebarProps) 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-64 p-0 bg-gradient-to-b from-teal-900 to-teal-800 border-r-0">
+      <SheetContent
+        side="left"
+        className="w-64 p-0 bg-gradient-to-b from-teal-900 to-teal-800 border-r-0"
+      >
         <SheetHeader className="px-5 py-4 border-b border-white/10">
           <SheetTitle className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500">
               <Activity className="h-4 w-4 text-white" />
             </div>
             <div>
-              <span className="text-lg font-bold text-white tracking-tight">Clinic OS</span>
-              <p className="text-[10px] text-teal-300 -mt-0.5 text-left">聯新運動醫學科</p>
+              <span className="text-lg font-bold text-white tracking-tight">
+                Clinic OS
+              </span>
+              <p className="text-[10px] text-teal-300 -mt-0.5 text-left">
+                聯新運動醫學科
+              </p>
             </div>
           </SheetTitle>
         </SheetHeader>
@@ -85,17 +97,17 @@ export function MobileSidebar({ user, open, onOpenChange }: MobileSidebarProps) 
                               onClick={() => onOpenChange(false)}
                               className={cn(
                                 isActive
-                                  ? 'bg-white/15 text-white border-l-2 border-orange-400'
-                                  : 'text-teal-100 hover:bg-white/10 hover:text-white border-l-2 border-transparent',
-                                'group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-colors'
+                                  ? "bg-white/15 text-white border-l-2 border-blue-400"
+                                  : "text-teal-100 hover:bg-white/10 hover:text-white border-l-2 border-transparent",
+                                "group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-colors",
                               )}
                             >
                               <item.icon
                                 className={cn(
                                   isActive
-                                    ? 'text-orange-400'
-                                    : 'text-teal-300 group-hover:text-white',
-                                  'h-5 w-5 shrink-0'
+                                    ? "text-blue-400"
+                                    : "text-teal-300 group-hover:text-white",
+                                  "h-5 w-5 shrink-0",
                                 )}
                                 aria-hidden="true"
                               />

@@ -1,52 +1,52 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Activity, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
+} from "@/components/ui/card";
+import { Activity, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError('Email 或密碼錯誤');
+        setError("Email 或密碼錯誤");
       } else {
         router.push(callbackUrl);
         router.refresh();
       }
     } catch (err) {
-      setError('登入時發生錯誤');
+      setError("登入時發生錯誤");
     } finally {
       setLoading(false);
     }
@@ -56,9 +56,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-cyan-50 p-4 relative overflow-hidden">
       {/* Decorative geometric shapes */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-teal-100/40 to-transparent rounded-full -translate-y-1/2 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-orange-100/30 to-transparent rounded-full translate-y-1/3 -translate-x-1/4" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-blue-100/30 to-transparent rounded-full translate-y-1/3 -translate-x-1/4" />
       <div className="absolute top-1/4 right-1/4 w-4 h-4 rounded-full bg-teal-300/30" />
-      <div className="absolute top-1/3 right-1/3 w-2 h-2 rounded-full bg-orange-300/40" />
+      <div className="absolute top-1/3 right-1/3 w-2 h-2 rounded-full bg-blue-300/40" />
       <div className="absolute bottom-1/4 left-1/3 w-3 h-3 rounded-full bg-cyan-300/30" />
 
       <Card className="w-full max-w-md shadow-xl border-0 relative z-10">
@@ -102,7 +102,7 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="輸入密碼"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -115,22 +115,32 @@ export default function LoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11 btn-lift font-semibold" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-11 btn-lift font-semibold"
+              disabled={loading}
+            >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <Spinner size="sm" className="text-white" />
                   登入中...
                 </span>
-              ) : '登入'}
+              ) : (
+                "登入"
+              )}
             </Button>
           </form>
 
-          {process.env.NODE_ENV === 'development' && (
+          {process.env.NODE_ENV === "development" && (
             <div className="mt-6 text-center text-sm text-muted-foreground">
               <p>測試帳號：</p>
               <p className="text-xs mt-1">

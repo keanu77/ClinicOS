@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { signOut } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Bell, LogOut, Menu, Activity } from 'lucide-react';
-import Link from 'next/link';
-import { RoleLabels, Role } from '@/shared';
-import { MobileSidebar } from './mobile-sidebar';
-import { apiGet } from '@/lib/api';
+import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Bell, LogOut, Menu, Activity } from "lucide-react";
+import Link from "next/link";
+import { RoleLabels, Role } from "@/shared";
+import { MobileSidebar } from "./mobile-sidebar";
+import { apiGet } from "@/lib/api";
 
 interface HeaderProps {
   user: {
@@ -26,7 +26,9 @@ export function Header({ user }: HeaderProps) {
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
-        const result = await apiGet<{ count: number }>('/notifications/unread-count');
+        const result = await apiGet<{ count: number }>(
+          "/notifications/unread-count",
+        );
         setUnreadCount(result.count);
       } catch {
         // silently ignore
@@ -56,12 +58,10 @@ export function Header({ user }: HeaderProps) {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-500">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500">
                 <Activity className="h-3.5 w-3.5 text-white" />
               </div>
-              <h2 className="text-lg font-semibold text-teal-900">
-                Clinic OS
-              </h2>
+              <h2 className="text-lg font-semibold text-teal-900">Clinic OS</h2>
             </div>
           </div>
 
@@ -75,8 +75,8 @@ export function Header({ user }: HeaderProps) {
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                    {unreadCount > 99 ? '99+' : unreadCount}
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </Button>
@@ -95,7 +95,7 @@ export function Header({ user }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: "/login" })}
                 aria-label="登出"
               >
                 <LogOut className="h-5 w-5" />
